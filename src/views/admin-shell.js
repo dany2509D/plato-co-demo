@@ -10,13 +10,6 @@ const NAV = [
   { ruta: 'admin-indicadores', href: '#/admin/indicadores', texto: 'Indicadores' },
 ];
 
-// Tarjeta "Próximamente" para las secciones que llegan en tareas posteriores.
-export function proximamente(titulo, texto) {
-  return (cont) => {
-    cont.innerHTML = `<section class="adm-proximamente"><h1>${esc(titulo)}</h1><p>${esc(texto)}</p><p class="adm-suave">Esta sección estará disponible muy pronto en la demo.</p></section>`;
-  };
-}
-
 // Marco del administrador: navegación, selector de sucursal (persistido en ui.sucursalAdmin) y
 // botón para volver al cliente. `content(contenedor)` puede devolver una función de limpieza.
 // Devuelve la limpieza total (el router la llama al salir de la ruta).

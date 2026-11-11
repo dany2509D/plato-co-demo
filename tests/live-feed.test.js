@@ -53,6 +53,14 @@ describe('construirFeed', () => {
     expect(f[1].enlace.href).toBe('#/admin/reservas');
     expect(f[1].titulo).toContain(r.id);
   });
+  it('cada estado tiene su propio icono y conserva el texto', () => {
+    const s = base();
+    const est = ['Recibido', 'En cocina', 'Listo', 'En camino', 'Entregado'];
+    s.pedidos = [pedido(s, { estado: 'Entregado', historial: est.map((e, i) => ({ estado: e, en: `2026-11-11T20:0${i}:00Z` })) })];
+    const iconos = construirFeed(s).filter((x) => x.tipo === 'estado').map((x) => x.icono);
+    expect(new Set(iconos).size).toBe(4);
+    expect(construirFeed(s).find((x) => x.titulo.includes('Entregado')).icono).toBe('🎉');
+  });
   it('respeta el límite', () => {
     const s = base();
     s.pedidos = Array.from({ length: 20 }, (_, i) => pedido(s, { id: `P-${i}` }));

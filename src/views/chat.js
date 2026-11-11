@@ -1,6 +1,6 @@
 import '../styles/phone.css';
 import { store } from '../core/app-store.js';
-import { createBot } from '../bot/engine.js';
+import { getAppBot } from '../bot/instance.js';
 import { replyWithFallback } from '../bot/ai-adapter.js';
 import { horaPanama } from '../bot/datetime.js';
 import { SALUDO, mensajesNuevos, retardoEscribiendo } from '../core/chat-view.js';
@@ -10,9 +10,7 @@ import { livePanel } from '../ui/live-panel.js';
 const CONV = 'c-web';
 const HUMANO = 'Pasar a una persona';
 
-// Un solo bot por carga de página: registra el aviso de estado de pedidos una sola vez.
-let bot = null;
-const getBot = () => (bot ??= createBot(store));
+const getBot = () => getAppBot(store);
 
 function asegurarConversacion() {
   const s = store.get();

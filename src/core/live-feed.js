@@ -6,6 +6,7 @@ import { formatHora } from './chat-view.js';
 // (acciones guardadas en los mensajes) y conversaciones marcadas "Requiere persona".
 const usd = (n) => `US$ ${Number(n).toFixed(2)}`;
 const nombreSuc = (state, id) => state.sucursales.find((s) => s.id === id)?.nombre ?? id;
+const ICONO_ESTADO = { Recibido: '📥', 'En cocina': '🍳', Listo: '✅', 'En camino': '🛵', Entregado: '🎉' };
 const ms = (iso) => Date.parse(iso) || 0;
 
 export function construirFeed(state, { limite = 12, humanoEn = {} } = {}) {
@@ -20,7 +21,7 @@ export function construirFeed(state, { limite = 12, humanoEn = {} } = {}) {
       enlace: { href: '#/admin/cocina', texto: 'Ver en cocina' },
     });
     (p.historial ?? []).slice(1).forEach((h, i) => items.push({
-      id: `estado-${p.id}-${i}`, tipo: 'estado', icono: '🍳', en: h.en, hora: formatHora(h.en),
+      id: `estado-${p.id}-${i}`, tipo: 'estado', icono: ICONO_ESTADO[h.estado] ?? '🔔', en: h.en, hora: formatHora(h.en),
       titulo: `Pedido ${p.id} pasó a ${h.estado}`,
       detalle: 'El cliente recibe el aviso en su chat.',
       enlace: { href: '#/admin/cocina', texto: 'Ver en cocina' },

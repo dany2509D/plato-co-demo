@@ -20,6 +20,7 @@ import { adminReservas } from './views/admin-reservas.js';
 import { adminMenu } from './views/admin-menu.js';
 import { renderIndicadores } from './views/admin-indicadores.js';
 import { vistaChat } from './views/chat.js';
+import { getAppBot } from './bot/instance.js';
 
 const TITULOS = {
   inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', pedido: 'Seguimiento de pedido',
@@ -34,6 +35,8 @@ const ADMIN = {
   'admin-menu': adminMenu,
   'admin-indicadores': (cont) => renderIndicadores(cont, store),
 };
+
+getAppBot(store); // registra desde el arranque el aviso de estado de pedidos hacia el chat
 
 const app = document.getElementById('app');
 const banner = crearBanner();

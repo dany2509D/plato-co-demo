@@ -142,6 +142,7 @@ export function phone(container, { onSend, onHandoff, onAttach } = {}) {
       for (const t of msg.botones) {
         const b = h('button', 'tel-rapido', String(t));
         b.type = 'button';
+        b.disabled = ocupado;
         b.addEventListener('click', () => { if (!ocupado) onSend?.(String(t)); });
         r.append(b);
       }
@@ -172,6 +173,7 @@ export function phone(container, { onSend, onHandoff, onAttach } = {}) {
     btnEnviar.disabled = b;
     btnAdj.disabled = b;
     btnHumano.disabled = b;
+    log.querySelectorAll('.tel-rapido').forEach((x) => { x.disabled = b; });
     raiz.classList.toggle('tel-ocupado', b);
     log.setAttribute('aria-busy', b ? 'true' : 'false');
   }
@@ -180,6 +182,7 @@ export function phone(container, { onSend, onHandoff, onAttach } = {}) {
     clearPending();
     pendiente = burbuja({ de: 'cliente', texto }, { pendiente: true });
     pendiente.classList.add('tel-pendiente');
+    pendiente.setAttribute('aria-hidden', 'true');
     log.insertBefore(pendiente, escribiendo?.parentNode === log ? escribiendo : null);
     bajar();
   }
