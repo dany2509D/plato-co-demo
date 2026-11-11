@@ -1,6 +1,8 @@
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/client.css';
+import './styles/admin.css';
+import './styles/kitchen.css';
 import { brand } from './config/brand.js';
 import { crearBanner } from './ui/banner.js';
 import { onRouteChange, parseRoute } from './ui/router.js';
@@ -10,6 +12,8 @@ import { vistaInicio } from './views/inicio.js';
 import { vistaMenu } from './views/menu.js';
 import { vistaCarrito } from './views/carrito.js';
 import { vistaPedido } from './views/pedido.js';
+import { adminShell, proximamente } from './views/admin-shell.js';
+import { adminCocina } from './views/admin-cocina.js';
 
 const TITULOS = {
   inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', pedido: 'Seguimiento de pedido',
@@ -17,6 +21,13 @@ const TITULOS = {
 };
 
 const VISTAS = { inicio: vistaInicio, menu: vistaMenu, carrito: vistaCarrito, pedido: vistaPedido };
+
+const ADMIN = {
+  'admin-cocina': adminCocina,
+  'admin-reservas': proximamente('Reservas', 'Aquí verá las reservas del día y las mesas de la sucursal.'),
+  'admin-menu': proximamente('Administrar menú', 'Aquí podrá marcar platos como agotados por sucursal.'),
+  'admin-indicadores': proximamente('Indicadores', 'Aquí verá las ventas, los tiempos de preparación y los platos más pedidos.'),
+};
 
 const app = document.getElementById('app');
 const banner = crearBanner();
@@ -43,6 +54,11 @@ reiniciar.addEventListener('click', () => {
   renderVista(parseRoute(location.hash));
 });
 header.append(reiniciar);
+const admin = document.createElement('a');
+admin.className = 'btn-admin';
+admin.href = '#/admin/cocina';
+admin.textContent = 'Entrar como administrador';
+header.append(admin);
 app.append(header);
 
 const main = document.createElement('main');
@@ -80,8 +96,11 @@ function renderVista(ruta) {
   header.querySelectorAll('[data-nav]').forEach((a) => {
     if (a.dataset.nav === ruta.name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
+  const esAdmin = ruta.name in ADMIN;
+  document.body.classList.toggle('modo-admin', esAdmin);
   const vista = VISTAS[ruta.name];
-  if (vista) limpiar = vista(main, ruta.params);
+  if (esAdmin) limpiar = adminShell(ADMIN[ruta.name], ruta.name);
+  else if (vista) limpiar = vista(main, ruta.params);
   else {
     const h = document.createElement('h1');
     h.textContent = titulo;

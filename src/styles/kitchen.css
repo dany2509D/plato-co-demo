@@ -1,0 +1,49 @@
+/* Pantalla de cocina: legible a 2 m, alto contraste, tableta 1024x768 en adelante. */
+.kc-cab { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.kc-cab h1 { font-size: 2.25rem; margin: 0 0 12px; }
+.kc-sub { margin: 0; font-size: 1.125rem; color: var(--tinta-suave); font-weight: 700; }
+
+.kc-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.kc-kpi { background: #fff; border: 2px solid var(--tinta); border-radius: 16px; padding: 12px 18px; display: flex; align-items: baseline; gap: 12px; }
+.kc-kpi-n { font-size: 3rem; font-weight: 900; line-height: 1; }
+.kc-kpi-t { font-size: 1.25rem; font-weight: 800; color: var(--tinta-suave); }
+
+.kc-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (min-width: 1280px) { .kc-cols { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.kc-col { background: #EDE8DF; border-radius: 16px; padding: 12px; min-height: 120px; }
+.kc-col h2 { font-size: 1.5rem; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+.kc-col-n { background: var(--tinta); color: #fff; border-radius: 999px; padding: 0 12px; font-size: 1.125rem; }
+.kc-vacio { font-size: 1.125rem; color: var(--tinta-suave); margin: 8px 4px; }
+
+.kc-card { background: #fff; border: 2px solid var(--tinta); border-left-width: 14px; border-radius: 12px; padding: 14px; margin-bottom: 12px; font-size: 1.25rem; line-height: 1.35; }
+.kc-verde { border-left-color: #1F7A3A; }
+.kc-amarillo { border-left-color: #D99A00; background: #FFF8DC; }
+.kc-rojo { border-left-color: #B3261E; background: #FFE9E4; }
+.kc-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.kc-card-top h3 { margin: 0; font-size: 1.625rem; }
+.kc-canal { font-size: 1rem; font-weight: 800; padding: 2px 12px; border-radius: 999px; border: 2px solid var(--tinta); background: #fff; }
+.kc-canal-wa { background: #D6F2D9; }
+.kc-canal-web { background: #DCE9FA; }
+.kc-tiempo { display: flex; justify-content: space-between; gap: 8px; margin: 6px 0; font-size: 1.25rem; }
+.kc-tiempo strong { font-size: 1.5rem; }
+.kc-sem { font-weight: 800; }
+.kc-verde .kc-sem { color: #14532A; }
+.kc-amarillo .kc-sem { color: #6B4A00; }
+.kc-rojo .kc-sem { color: #8C1710; }
+.kc-tipo { margin: 0 0 8px; font-weight: 700; }
+.kc-lineas { list-style: none; margin: 0 0 12px; padding: 8px 0 0; border-top: 2px dashed rgba(43, 24, 16, .35); }
+.kc-lineas li { padding: 4px 0; }
+.kc-mods { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.kc-mod { font-size: 1.125rem; font-weight: 800; background: var(--amarillo); border-radius: 6px; padding: 0 8px; }
+
+.kc-avanzar {
+  display: block; width: 100%; min-height: 64px; padding: 12px 16px; cursor: pointer;
+  font-size: 1.375rem; font-weight: 900; color: #fff; background: var(--tinta);
+  border: 3px solid var(--tinta); border-radius: 12px;
+}
+.kc-avanzar:hover { background: #4A2D20; }
+.kc-avanzar:active { transform: translateY(2px); }
+
+.kc-hist { margin-top: 24px; background: #fff; border: 2px solid var(--tinta); border-radius: 12px; padding: 12px 16px; font-size: 1.125rem; }
+.kc-hist summary { cursor: pointer; font-weight: 800; font-size: 1.25rem; min-height: 44px; display: flex; align-items: center; }
+.kc-hist ul { margin: 8px 0 0; padding-left: 20px; }
