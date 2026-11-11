@@ -1,4 +1,4 @@
-const SIMPLES = ['inicio', 'menu', 'carrito', 'chat'];
+const SIMPLES = ['inicio', 'menu', 'carrito', 'chat', 'estilo'];
 const ADMIN = ['cocina', 'reservas', 'menu', 'indicadores'];
 
 export function parseRoute(hash) {

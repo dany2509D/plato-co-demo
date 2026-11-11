@@ -40,5 +40,3 @@ body.modo-admin .app-header { display: none; }
 .adm-proximamente p { font-size: 1.125rem; }
 .adm-suave { color: var(--tinta-suave); }
 
-/* Botón de acceso desde el cliente */
-.btn-admin { margin-left: 0; min-height: 40px; padding: 4px 12px; font-size: .875rem; display: inline-flex; align-items: center; border: 2px solid var(--tinta); border-radius: 8px; font-weight: 700; color: var(--tinta); text-decoration: none; background: var(--amarillo); }

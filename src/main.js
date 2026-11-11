@@ -1,5 +1,7 @@
 import './styles/tokens.css';
 import './styles/base.css';
+import './styles/components.css';
+import './styles/layout.css';
 import './styles/client.css';
 import './styles/admin.css';
 import './styles/kitchen.css';
@@ -20,14 +22,17 @@ import { adminReservas } from './views/admin-reservas.js';
 import { adminMenu } from './views/admin-menu.js';
 import { renderIndicadores } from './views/admin-indicadores.js';
 import { vistaChat } from './views/chat.js';
+import { vistaEstilo } from './views/estilo.js';
+import { crearFooter } from './ui/footer.js';
+import { vigilarReveal } from './ui/reveal.js';
 import { getAppBot } from './bot/instance.js';
 
 const TITULOS = {
-  inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', pedido: 'Seguimiento de pedido',
+  inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', estilo: 'Guía de estilo', pedido: 'Seguimiento de pedido',
   'admin-cocina': 'Cocina', 'admin-reservas': 'Reservas', 'admin-menu': 'Administrar menú', 'admin-indicadores': 'Indicadores',
 };
 
-const VISTAS = { inicio: vistaInicio, menu: vistaMenu, carrito: vistaCarrito, pedido: vistaPedido, chat: vistaChat };
+const VISTAS = { inicio: vistaInicio, menu: vistaMenu, carrito: vistaCarrito, pedido: vistaPedido, chat: vistaChat, estilo: vistaEstilo };
 
 const ADMIN = {
   'admin-cocina': adminCocina,
@@ -39,37 +44,59 @@ const ADMIN = {
 getAppBot(store); // registra desde el arranque el aviso de estado de pedidos hacia el chat
 
 const app = document.getElementById('app');
+const skip = document.createElement('a');
+skip.className = 'skip-link';
+skip.href = '#contenido';
+skip.textContent = 'Saltar al contenido';
+skip.addEventListener('click', (e) => { e.preventDefault(); main.focus(); });
+app.append(skip);
 const banner = crearBanner();
 app.append(banner);
 
+const ICONO_BOLSA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>';
 const header = document.createElement('header');
 header.className = 'app-header';
 header.innerHTML = `
-  <a class="brand" href="#/">${brand.logoSvg}<strong>${brand.nombre.replace('&', '&amp;')}</strong></a>
-  <nav class="nav" aria-label="Principal">
-    <a href="#/" data-nav="inicio">Inicio</a>
-    <a href="#/menu" data-nav="menu">Menú</a>
-    <a href="#/chat" data-nav="chat">Reservar</a>
-    <a class="btn btn-primario btn-nav" href="#/menu">Pedir</a>
-    <a class="nav-carrito" href="#/carrito" data-nav="carrito" aria-label="Carrito, 0 productos">Carrito <span class="nav-cuenta" data-cuenta>0</span></a>
-  </nav>`;
+  <div class="app-header__inner container--wide">
+    <a class="brand" href="#/">${brand.logoSvg}<span class="brand__name">${brand.nombre.replace('&', '&amp;')}</span></a>
+    <nav class="nav" aria-label="Principal">
+      <a href="#/" data-nav="inicio">Inicio</a>
+      <a href="#/menu" data-nav="menu">Menú</a>
+      <a href="#/chat" data-nav="chat">Asistente</a>
+    </nav>
+    <div class="app-header__cta">
+      <a class="btn btn--ghost btn--sm" href="#/chat">Reservar</a>
+      <a class="btn btn--sm" href="#/menu">Pedir</a>
+      <a class="btn btn--ghost btn--sm nav-carrito" href="#/carrito" data-nav="carrito" aria-label="Carrito, 0 productos">${ICONO_BOLSA}<span class="nav-cuenta" data-cuenta>0</span></a>
+    </div>
+    <div class="app-header__util"></div>
+  </div>`;
+const util = header.querySelector('.app-header__util');
 const reiniciar = document.createElement('button');
 reiniciar.type = 'button';
-reiniciar.className = 'btn-reiniciar';
+reiniciar.className = 'btn btn--text btn--sm btn-reiniciar';
 reiniciar.textContent = 'Reiniciar demo';
 reiniciar.addEventListener('click', reiniciarDemo);
-header.append(reiniciar);
 const admin = document.createElement('a');
-admin.className = 'btn-admin';
+admin.className = 'btn btn--ghost btn--sm btn-admin';
 admin.href = '#/admin/cocina';
 admin.textContent = 'Entrar como administrador';
-header.append(admin);
+util.append(reiniciar, admin);
 app.append(header);
 
 const main = document.createElement('main');
 main.className = 'vista';
+main.id = 'contenido';
 main.tabIndex = -1;
 app.append(main);
+const footer = crearFooter();
+app.append(footer);
+vigilarReveal(main);
+
+// Sombra suave de la cabecera solo cuando hay scroll.
+let rafScroll = 0;
+const marcarScroll = () => { rafScroll = 0; header.classList.toggle('is-scrolled', window.scrollY > 8); };
+window.addEventListener('scroll', () => { if (!rafScroll) rafScroll = requestAnimationFrame(marcarScroll); }, { passive: true });
 
 // Alturas de banner y encabezado para los elementos fijos (barra de categorías, anclas).
 function medir() {
@@ -103,6 +130,7 @@ function renderVista(ruta) {
   });
   const esAdmin = ruta.name in ADMIN;
   document.body.classList.toggle('modo-admin', esAdmin);
+  footer.hidden = esAdmin;
   const vista = VISTAS[ruta.name];
   if (esAdmin) limpiar = adminShell(ADMIN[ruta.name], ruta.name);
   else if (vista) limpiar = vista(main, ruta.params);

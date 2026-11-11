@@ -1,17 +1,17 @@
 const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Plato &amp; Co.">
-  <circle cx="24" cy="24" r="22" fill="#B4472A"/>
-  <circle cx="24" cy="24" r="14" fill="#FFF6E5"/>
-  <circle cx="24" cy="24" r="8" fill="#F5B82E"/>
+  <circle cx="24" cy="24" r="22" fill="#823513"/>
+  <circle cx="24" cy="24" r="14" fill="#ECE2D0"/>
+  <circle cx="24" cy="24" r="8" fill="#FAAE33"/>
 </svg>`;
 
 export const brand = {
   nombre: 'Plato & Co.',
   logoSvg,
   colores: {
-    crema: '#FFF6E5',
-    terracota: '#B4472A',
-    amarillo: '#F5B82E',
-    tinta: '#2B1810',
+    crema: '#ECE2D0',
+    terracota: '#823513',
+    amarillo: '#FAAE33',
+    tinta: '#2A1A12',
   },
   moneda: 'US$',
   itbms: 0.07,

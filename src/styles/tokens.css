@@ -1,14 +1,128 @@
+/*
+ * PLATO & CO. · TOKENS DE DISEÑO (fuente única de verdad)
+ * Mira la guía viva en  #/estilo  y la documentación en docs/design/system.md
+ *
+ * Convención de nombres
+ *   --c-*        colores (roles, no tonos: usar el rol, nunca el hex)
+ *   --font-*     familias        --fs-*   escala de tipo fluida       --lh-* / --tr-*  interlínea / tracking
+ *   --sp-*       espaciado (rejilla de 8 px)   --r-*  radios   --rule-*  filetes
+ *   --ease / --dur   movimiento   --z-*  capas   --w-*  anchos de contenedor
+ *   --ctx-*      variables de CONTEXTO: cambian dentro de .on-dark / .band--* (los componentes las leen)
+ *
+ * Contraste (WCAG 2.1, calculado con un script; AA texto normal ≥ 4,5, texto grande/UI ≥ 3):
+ *   ink #2a1a12 / canvas #ece2d0 13,03 · / linen #e0d3bb 11,32 · / paper #f6f0e4 14,5
+ *   ink-soft #5a483c / canvas 6,74 · / linen 5,85       ink-muted #65554a / canvas 5,54 · / linen 4,81
+ *   ember #823513 / canvas 6,63 · / linen 5,76 (texto y enlaces sobre crema = ink o ember, NUNCA oro)
+ *   canvas / ink 13,03 · canvas / ember 6,63 · on-dark #ece2d0 / char #281006 14,02 · / card #402011 11,42
+ *   on-dark-muted #d2c4ab / char 10,48 · / card 8,53 · / ember 4,95
+ *   gold #faae33 / char 9,57 · / card 7,79 · / ember 4,53 · / ink 8,90   (oro = relleno, borde, texto grande/oscuro)
+ *   char / gold (texto de botón oro) 9,57 · char / gold-hover 11,25
+ *   white / chili #d1255c 5,08 (solo insignias)
+ *   success #2a6218 / okBg #d5e6c3 · warn #7a4a00 / #f7e0a8 5,77 · danger #a3132f / #f6d3d8 5,66  (ver tabla completa en el informe)
+ *   admin: muted #736f7c / blanco 4,89 · / soft #f6f6f5 4,52 · ink / blanco 16,73
+ *   line-strong #7d6d58 (borde de inputs) / canvas ≥ 3,5 (componente de UI ≥ 3)
+ */
 :root {
-  --crema: #FFF6E5;
-  --crema-2: #FBE9C8;
-  --terracota: #B4472A;
-  --terracota-osc: #8E3520;
-  --amarillo: #F5B82E;
-  --tinta: #2B1810;
-  --tinta-suave: #5A4036;
-  --blanco: #FFFFFF;
-  --radio: 14px;
-  --sombra: 0 4px 0 rgba(43, 24, 16, 0.9);
-  --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --gutter: 16px;
+  /* ---------- Lienzo y tinta (cliente, claro) ---------- */
+  --c-canvas: #ece2d0;        /* pergamino: fondo de página */
+  --c-linen: #e0d3bb;         /* un escalón más oscuro: tarjetas, filas alternas, hover */
+  --c-paper: #f6f0e4;         /* un escalón más claro: tarjetas sobre canvas, inputs */
+  --c-rule: #c9bba2;          /* filete decorativo de 1 px (no lleva información) */
+  --c-line-strong: #7d6d58;   /* borde de controles (contraste de UI ≥ 3) */
+  --c-ink: #2a1a12;           /* texto y botón primario; nunca #000 */
+  --c-ink-soft: #5a483c;      /* texto secundario */
+  --c-ink-muted: #65554a;     /* texto terciario / ayudas (sigue siendo AA) */
+
+  /* ---------- Bandas oscuras ---------- */
+  --c-char: #281006;          /* carbón: héroe, pie, bandas */
+  --c-card: #402011;          /* marrón medio: tarjetas sobre carbón */
+  --c-ember: #823513;         /* brasa / óxido: banda de acento, enlaces sobre crema */
+  --c-ember-deep: #6b2a0e;    /* hover/pressed de brasa */
+  --c-line-dark: #6b2e12;     /* filete 1 px sobre bandas oscuras */
+  --c-on-dark: #ece2d0;       /* texto sobre bandas */
+  --c-on-dark-muted: #d2c4ab; /* texto secundario sobre bandas */
+
+  /* ---------- Acento único ---------- */
+  --c-gold: #faae33;          /* relleno, borde, texto grande sobre oscuro. NUNCA texto pequeño sobre crema */
+  --c-gold-hover: #ffc25c;
+  --c-chili: #d1255c;         /* solo insignias diminutas de alerta/picante (texto blanco) */
+
+  /* ---------- Semánticos de cocina (siempre con texto/icono, nunca solo color) ---------- */
+  --c-success: #2a6218;  --c-success-bg: #d5e6c3;
+  --c-warn: #7a4a00;     --c-warn-bg: #f7e0a8;
+  --c-danger: #a3132f;   --c-danger-bg: #f6d3d8;
+
+  /* ---------- Superficies del panel (estilo Sunday, claro y limpio) ---------- */
+  --c-adm-surface: #ffffff;
+  --c-adm-soft: #f6f6f5;
+  --c-adm-hair: #dedede;      /* hairline */
+  --c-adm-muted: #736f7c;     /* texto apagado */
+  --c-adm-placeholder: #8a8590; /* solo placeholder (no es texto de contenido) */
+
+  /* ---------- Contexto (los componentes leen estos; .on-dark y .band--* los cambian) ---------- */
+  --ctx-bg: var(--c-canvas);
+  --ctx-fg: var(--c-ink);
+  --ctx-muted: var(--c-ink-soft);
+  --ctx-link: var(--c-ember);
+  --ctx-rule: var(--c-rule);
+  --ctx-focus: var(--c-ink);
+  --ctx-accent: var(--c-ember);   /* en oscuro pasa a oro */
+  --ctx-surface: var(--c-paper);  /* tarjetas */
+  --ctx-surface-line: var(--c-rule);
+
+  /* ---------- Tipografía ---------- */
+  --font-display: 'Anton', Impact, 'Haettenschweiler', 'Arial Narrow Bold', 'Arial Narrow', sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Escala fluida: 360 px → 1440 px. d-* = Anton en mayúsculas; t-* = DM Sans */
+  --fs-d1: clamp(4.5rem, 2rem + 14vw, 12.5rem);     /* cifras gigantes 72 → 200 px */
+  --fs-d2: clamp(3.25rem, 1.5rem + 8vw, 8rem);      /* título de héroe 52 → 128 px */
+  --fs-d3: clamp(2.5rem, 1.4rem + 4.8vw, 4.5rem);   /* título de sección 40 → 72 px */
+  --fs-d4: clamp(1.75rem, 1.2rem + 2.4vw, 3rem);    /* subtítulo 28 → 48 px */
+  --fs-d5: clamp(1.25rem, 1.1rem + .7vw, 1.625rem); /* título de tarjeta 20 → 26 px */
+  --fs-lead: clamp(1.0625rem, 1rem + .3vw, 1.3125rem);
+  --fs-base: 1rem;
+  --fs-sm: .875rem;
+  --fs-xs: .75rem;
+  --lh-display: .88;  --lh-tight: 1.1;  --lh-body: 1.55;
+  --tr-display: -0.02em;   /* ≥ 64 px */
+  --tr-title: -0.01em;     /* 28–64 px */
+  --tr-label: .08em;       /* etiquetas en mayúsculas */
+
+  /* ---------- Espaciado (rejilla de 8 px) ---------- */
+  --sp-0: 4px;  --sp-1: 8px;  --sp-2: 16px;  --sp-3: 24px;  --sp-4: 32px;
+  --sp-5: 48px; --sp-6: 64px; --sp-7: 80px;  --sp-8: 120px;
+  --gutter: clamp(16px, 4vw, 32px);
+  --section-y: clamp(56px, 4vw + 36px, 120px);
+
+  /* ---------- Geometría ---------- */
+  --r-sharp: 0;
+  --r-card: 6px;
+  --r-pill: 9999px;
+  --rule-w: 1px;
+  --tap: 44px;               /* tamaño mínimo táctil */
+  --w-content: 1200px;
+  --w-wide: 1440px;
+
+  /* ---------- Movimiento ---------- */
+  --dur: .4s;
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --shadow-sticky: 0 12px 32px rgba(42, 26, 18, .14); /* ÚNICA sombra: cabecera con scroll */
+
+  /* ---------- Capas ---------- */
+  --z-base: 1; --z-sticky: 40; --z-banner: 100; --z-float: 120; --z-modal: 200; --z-toast: 300;
+
+  /* ============================================================
+   * ALIAS DE COMPATIBILIDAD (nombres antiguos). Borrar cuando B y C migren.
+   * ============================================================ */
+  --crema: var(--c-canvas);
+  --crema-2: var(--c-linen);
+  --terracota: var(--c-ember);
+  --terracota-osc: var(--c-ember-deep);
+  --amarillo: var(--c-gold);
+  --tinta: var(--c-ink);
+  --tinta-suave: var(--c-ink-soft);
+  --blanco: var(--c-paper);
+  --radio: var(--r-card);
+  --sombra: none;
+  --fuente: var(--font-body);
 }

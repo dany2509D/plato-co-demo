@@ -1,0 +1,84 @@
+/* Estructura del cliente: banner de demo, cabecera, pie. (Las rutas de admin usan su propia barra.) */
+
+/* ---------- Banner de demostración: banda fina de tinta ---------- */
+.banner-demo {
+  position: sticky; top: 0; z-index: var(--z-banner);
+  display: flex; flex-wrap: wrap; gap: 2px 16px; justify-content: center; align-items: center;
+  padding: 6px var(--gutter);
+  background: var(--c-ink); color: var(--c-on-dark);
+  font-size: .75rem; line-height: 1.35; text-align: center;
+  --ctx-focus: var(--c-gold);
+}
+.banner-demo a { color: var(--c-gold); }
+.banner-cta { font-weight: 700; }
+
+/* ---------- Cabecera ---------- */
+.app-header {
+  position: relative; z-index: var(--z-sticky);
+  background: var(--c-canvas); border-bottom: var(--rule-w) solid var(--c-rule);
+  transition: box-shadow var(--dur) var(--ease);
+}
+.app-header.is-scrolled { box-shadow: var(--shadow-sticky); }
+.app-header__inner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3);
+  padding-block: var(--sp-1);
+}
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--c-ink); min-height: var(--tap); }
+.brand svg { width: 36px; height: 36px; flex: none; }
+.brand__name { font-family: var(--font-display); font-size: 1.5rem; line-height: 1; text-transform: uppercase; letter-spacing: .01em; font-weight: 400; }
+.nav { display: flex; align-items: center; gap: var(--sp-0) var(--sp-2); }
+.nav a:not(.btn) {
+  position: relative; display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--sp-1);
+  font-size: .9375rem; font-weight: 500; color: var(--c-ink); text-decoration: none;
+}
+.nav a:not(.btn)::after { content: ''; position: absolute; left: var(--sp-1); right: var(--sp-1); bottom: 8px; height: 1px; background: var(--c-ink); transform: scaleX(0); transform-origin: left; transition: transform var(--dur) var(--ease); }
+.nav a:not(.btn):hover::after { transform: scaleX(1); }
+.nav a[aria-current="page"]:not(.btn) { font-weight: 700; }
+.nav a[aria-current="page"]:not(.btn)::after { transform: scaleX(1); height: 2px; }
+.app-header__cta { display: flex; align-items: center; gap: var(--sp-1); margin-left: auto; }
+.nav-carrito { gap: 6px; }
+.nav-carrito[aria-current="page"] { --btn-bg: var(--c-ink); --btn-fg: var(--c-canvas); }
+.nav-cuenta {
+  display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-pill);
+  background: var(--c-gold); color: var(--c-char); font-size: .75rem; font-weight: 700; line-height: 1;
+}
+.app-header__util { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--sp-1); flex-basis: 100%; justify-content: flex-end; padding-bottom: 2px; }
+.app-header .btn-reiniciar { margin: 0; }
+
+/* Móvil: marca + carrito + Pedir arriba; enlaces debajo; utilidades al final */
+@media (max-width: 899px) {
+  .app-header__inner { gap: 0 var(--sp-1); }
+  .brand { order: 1; flex: 1 1 auto; }
+  .app-header__cta { order: 2; margin-left: 0; }
+  .nav { order: 3; flex: 1 1 100%; gap: 0; justify-content: space-between; border-top: var(--rule-w) dotted var(--c-ink-muted); }
+  .nav a[data-nav="inicio"] { display: none; }
+  .app-header__util { order: 4; justify-content: space-between; border-top: var(--rule-w) dotted var(--c-ink-muted); padding-top: 2px; }
+}
+@media (min-width: 900px) {
+  .app-header { position: sticky; top: var(--banner-h, 0px); }
+  .app-header__inner { flex-wrap: wrap; }
+  .nav { margin-left: var(--sp-3); }
+  .app-header__util { flex-basis: auto; order: 5; padding: 0; }
+}
+@media (min-width: 900px) and (max-width: 1299px) {
+  .app-header__util { flex-basis: 100%; border-top: var(--rule-w) dotted var(--c-ink-muted); padding-top: 2px; }
+}
+
+/* ---------- Pie ---------- */
+.site-footer { margin-top: var(--sp-6); padding-block: var(--sp-6) var(--sp-4); }
+.site-footer__mark {
+  display: block; margin: 0 0 var(--sp-3); font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(4rem, 2rem + 16vw, 14rem); line-height: .85; letter-spacing: var(--tr-display); color: var(--c-gold); text-decoration: none;
+}
+.site-footer__grid { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.site-footer h2 { font-family: var(--font-body); font-size: .8125rem; font-weight: 700; letter-spacing: var(--tr-label); line-height: 1.2; margin: 0 0 var(--sp-1); color: var(--c-gold); }
+.site-footer p { margin: 0 0 var(--sp-1); color: var(--c-on-dark-muted); font-size: .9375rem; }
+.site-footer strong { color: var(--c-on-dark); font-weight: 700; display: block; }
+.site-footer ul { list-style: none; margin: 0; padding: 0; }
+.site-footer li a { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--c-on-dark); text-decoration: none; }
+.site-footer li a:hover { color: var(--c-gold); text-decoration: underline; }
+.site-footer a { color: var(--c-gold); }
+.site-footer__legal { font-size: .8125rem; color: var(--c-on-dark-muted); max-width: 70ch; }
+body.modo-admin .site-footer { display: none; }
+/* 360 px: "Reservar" ya está en el enlace Asistente (misma ruta); así marca + Pedir + carrito caben en una fila */
+@media (max-width: 599px) { .app-header__cta .btn--ghost:not(.nav-carrito) { display: none; } }

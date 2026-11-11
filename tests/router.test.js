@@ -23,4 +23,8 @@ describe('parseRoute', () => {
     expect(parseRoute('#/nada').name).toBe('inicio');
     expect(parseRoute('#/admin/xyz').name).toBe('inicio');
   });
+  it('reconoce #/estilo (guía de estilo, no enlazada en la navegación)', () => {
+    expect(parseRoute('#/estilo').name).toBe('estilo');
+    expect(parseRoute('#/estilo/otra').name).toBe('inicio');
+  });
 });
