@@ -21,9 +21,9 @@ function etiquetaFecha(f, hoy) {
 export function adminReservas(cont) {
   cont.innerHTML = `
     <section class="rv" aria-labelledby="rv-titulo">
-      <div class="gs-cab"><h1 id="rv-titulo">Reservas</h1><p class="gs-sub" data-sub></p></div>
+      <div class="pg-cab"><p class="rol">Vista por rol · Anfitrión</p><h1 id="rv-titulo">Reservas</h1><p class="pg-sub" data-sub></p></div>
       <div class="rv-filtros">
-        <label class="gs-campo"><span>Fecha</span><select data-fecha></select></label>
+        <div class="field rv-fecha"><label class="label" for="rv-fecha">Fecha</label><select class="select" id="rv-fecha" data-fecha></select></div>
         <div class="rv-franjas" role="group" aria-label="Franja horaria" data-franjas></div>
       </div>
       <p class="gs-msg" role="status" aria-live="polite" data-msg></p>
@@ -88,7 +88,7 @@ export function adminReservas(cont) {
     q('[data-sub]').textContent = `${suc.nombre} · ${suc.mesas.length} mesas · se actualiza solo`;
     q('[data-franjas]').innerHTML = ocup.map((o) => `
       <button type="button" class="rv-franja" data-franja="${esc(o.hora)}" aria-pressed="${o.hora === ui.franja}">
-        <strong>${esc(o.hora)}</strong><span>${o.mesasOcupadas}/${o.mesasTotal} ocupadas</span>
+        <span class="rv-franja__h">${esc(o.hora)}</span><strong class="rv-franja__n">${o.mesasOcupadas}<small>/${o.mesasTotal}</small></strong><span class="rv-franja__t">ocupadas</span>
       </button>`).join('');
 
     q('[data-n]').textContent = String(reservas.length);

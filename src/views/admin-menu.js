@@ -9,10 +9,10 @@ const MSG_PRECIO = 'Escriba un precio mayor que 0, por ejemplo 8.95';
 export function adminMenu(cont) {
   cont.innerHTML = `
     <section class="mn" aria-labelledby="mn-titulo">
-      <div class="gs-cab"><h1 id="mn-titulo">Administrar menú</h1><p class="gs-sub" data-sub></p></div>
+      <div class="pg-cab"><p class="rol">Vista por rol · Gerente</p><h1 id="mn-titulo">Administrar menú</h1><p class="pg-sub" data-sub></p></div>
       <div class="mn-barra">
         <p class="mn-cuenta" data-cuenta role="status" aria-live="polite"></p>
-        <label class="gs-campo mn-buscar"><span>Buscar plato</span><input type="search" data-buscar placeholder="Ej.: hamburguesa" autocomplete="off"></label>
+        <div class="field mn-buscar"><label class="label" for="mn-buscar">Buscar plato</label><input class="input" id="mn-buscar" type="search" data-buscar placeholder="Ej.: hamburguesa" autocomplete="off"></div>
       </div>
       <div class="mn-chips" role="group" aria-label="Filtrar por categoría" data-chips></div>
       <div data-grupos></div>
@@ -21,7 +21,7 @@ export function adminMenu(cont) {
   const ui = { sucursalId: null, texto: '', categoria: '', soloAgotados: false, errores: {} };
 
   function chip(valor, texto, activo, attr = 'data-cat') {
-    return `<button type="button" class="mn-chip" ${attr}="${esc(valor)}" aria-pressed="${activo}">${esc(texto)}</button>`;
+    return `<button type="button" class="chip mn-chip" ${attr}="${esc(valor)}" aria-pressed="${activo}">${esc(texto)}</button>`;
   }
 
   function pintar() {
@@ -34,7 +34,7 @@ export function adminMenu(cont) {
 
     const n = countAgotados(state, suc.id);
     q('[data-sub]').textContent = `${suc.nombre} · los cambios se ven al instante en el menú del cliente`;
-    q('[data-cuenta]').innerHTML = `<strong>${n}</strong> ${n === 1 ? 'plato agotado' : 'platos agotados'} en esta sucursal`;
+    q('[data-cuenta]').innerHTML = `<strong class="mn-cuenta__n">${n}</strong> <span>${n === 1 ? 'plato agotado' : 'platos agotados'} en esta sucursal</span>`;
     q('[data-chips]').innerHTML = chip('', 'Todas', !ui.categoria && !ui.soloAgotados)
       + categoriasDe(state).map((c) => chip(c, c, ui.categoria === c)).join('')
       + chip('1', `Solo agotados (${n})`, ui.soloAgotados, 'data-solo');
@@ -53,7 +53,7 @@ export function adminMenu(cont) {
             </div>
             <div class="mn-precio">
               <label for="pr-${esc(p.id)}">Precio (US$)<span class="sr-only"> de ${esc(p.nombre)}</span></label>
-              <input id="pr-${esc(p.id)}" type="number" step="0.01" min="0.01" inputmode="decimal" data-precio="${esc(p.id)}" value="${esc(valor)}"
+              <input class="input" id="pr-${esc(p.id)}" type="number" step="0.01" min="0.01" inputmode="decimal" data-precio="${esc(p.id)}" value="${esc(valor)}"
                 ${err ? `aria-invalid="true" aria-describedby="pe-${esc(p.id)}"` : ''}>
               ${err ? `<p class="gs-error mn-err" id="pe-${esc(p.id)}" role="alert">${MSG_PRECIO}</p>` : ''}
             </div>

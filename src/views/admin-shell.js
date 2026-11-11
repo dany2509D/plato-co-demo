@@ -21,19 +21,26 @@ export function adminShell(content, route) {
     store.update((s) => { s.ui.sucursalAdmin = sucursales[0].id; });
   }
 
+  const corto = (n) => n.replace(/^Plato & Co\.\s*/, '') || n;
   const marco = el(`
-    <div class="adm">
-      <div class="adm-barra">
-        <div class="adm-marca">${brand.logoSvg}<span><strong>${esc(brand.nombre)}</strong><small>Administración</small></span></div>
-        <label class="adm-suc"><span>Sucursal</span>
-          <select data-suc>${sucursales.map((s) => `<option value="${esc(s.id)}">${esc(s.nombre)}</option>`).join('')}</select>
-        </label>
+    <div class="adm${route === 'admin-cocina' ? ' adm--cocina on-dark' : ''}">
+      <header class="adm-barra">
+        <div class="adm-fila">
+          <div class="adm-marca">${brand.logoSvg}<span><strong>${esc(brand.nombre)}</strong><small>Administración</small></span></div>
+          <div class="adm-suc" role="group" aria-label="Sucursal">
+            <span class="adm-suc__etq" aria-hidden="true">Sucursal</span>
+            <div class="adm-seg seg" data-seg>${sucursales.map((s) => `<button type="button" data-suc-btn="${esc(s.id)}" aria-pressed="false" aria-label="${esc(s.nombre)}">${esc(corto(s.nombre))}</button>`).join('')}</div>
+            <select class="select" data-suc aria-label="Sucursal">${sucursales.map((s) => `<option value="${esc(s.id)}">${esc(s.nombre)}</option>`).join('')}</select>
+          </div>
+          <div class="adm-acciones">
+            <button type="button" class="btn btn--ghost btn--sm adm-reiniciar" data-reiniciar>Reiniciar demo</button>
+            <a class="btn btn--sm adm-volver" href="#/">Volver a la vista de cliente</a>
+          </div>
+        </div>
         <nav class="adm-nav" aria-label="Administración">
           ${NAV.map((n) => `<a href="${n.href}" ${n.ruta === route ? 'aria-current="page"' : ''}>${n.texto}</a>`).join('')}
         </nav>
-        <a class="adm-volver" href="#/">Volver a la vista de cliente</a>
-        <button type="button" class="adm-volver adm-reiniciar" data-reiniciar>Reiniciar demo</button>
-      </div>
+      </header>
       <div class="adm-contenido" data-contenido></div>
     </div>`);
   main.append(marco);
@@ -44,8 +51,24 @@ export function adminShell(content, route) {
   select.addEventListener('change', () => {
     store.update((s) => { s.ui.sucursalAdmin = select.value; });
   });
-  const off = store.subscribe((s) => { if (select.value !== s.ui.sucursalAdmin) select.value = s.ui.sucursalAdmin; });
+  const botones = [...marco.querySelectorAll('[data-suc-btn]')];
+  const sincronizar = (id) => {
+    if (select.value !== id) select.value = id;
+    for (const b of botones) b.setAttribute('aria-pressed', String(b.dataset.sucBtn === id));
+  };
+  sincronizar(store.get().ui.sucursalAdmin);
+  for (const b of botones) {
+    b.addEventListener('click', () => { store.update((s) => { s.ui.sucursalAdmin = b.dataset.sucBtn; }); });
+  }
+  const off = store.subscribe((s) => sincronizar(s.ui.sucursalAdmin));
+
+  // Altura de la barra fija: la usan los elementos pegajosos de cada vista (categorías del menú).
+  const barra = marco.querySelector('.adm-barra');
+  const medir = () => marco.style.setProperty('--adm-h', `${barra.offsetHeight}px`);
+  medir();
+  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(medir) : null;
+  ro?.observe(barra);
 
   const limpiarContenido = content(marco.querySelector('[data-contenido]'));
-  return () => { off(); if (typeof limpiarContenido === 'function') limpiarContenido(); };
+  return () => { off(); ro?.disconnect(); if (typeof limpiarContenido === 'function') limpiarContenido(); };
 }
