@@ -1,6 +1,6 @@
 import { normalize } from '../core/text.js';
 import { isAvailable } from '../core/menu.js';
-import { assignBranch } from '../core/orders.js';
+import { assignBranch, priceOrder } from '../core/orders.js';
 import { createReservation } from '../core/reservations.js';
 import { horaPanama } from './datetime.js';
 import { t } from './texts.js';
@@ -79,8 +79,14 @@ export function buildContext(state) {
 
 // ---------- aplicar acciones ----------
 
-const HORA = /^([01]?\d|2[0-3]):[0-5]\d$/;
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+const fechaReal = (f) => { if (!FECHA.test(f)) return false; const d = new Date(`${f}T00:00:00Z`); return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === f; };
+// Acepta "H:mm" o "HH:mm" entre 00:00 y 23:59 y devuelve "HH:mm"; si no, null.
+function horaValida(h) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(typeof h === 'string' ? h : '');
+  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return null;
+  return `${m[1].padStart(2, '0')}:${m[2]}`;
+}
 
 function validarPedido(state, p) {
   if (!esObjeto(p)) return { motivo: 'payload_invalido' };
@@ -95,7 +101,7 @@ function validarPedido(state, p) {
     if (!isAvailable(state, prod.id, suc.id)) return { motivo: 'producto_agotado' };
     if (!Number.isInteger(l.cantidad) || l.cantidad < 1 || l.cantidad > 20) return { motivo: 'cantidad_invalida' };
     const mods = l.modificadores ?? [];
-    if (!Array.isArray(mods) || !mods.every((m) => typeof m === 'string' && prod.modificadores.includes(m))) return { motivo: 'modificador_invalido' };
+    if (!Array.isArray(mods) || !mods.every((m) => typeof m === 'string' && (prod.modificadores ?? []).includes(m))) return { motivo: 'modificador_invalido' };
     lineas.push({ productoId: prod.id, cantidad: l.cantidad, modificadores: [...mods] });
   }
   let tipo = p.tipo === 'entrega' || p.tipo === 'retiro' ? p.tipo : null;
@@ -111,18 +117,20 @@ function validarPedido(state, p) {
 function validarReserva(state, p) {
   if (!esObjeto(p)) return { motivo: 'payload_invalido' };
   if (!state.sucursales.some((s) => s.id === p.sucursalId)) return { motivo: 'sucursal_invalida' };
-  if (typeof p.fecha !== 'string' || !FECHA.test(p.fecha)) return { motivo: 'fecha_invalida' };
-  if (typeof p.hora !== 'string' || !HORA.test(p.hora)) return { motivo: 'hora_invalida' };
+  if (typeof p.fecha !== 'string' || !fechaReal(p.fecha)) return { motivo: 'fecha_invalida' };
+  const hora = horaValida(p.hora);
+  if (!hora) return { motivo: 'hora_invalida' };
   if (!Number.isInteger(p.personas) || p.personas < 1) return { motivo: 'personas_invalidas' };
   if (p.personas > MAX_PERSONAS) return { motivo: 'personas_fuera_de_rango', handoff: true };
   if (typeof p.ocasion !== 'string' || !p.ocasion.trim() || p.ocasion.length > 60) return { motivo: 'ocasion_invalida' };
   if (normalize(p.ocasion) === 'evento') return { motivo: 'evento', handoff: true };
-  return { sucursalId: p.sucursalId, fecha: p.fecha, hora: p.hora, personas: p.personas, ocasion: p.ocasion.trim() };
+  return { sucursalId: p.sucursalId, fecha: p.fecha, hora, personas: p.personas, ocasion: p.ocasion.trim() };
 }
 
 // Devuelve {aplicadas: string[], descartadas: {type, motivo}[]}. Todo cambio pasa por store.update.
 export function applyActions(store, convId, actions) {
   const aplicadas = [], descartadas = [];
+  let hayPropuesta = false; // por turno solo se conserva la PRIMERA propuesta válida (pedido o reserva)
   const lista = Array.isArray(actions) ? actions : [];
   for (const a of lista) {
     const type = esObjeto(a) && typeof a.type === 'string' ? a.type : '?';
@@ -134,6 +142,7 @@ export function applyActions(store, convId, actions) {
       aplicadas.push(type);
       continue;
     }
+    if (hayPropuesta) { descartadas.push({ type, motivo: 'propuesta_duplicada' }); continue; }
     const v = type === 'proponer_pedido' ? validarPedido(store.get(), a.payload) : validarReserva(store.get(), a.payload);
     if (v.motivo) {
       if (v.handoff) setConv((c) => { c.requiereHumano = true; });
@@ -149,20 +158,47 @@ export function applyActions(store, convId, actions) {
     } else {
       setConv((c) => { c.propuesta = { type, payload: { ...v } }; });
     }
+    hayPropuesta = true;
     aplicadas.push(type);
   }
   return { aplicadas, descartadas };
+}
+
+// ---------- resumen determinista ----------
+// El texto de confirmación sale de la propuesta YA validada y del store, nunca del texto libre
+// del modelo: lo que se muestra es exactamente lo que se creará.
+
+const usd = (n) => `$${Number(n).toFixed(2)}`;
+
+function resumenPropuesta(state, propuesta, idioma) {
+  const en = idioma === 'en';
+  const p = propuesta.payload;
+  const suc = state.sucursales.find((s) => s.id === p.sucursalId);
+  if (propuesta.type === 'proponer_reserva') {
+    return en
+      ? `Reservation summary:\n- Branch: ${suc.nombre}\n- Date: ${p.fecha}\n- Time: ${p.hora}\n- People: ${p.personas}\n- Occasion: ${p.ocasion}\nConfirm the reservation? (yes / cancel)`
+      : `Resumen de su reserva:\n- Sucursal: ${suc.nombre}\n- Fecha: ${p.fecha}\n- Hora: ${p.hora}\n- Personas: ${p.personas}\n- Ocasión: ${p.ocasion}\n¿Confirma la reserva? (sí / cancelar)`;
+  }
+  const nombre = (id) => state.productos.find((x) => x.id === id)?.nombre ?? id;
+  const lineas = p.lineas.map((l) => `- ${l.cantidad} x ${nombre(l.productoId)}${l.modificadores?.length ? ` (${l.modificadores.join(', ')})` : ''}`);
+  const tot = priceOrder(state, p.lineas);
+  const partes = [en ? 'Order summary:' : 'Resumen de su pedido:', ...lineas,
+    `Subtotal ${usd(tot.subtotal)} · ITBMS ${usd(tot.itbms)} · Total ${usd(tot.total)}`];
+  const eta = p.tipo === 'entrega' && p.direccion ? (p.eta ?? suc.etaBaseMin) : null;
+  partes.push(en
+    ? `Branch: ${suc.nombre}${eta ? ` · estimated ${eta} min` : ''}`
+    : `Sucursal: ${suc.nombre}${eta ? ` · tiempo estimado ${eta} min` : ''}`);
+  partes.push(en ? 'Confirm the order? (yes / cancel)' : '¿Confirma el pedido? (sí / cancelar)');
+  return partes.join('\n');
 }
 
 // ---------- respuesta con respaldo ----------
 
 const ahoraDe = (a) => (typeof a === 'function' ? a() : a instanceof Date ? a : new Date());
 
-function registrar(store, convId, msg, ahora) {
+function mensaje(msg, ahora) {
   const d = ahoraDe(ahora);
-  const guardado = { ...msg, hora: horaPanama(d), en: d.toISOString() };
-  store.update((s) => { s.conversaciones.find((c) => c.id === convId)?.mensajes.push(guardado); });
-  return guardado;
+  return { ...msg, hora: horaPanama(d), en: d.toISOString() };
 }
 
 function confirmarReserva(store, convId, ahora) {
@@ -188,26 +224,42 @@ function confirmarReserva(store, convId, ahora) {
 
 // Intenta la IA real si iaReal; si está apagada, falla o responde algo inválido, usa el guion.
 // Registra los mensajes en la conversación igual que bot.reply. Nunca lanza.
+// Atomicidad: se toma una foto de propuesta/paso/slots/requiereHumano/mensajes; los dos mensajes
+// (cliente y bot) se escriben juntos en un solo store.update después de validar y aplicar las
+// acciones; si algo lanza, se restaura la foto y el guion responde, así el mensaje del usuario
+// queda registrado una sola vez y no queda ninguna propuesta a medias.
 export async function replyWithFallback(bot, store, convId, texto, { iaReal = false, fetchImpl, ahora, timeoutMs, endpoint } = {}) {
-  const guion = () => bot.reply(convId, texto);
+  const getConv = () => store.get().conversaciones.find((c) => c.id === convId);
+  // Una propuesta vieja no debe sobrevivir al fin de un flujo del guion.
+  const guion = () => {
+    const out = bot.reply(convId, texto);
+    const c = getConv();
+    if (c && c.propuesta && !c.paso) store.update((s) => { delete s.conversaciones.find((x) => x.id === convId).propuesta; });
+    return out;
+  };
   if (!iaReal) return guion();
+  let foto = null;
   try {
-    const conv = store.get().conversaciones.find((c) => c.id === convId);
+    const conv = getConv();
     // Un flujo del guion en curso (confirmar, pago, dirección...) lo sigue el guion.
     if (conv?.paso) return guion();
     const raw = typeof texto === 'string' ? texto : String(texto ?? '');
     const n = normalize(raw);
+    if (conv) foto = JSON.parse(JSON.stringify({ propuesta: conv.propuesta, paso: conv.paso, slots: conv.slots, requiereHumano: conv.requiereHumano, n: conv.mensajes.length }));
+
     if (conv?.propuesta?.type === 'proponer_reserva' && (SI.test(n) || NO.test(n))) {
-      registrar(store, convId, { de: 'cliente', texto: raw }, ahora);
+      store.update((s) => { s.conversaciones.find((c) => c.id === convId).mensajes.push(mensaje({ de: 'cliente', texto: raw }, ahora)); });
       let msg;
       if (SI.test(n)) msg = confirmarReserva(store, convId, ahora);
       else {
         store.update((s) => { delete s.conversaciones.find((c) => c.id === convId).propuesta; });
         msg = { de: 'bot', texto: t(conv.idioma).cancelado };
       }
-      registrar(store, convId, msg, ahora);
-      return [msg];
+      const guardado = mensaje(msg, ahora);
+      store.update((s) => { s.conversaciones.find((c) => c.id === convId).mensajes.push(guardado); });
+      return [guardado];
     }
+
     const historial = (conv?.mensajes ?? []).slice(-MAX_HISTORIAL)
       .map((m) => ({ role: m.de === 'cliente' ? 'user' : 'assistant', content: String(m.texto ?? '') }))
       .filter((m) => m.content);
@@ -217,14 +269,32 @@ export async function replyWithFallback(bot, store, convId, texto, { iaReal = fa
       context: buildContext(store.get()),
     }, { fetchImpl, timeoutMs, endpoint });
     if (!res) return guion();
-    if (!conv) store.update((s) => { s.conversaciones.push({ id: convId, idioma: 'es', mensajes: [], requiereHumano: false, paso: null, slots: {} }); });
-    registrar(store, convId, { de: 'cliente', texto: raw }, ahora);
+
+    if (!getConv()) store.update((s) => { s.conversaciones.push({ id: convId, idioma: 'es', mensajes: [], requiereHumano: false, paso: null, slots: {} }); });
+    if (!foto) foto = { propuesta: undefined, paso: null, slots: {}, requiereHumano: false, n: 0 };
+    // Turno que no es confirmación: se borra cualquier propuesta anterior.
+    store.update((s) => { delete s.conversaciones.find((c) => c.id === convId).propuesta; });
     const { aplicadas } = applyActions(store, convId, res.actions);
     if (res.handoff && !aplicadas.includes('pasar_a_persona')) store.update((s) => { s.conversaciones.find((c) => c.id === convId).requiereHumano = true; });
-    const msg = { de: 'bot', texto: res.reply };
-    const guardado = registrar(store, convId, msg, ahora);
-    return [guardado];
+    const actual = getConv();
+    // Si hay propuesta, el resumen determinista REEMPLAZA el texto libre del modelo.
+    const textoBot = actual.propuesta ? resumenPropuesta(store.get(), actual.propuesta, actual.idioma) : res.reply;
+    const cliente = mensaje({ de: 'cliente', texto: raw }, ahora);
+    const bota = mensaje({ de: 'bot', texto: textoBot }, ahora);
+    store.update((s) => { s.conversaciones.find((c) => c.id === convId).mensajes.push(cliente, bota); });
+    return [bota];
   } catch {
+    try {
+      if (foto) {
+        store.update((s) => {
+          const c = s.conversaciones.find((x) => x.id === convId);
+          if (!c) return;
+          if (foto.propuesta === undefined) delete c.propuesta; else c.propuesta = foto.propuesta;
+          c.paso = foto.paso; c.slots = foto.slots; c.requiereHumano = foto.requiereHumano;
+          c.mensajes.length = Math.min(c.mensajes.length, foto.n);
+        });
+      }
+    } catch { /* el guion responde de todos modos */ }
     return guion();
   }
 }

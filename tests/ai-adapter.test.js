@@ -98,6 +98,113 @@ describe('applyActions', () => {
   });
 });
 
+describe('applyActions: casos extra de validación', () => {
+  const reserva = (extra = {}) => ({ type: 'proponer_reserva', payload: { sucursalId: suc, fecha: '2026-11-12', hora: '19:00', personas: 2, ocasion: 'ninguna', ...extra } });
+  it('rechaza personas 0 y 2.5', () => {
+    expect(applyActions(store, 'c1', [reserva({ personas: 0 })]).aplicadas).toEqual([]);
+    expect(applyActions(store, 'c1', [reserva({ personas: 2.5 })]).aplicadas).toEqual([]);
+  });
+  it('rechaza sucursalId desconocida en una reserva', () => {
+    expect(applyActions(store, 'c1', [reserva({ sucursalId: 'zzz' })]).aplicadas).toEqual([]);
+  });
+  it('rechaza fechas que no existen en el calendario y horas fuera de rango', () => {
+    for (const fecha of ['2026-13-45', '2026-02-30', '12/11/2026']) expect(applyActions(store, 'c1', [reserva({ fecha })]).aplicadas).toEqual([]);
+    for (const hora of ['24:00', '19:60', 'tarde']) expect(applyActions(store, 'c1', [reserva({ hora })]).aplicadas).toEqual([]);
+  });
+  it('normaliza "9:00" a "09:00"', () => {
+    expect(applyActions(store, 'c1', [reserva({ hora: '9:00' })]).aplicadas).toEqual(['proponer_reserva']);
+    expect(conv().propuesta.payload.hora).toBe('09:00');
+  });
+  it('rechaza modificadores que no son una lista', () => {
+    const id = prod('Limonada').id;
+    const p = { type: 'proponer_pedido', payload: { sucursalId: suc, lineas: [{ productoId: id, cantidad: 1, modificadores: 'sin hielo' }] } };
+    expect(applyActions(store, 'c1', [p]).aplicadas).toEqual([]);
+  });
+  it('ignora claves __proto__ del payload', () => {
+    const id = prod('Limonada').id;
+    const raw = JSON.parse(`{"type":"proponer_pedido","payload":{"__proto__":{"admin":true},"sucursalId":"${suc}","lineas":[{"productoId":"${id}","cantidad":1,"__proto__":{"x":1}}]}}`);
+    expect(applyActions(store, 'c1', [raw]).aplicadas).toEqual(['proponer_pedido']);
+    expect(conv().propuesta.payload.admin).toBeUndefined();
+    expect({}.admin).toBeUndefined();
+    expect(Object.keys(conv().propuesta.payload)).not.toContain('__proto__');
+  });
+  it('producto agotado solo en la otra sucursal: vale en una y se descarta en la otra', () => {
+    const otra = store.get().sucursales[1].id;
+    const id = prod('Limonada').id;
+    setAvailable(store, id, otra, false);
+    const mk = (s) => ({ type: 'proponer_pedido', payload: { sucursalId: s, lineas: [{ productoId: id, cantidad: 1 }] } });
+    expect(applyActions(store, 'c1', [mk(suc)]).aplicadas).toEqual(['proponer_pedido']);
+    expect(applyActions(store, 'c1', [mk(otra)]).descartadas[0].motivo).toBe('producto_agotado');
+  });
+  it('con pedido y reserva en el mismo turno solo queda la primera propuesta', () => {
+    const id = prod('Limonada').id;
+    const r = applyActions(store, 'c1', [
+      { type: 'proponer_pedido', payload: { sucursalId: suc, lineas: [{ productoId: id, cantidad: 1 }] } },
+      reserva(),
+    ]);
+    expect(r.aplicadas).toEqual(['proponer_pedido']);
+    expect(r.descartadas[0].motivo).toBe('propuesta_duplicada');
+    expect(conv().propuesta.type).toBe('proponer_pedido');
+  });
+});
+
+describe('askAI: cuerpos no JSON', () => {
+  it('devuelve null si la respuesta es HTML', async () => {
+    const html = async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token <'); } });
+    expect(await askAI(payload(), { fetchImpl: html })).toBeNull();
+  });
+});
+
+describe('resumen determinista y propuestas', () => {
+  const caido = async () => { throw new Error('red'); };
+  const bodyPedido = (texto) => ({ reply: texto, actions: [{ type: 'proponer_pedido', payload: { sucursalId: suc, lineas: [{ productoId: prod('Limonada').id, cantidad: 2, modificadores: ['sin hielo'] }] } }], handoff: false });
+  it('el resumen del pedido sale del store y reemplaza el texto libre del modelo', async () => {
+    const msgs = await replyWithFallback(bot, store, 'c1', 'dos limonadas', { iaReal: true, fetchImpl: okFetch(bodyPedido('Son $1.00 en total')) });
+    const t = msgs[0].texto;
+    expect(t).not.toContain('$1.00 en total');
+    expect(t).toContain('2');
+    expect(t).toContain('Limonada');
+    expect(t).toContain('sin hielo');
+    expect(t).toContain('5.50'); // 2 x 2.75
+    expect(t).toContain('ITBMS');
+    expect(t).toContain('¿Confirma el pedido? (sí / cancelar)');
+    expect(conv().mensajes.at(-1).texto).toBe(t);
+  });
+  it('resumen en inglés cuando la conversación está en inglés', async () => {
+    store.update((s) => { s.conversaciones[0].idioma = 'en'; });
+    const msgs = await replyWithFallback(bot, store, 'c1', 'two lemonades', { iaReal: true, fetchImpl: okFetch(bodyPedido('x')) });
+    expect(msgs[0].texto).toContain('Confirm the order? (yes / cancel)');
+  });
+  it('el resumen de la reserva indica sucursal, fecha, hora, personas y ocasión', async () => {
+    const body = { reply: 'Listo, ya quedó', actions: [{ type: 'proponer_reserva', payload: { sucursalId: suc, fecha: '2026-11-12', hora: '19:00', personas: 4, ocasion: 'cumpleaños' } }], handoff: false };
+    const msgs = await replyWithFallback(bot, store, 'c1', 'mesa para 4', { iaReal: true, fetchImpl: okFetch(body) });
+    const t = msgs[0].texto;
+    for (const x of ['2026-11-12', '19:00', '4', 'cumpleaños', store.get().sucursales[0].nombre]) expect(t).toContain(x);
+    expect(t).not.toContain('ya quedó');
+    expect(t).toMatch(/sí \/ cancelar/);
+  });
+  it('una propuesta vieja se borra en un turno que no es confirmación', async () => {
+    const prop = { type: 'proponer_reserva', payload: { sucursalId: suc, fecha: '2026-11-12', hora: '19:00', personas: 2, ocasion: 'ninguna' } };
+    applyActions(store, 'c1', [prop]);
+    await replyWithFallback(bot, store, 'c1', 'qué horario tienen', { iaReal: true, fetchImpl: okFetch({ reply: 'Abrimos a las 11', actions: [], handoff: false }) });
+    expect(conv().propuesta).toBeUndefined();
+  });
+  it('si algo falla tras registrar, el mensaje del usuario queda una sola vez y no queda propuesta a medias', async () => {
+    const orig = store.update;
+    let armado = true;
+    store.update = (fn) => {
+      orig(fn);
+      if (armado && conv().mensajes.some((m) => m.de === 'bot')) { armado = false; throw new Error('fallo forzado'); }
+    };
+    const msgs = await replyWithFallback(bot, store, 'c1', 'dos limonadas', { iaReal: true, fetchImpl: okFetch(bodyPedido('hola')) });
+    store.update = orig;
+    expect(msgs[0].de).toBe('bot');
+    expect(conv().mensajes.filter((m) => m.de === 'cliente' && m.texto === 'dos limonadas').length).toBe(1);
+    expect(conv().propuesta).toBeUndefined();
+    expect(conv().requiereHumano).toBe(false);
+  });
+});
+
 describe('buildContext', () => {
   it('incluye menú con precios y alérgenos declarados, sucursales y disponibilidad', () => {
     const c = buildContext(store.get());
@@ -126,7 +233,7 @@ describe('replyWithFallback', () => {
     const id = prod('Limonada').id;
     const body = { reply: 'Le propongo una limonada.', actions: [{ type: 'proponer_pedido', payload: { sucursalId: suc, lineas: [{ productoId: id, cantidad: 1 }] } }], handoff: false };
     const msgs = await replyWithFallback(bot, store, 'c1', 'una limonada', { iaReal: true, fetchImpl: okFetch(body) });
-    expect(msgs[0].texto).toBe('Le propongo una limonada.');
+    expect(msgs[0].texto).toContain('Resumen de su pedido'); // el resumen determinista sustituye el texto libre
     expect(conv().mensajes.map((m) => m.de)).toEqual(['cliente', 'bot']);
     expect(conv().propuesta.type).toBe('proponer_pedido');
   });
