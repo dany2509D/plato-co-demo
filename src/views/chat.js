@@ -43,24 +43,28 @@ function adjuntar({ nombre, tipo }) {
 export function vistaChat(main) {
   asegurarConversacion();
   main.innerHTML = `
-    <div class="chat-pag">
-      <header class="chat-intro">
-        <h1>Pida y reserve por WhatsApp</h1>
-        <p>Así atiende el asistente de ${'Plato & Co.'.replace('&', '&amp;')} a un cliente. A la derecha, lo que ve el equipo en el mismo instante.</p>
-      </header>
-      <div class="chat-cols">
-        <div class="chat-col-tel">
-          <p class="chat-etq"><span aria-hidden="true">📱</span> Cliente · lo que ve quien escribe</p>
-          <div data-tel></div>
-          <p class="tel-nota">Chat simulado · No se conecta a WhatsApp real</p>
-          <div class="ia-caja">
-            <label class="ia-sw"><input type="checkbox" role="switch" data-ia><span class="ia-pista" aria-hidden="true"></span><span>Modo IA real (opcional)</span></label>
-            <p class="ia-ayuda" id="ia-ayuda">Si no está disponible, la demo vuelve al modo guion automáticamente.</p>
+    <div class="chat-pag band band--dark on-dark">
+      <div class="chat-in">
+        <header class="chat-intro">
+          <p class="eyebrow">Demo en vivo · WhatsApp</p>
+          <h1>Lo que usted ve, lo que el restaurante ve</h1>
+          <p class="chat-pista">Para quien presenta: escriba “Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio” y siga con las respuestas rápidas; a la derecha aparece, al instante, lo que ve el equipo.</p>
+        </header>
+        <div class="rule-dotted-gold" aria-hidden="true"></div>
+        <div class="chat-cols">
+          <div class="chat-col-tel">
+            <p class="chat-etq"><span aria-hidden="true">📱</span> Cliente · lo que ve quien escribe</p>
+            <div data-tel></div>
+            <p class="tel-nota">Chat simulado · No se conecta a WhatsApp real</p>
+            <div class="ia-caja">
+              <label class="ia-sw"><input type="checkbox" role="switch" data-ia><span class="ia-pista" aria-hidden="true"></span><span>Modo IA real (opcional)</span></label>
+              <p class="ia-ayuda" id="ia-ayuda">Si no está disponible, la demo vuelve al modo guion automáticamente.</p>
+            </div>
           </div>
-        </div>
-        <div class="chat-col-vivo">
-          <p class="chat-etq"><span aria-hidden="true">🖥️</span> Panel · lo que ve el restaurante</p>
-          <div data-vivo></div>
+          <div class="chat-col-vivo">
+            <p class="chat-etq"><span aria-hidden="true">🖥️</span> Panel · lo que ve el restaurante</p>
+            <div data-vivo></div>
+          </div>
         </div>
       </div>
     </div>`;

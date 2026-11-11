@@ -9,7 +9,7 @@ export function livePanel(container, store) {
       <header class="vivo-cab">
         <h2 id="vivo-t"><span class="vivo-punto" aria-hidden="true"></span>En vivo</h2>
         <p>Lo que hace la automatización mientras el cliente chatea: pedidos, reservas y avisos al equipo.</p>
-        <p class="vivo-enlaces"><a href="#/admin/cocina">Ver en cocina</a><a href="#/admin/reservas">Ver reservas</a></p>
+        <p class="vivo-enlaces"><a class="btn btn--sm" href="#/admin/cocina">Ver en cocina</a><a class="btn btn--ghost btn--sm" href="#/admin/reservas">Ver reservas</a></p>
       </header>
       <ol class="vivo-lista" data-lista aria-label="Actividad reciente, lo más nuevo primero"></ol>
       <p class="vivo-vacio" data-vacio>Aún no hay actividad. Haga un pedido o una reserva en el chat y aparecerá aquí al instante.</p>
@@ -40,7 +40,7 @@ export function livePanel(container, store) {
         <div class="vivo-cuerpo">
           <p class="vivo-tit"><strong>${esc(it.titulo)}</strong><time>${esc(it.hora)}</time></p>
           <p class="vivo-det">${esc(it.detalle)}</p>
-          ${it.enlace ? `<a class="vivo-link" href="${esc(it.enlace.href)}">${esc(it.enlace.texto)}</a>` : ''}
+          ${it.enlace ? `<a class="vivo-link btn btn--ghost btn--sm" href="${esc(it.enlace.href)}">${esc(it.enlace.texto)}</a>` : ''}
         </div>
       </li>`;
     }).join('');
