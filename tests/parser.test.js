@@ -165,4 +165,49 @@ describe('parseOrder', () => {
     const r = parse('quiero un té helado');
     expect(r.lineas.map((l) => l.productoId)).toEqual([id('Té helado')]);
   });
+
+  describe('ronda de arreglos 1', () => {
+    const hc = () => id('Hamburguesa clásica');
+    it('frase de la demo con destino: ambas líneas, nada en desconocidos', () => {
+      const r = parse('Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio');
+      expect(r.lineas).toEqual([
+        { productoId: hc(), cantidad: 2, modificadores: ['sin cebolla'] },
+        { productoId: id('Limonada'), cantidad: 1, modificadores: [] },
+      ]);
+      expect(r.desconocidos).toEqual([]);
+    });
+    it('destino o cola de relleno no se traga el ítem', () => {
+      expect(parse('una limonada para Obarrio').lineas.map((l) => l.productoId)).toEqual([id('Limonada')]);
+      const r = parse('2 hamburguesas clásicas y 3 papas fritas para llevar');
+      expect(r.lineas.map((l) => [l.productoId, l.cantidad])).toEqual([[hc(), 2], [id('Papas fritas'), 3]]);
+      expect(r.desconocidos).toEqual([]);
+      expect(parse('una limonada por favor para Obarrio').lineas).toHaveLength(1);
+      expect(parse('dos hamburguesas clásicas y una limonada para Obarrio').lineas).toHaveLength(2);
+      expect(parse('a lemonade to Obarrio').lineas).toHaveLength(1);
+      expect(parse('por favor para Obarrio').desconocidos).toEqual([]);
+    });
+    it('verbos de cortesía y palabras iniciales desconocidas', () => {
+      for (const t of ['me regala 2 hamburguesas clásicas y una limonada', 'me colabora con 2 hamburguesas y una limonada',
+        "I'd like 2 burgers and a lemonade", 'can I get 2 burgers and a lemonade', 'could I have 2 burgers and a lemonade']) {
+        const r = parse(t);
+        expect(r.lineas.map((l) => [l.productoId, l.cantidad]), t).toEqual([[r.lineas[0]?.productoId, 2], [id('Limonada'), 1]]);
+        expect(r.desconocidos, t).toEqual([]);
+      }
+      expect(parse('mi estimado amigo 2 limonadas').lineas[0].cantidad).toBe(2);
+      expect(parse('blablabla').lineas).toEqual([]);
+    });
+    it('varios "sin" en el mismo ítem', () => {
+      for (const t of ['una hamburguesa clásica sin cebolla y sin tomate', 'una hamburguesa clásica sin cebolla, sin tomate']) {
+        const r = parse(t);
+        expect(r.lineas).toEqual([{ productoId: hc(), cantidad: 1, modificadores: ['sin cebolla', 'sin tomate'] }]);
+        expect(r.desconocidos, t).toEqual([]);
+      }
+    });
+    it('"sin" colgante y "y" mezclado con inglés', () => {
+      expect(parse('una hamburguesa clásica sin').lineas).toEqual([{ productoId: hc(), cantidad: 1, modificadores: [] }]);
+      const r = parse('two burgers y una limonada');
+      expect(r.lineas.map((l) => l.cantidad)).toEqual([2, 1]);
+      expect(r.desconocidos).toEqual([]);
+    });
+  });
 });

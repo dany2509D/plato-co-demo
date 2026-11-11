@@ -62,7 +62,7 @@ const ALIAS = {
 const RELLENO = new Set(['quiero', 'quisiera', 'quisieramos', 'necesito', 'me', 'das', 'dame', 'ponme', 'pon', 'por', 'favor', 'porfa',
   'hola', 'buenas', 'buenos', 'tardes', 'noches', 'dias', 'gracias', 'orden', 'ordenes', 'porcion', 'pedido', 'tambien', 'agrega',
   'agregar', 'para', 'i', 'id', "i'd", 'want', 'would', 'like', 'please', 'can', 'could', 'have', 'get', 'give', 'a', 'an', 'the',
-  'also', 'add', 'order', 'of', 'to', 'for', 'mas', 'tengo', 'hello', 'hi', 'thanks', 'quiere']);
+  'also', 'add', 'order', 'of', 'to', 'for', 'mas', 'tengo', 'hello', 'hi', 'thanks', 'quiere', 'regala', 'regalas', 'regalame', 'colabora', 'colaboras', 'da', 'dar', 'pido', 'queria', 'gustaria', 'ordenar', 'pedir']);
 const FUNCIONALES = new Set(['de', 'la', 'el', 'los', 'las', 'del', 'con', 'al']);
 const MODS_TERMINO = [
   [/\btermino medio\b|\bmedio\b|\bmedium\b/g, 'término medio'],
@@ -101,8 +101,11 @@ function traducir(t) {
   return s.trim().split(' ').map((w) => PALABRAS_EN[w] ?? PALABRAS_EN[uno(w)] ?? w).join(' ');
 }
 
+// Marcadores de destino/entrega: lo que sigue no es parte del pedido ("para Obarrio").
+const RE_DESTINO = /(^|\s)(para|en|entrega|entregar|deliver|delivered|to|for|at)(\s(?!(agrandar|grande)\b).*)?$/;
+
 function parseFragmento(frag, ingred) {
-  let t = traducir(frag);
+  let t = traducir(frag).replace(RE_DESTINO, ' ').trim();
   // término de la carne
   const termino = [];
   for (const [re, canon] of MODS_TERMINO) {
@@ -136,7 +139,7 @@ function parseFragmento(frag, ingred) {
     else if (!RELLENO.has(w)) nombre.push(w);
   }
   const invalida = cantidad !== null && (!Number.isInteger(cantidad) || cantidad < MIN_CANT || cantidad > MAX_CANT);
-  return { nombre, cantidad: cantidad ?? 1, invalida, termino, agrandar, sin };
+  return { nombre, conCantidad: cantidad !== null, cantidad: cantidad ?? 1, invalida, termino, agrandar, sin };
 }
 
 // findProducts busca por subcadena: cada palabra de la consulta debe además ser una
@@ -169,6 +172,12 @@ export function parseOrder(texto, state, sucursalId) {
     const f = parseFragmento(frag, ingred);
     const nombre = f.nombre;
     if (!nombre.some((w) => !FUNCIONALES.has(w))) {
+      // "sin tomate" suelto tras otro ítem: se suma a la línea anterior
+      if (ultima && f.sin.length && f.cantidad === 1 && !f.invalida) {
+        for (const m of f.sin) if (!ultima.linea.modificadores.includes(m)) ultima.linea.modificadores.push(m);
+        ultima.tieneSin = true;
+        continue;
+      }
       // solo relleno: se ignora; con cantidad o "sin" sueltos, es ruido que se reporta
       if (f.sin.length || f.cantidad !== 1 || f.invalida) res.desconocidos.push(frag);
       continue;
@@ -182,7 +191,11 @@ export function parseOrder(texto, state, sucursalId) {
       }
       continue;
     }
-    const p = buscar(state, nombre, sucursalId) ?? buscar(state, nombre.filter((w) => !FUNCIONALES.has(w)), sucursalId);
+    let p = buscar(state, nombre, sucursalId) ?? buscar(state, nombre.filter((w) => !FUNCIONALES.has(w)), sucursalId);
+    // con cantidad explícita se toleran palabras desconocidas al inicio o al final
+    for (let i = 1; !p && f.conCantidad && i < nombre.length; i++) {
+      p = buscar(state, nombre.slice(i), sucursalId) ?? buscar(state, nombre.slice(0, nombre.length - i), sucursalId);
+    }
     if (!p || f.invalida) {
       res.desconocidos.push(frag);
       ultima = null;
