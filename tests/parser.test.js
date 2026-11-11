@@ -211,3 +211,25 @@ describe('parseOrder', () => {
     });
   });
 });
+
+describe('conector "y" suelto', () => {
+  const bowl = () => id('Bowl de pollo y arroz');
+  it.each(['y una coca', 'y una pizza', 'y 2 pepsi', 'y', 'and', 'también una coca', 'also a pizza'])('"%s" no agrega ningún producto', (t) => {
+    expect(parse(t).lineas).toEqual([]);
+  });
+  it('un producto desconocido tras "y" va a desconocidos', () => {
+    const r = parse('y una coca');
+    expect(r.lineas).toEqual([]);
+    expect(r.desconocidos.join(' ')).toContain('coca');
+  });
+  it('conector al final no pierde el producto', () => {
+    expect(parse('una limonada y').lineas.map((l) => l.productoId)).toEqual([id('Limonada')]);
+  });
+  it('"y una limonada" solo trae la limonada', () => {
+    expect(parse('y una limonada').lineas).toEqual([{ productoId: id('Limonada'), cantidad: 1, modificadores: [] }]);
+  });
+  it('los nombres con " y " siguen funcionando', () => {
+    expect(parse('quiero un bowl de pollo y arroz').lineas.map((l) => l.productoId)).toEqual([bowl()]);
+    expect(parse('un bowl de pollo y una limonada').lineas.map((l) => l.productoId)).toEqual([id('Bowl de pollo y arroz'), id('Limonada')]);
+  });
+});

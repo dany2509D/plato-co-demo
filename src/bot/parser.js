@@ -95,6 +95,15 @@ function ingredientesSin(state) {
   return set;
 }
 
+// Quita conectores sueltos al inicio o al final ("y una coca", "una limonada y").
+const CONECTOR = '(?:y|e|and|plus|also|tambien|ademas)';
+function sinConector(f) {
+  const ini = new RegExp(String.raw`^(?:${CONECTOR}\s+)+`);
+  const fin = new RegExp(String.raw`(?:\s+${CONECTOR})+$`);
+  const solo = new RegExp(`^${CONECTOR}$`);
+  return f.replace(ini, '').replace(fin, '').replace(solo, '').trim();
+}
+
 function traducir(t) {
   let s = ` ${t} `;
   for (const [a, b] of FRASES_EN) s = s.split(` ${a} `).join(` ${b} `);
@@ -145,7 +154,7 @@ function parseFragmento(frag, ingred) {
 // findProducts busca por subcadena: cada palabra de la consulta debe además ser una
 // palabra COMPLETA del producto (así "te" no acepta "hamburguesa") y al menos una del nombre.
 function buscar(state, palabras, sucursalId) {
-  const q = palabras.map(uno);
+  const q = palabras.map(uno).filter((w) => w.length > 1); // una letra suelta ("y") nunca identifica un producto
   if (!q.length) return null;
   for (const p of findProducts(state, q.join(' '), sucursalId)) {
     const nom = new Set(normalize(p.nombre).split(' ').map(uno));
@@ -162,8 +171,8 @@ export function parseOrder(texto, state, sucursalId) {
   if (!norm) return res;
   const ingred = ingredientesSin(state);
   const fragmentos = proteger(norm, state)
-    .split(/\s*[,;+]\s*|\s+(?:y|and|e)\s+/)
-    .map((f) => f.replace(/_y_/g, 'y').trim())
+    .split(/\s*[,;+&]\s*|\s+(?:y|and|e)\s+/)
+    .map((f) => sinConector(f).replace(/_y_/g, 'y').trim())
     .filter(Boolean);
 
   const lineas = new Map();

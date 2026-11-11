@@ -257,7 +257,8 @@ export function createBot(store, opts = {}) {
       if (ENTREGA.test(n) && sl.tipo !== 'entrega') return despuesDeConfirmar(id, { ...sl, tipo: 'entrega' });
       if (sl.tipo === 'entrega' && n.length > 2) {
         if (zonaDe(texto)) return pasoDireccion(id, texto);
-        const dir = `${texto.trim().slice(0, MAX_DIR)}${sl.zona ? `, ${sl.zona}` : ''}`;
+        const cola = sl.zona ? `, ${sl.zona}` : '';
+        const dir = `${texto.trim().slice(0, MAX_DIR - cola.length)}${cola}`;
         return pedirPago(id, { ...sl, direccion: dir, exacta: true }, [T.direccionAnotada]);
       }
       return [m(T.pagoInvalido, T.botonesPago)];

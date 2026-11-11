@@ -521,3 +521,42 @@ describe('ronda 1: basura con signo de pregunta e inglés', () => {
     expect(out2).not.toMatch(/lácteos|huevo/);
   });
 });
+
+describe('ronda 2: conector "y" y dirección', () => {
+  it('"y una coca" no cambia el pedido en la confirmación', () => {
+    say('Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio');
+    const antes = JSON.stringify(conv().slots.lineas);
+    const out = txt(say('y una coca'));
+    expect(JSON.stringify(conv().slots.lineas)).toBe(antes);
+    expect(out).toMatch(/coca/i);
+    expect(out).toMatch(/agrega una coca/i);
+    expect(out).not.toMatch(/Bowl/);
+    say('y');
+    expect(JSON.stringify(conv().slots.lineas)).toBe(antes);
+  });
+
+  it('"y una coca" como primer mensaje no inicia nada', () => {
+    const out = txt(say('y una coca'));
+    expect(conv().paso ?? null).toBeNull();
+    expect(out).not.toMatch(/Bowl/);
+    expect(store.get().pedidos.some((p) => p.conversacionId === 'c1')).toBe(false);
+  });
+
+  it('"y una limonada" con un pedido existente suma solo la limonada', () => {
+    say('Quiero 2 hamburguesas clásicas y una limonada para Obarrio');
+    say('y una limonada');
+    const ls = conv().slots.lineas;
+    expect(ls.find((l) => l.productoId === prod('Limonada').id).cantidad).toBe(2);
+    expect(ls).toHaveLength(2);
+  });
+
+  it('la dirección final guardada no pasa de 200 caracteres', () => {
+    say('Quiero 1 limonada para Obarrio');
+    say('sí');
+    say(`Calle ${'x'.repeat(250)}`);
+    say('yappy');
+    const d = store.get().pedidos.find((p) => p.conversacionId === 'c1').direccion;
+    expect(d.length).toBeLessThanOrEqual(200);
+    expect(d).toContain('Obarrio');
+  });
+});
