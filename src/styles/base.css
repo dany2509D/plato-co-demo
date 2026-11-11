@@ -28,3 +28,5 @@ a { color: var(--terracota-osc); }
 .app-header svg { width: 40px; height: 40px; flex: none; }
 .app-header strong { font-size: 1.25rem; font-weight: 900; }
 .vista { padding: 16px var(--gutter) 48px; max-width: 1200px; margin: 0 auto; }
+.btn-reiniciar { margin-left: auto; min-height: 44px; padding: 8px 14px; border: 2px solid var(--tinta, #2B1810); border-radius: 8px; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.btn-reiniciar:focus-visible { outline: 3px solid var(--amarillo, #F5B82E); outline-offset: 2px; }
