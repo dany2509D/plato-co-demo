@@ -50,7 +50,7 @@ const PALABRAS_EN = {
   strawberry: 'fresa', vanilla: 'vainilla', salad: 'ensalada', caesar: 'cesar', shrimp: 'camarones',
   ribs: 'costillas', fish: 'pescado', soup: 'sopa', wings: 'alitas', cheese: 'queso', onion: 'cebolla',
   onions: 'cebolla', tomato: 'tomate', tomatoes: 'tomate', sauce: 'salsa', ice: 'hielo', no: 'sin',
-  without: 'sin', large: 'grande', big: 'grande', burger: 'hamburguesa', burgers: 'hamburguesa',
+  without: 'sin', large: 'grande', big: 'grande', burger: 'hamburguesa', burgers: 'hamburguesa', hamburger: 'hamburguesa', hamburgers: 'hamburguesa',
   steak: 'churrasco', dessert: 'postre', pork: 'cerdo',
 };
 // Mismos sinónimos que usa findProducts, para validar contra palabras reales del menú.

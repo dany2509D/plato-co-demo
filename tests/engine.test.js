@@ -365,3 +365,159 @@ describe('texto vacío, humano, idioma', () => {
     expect(typeof m[0].texto).toBe('string');
   });
 });
+
+describe('ronda 1: editar el pedido en la confirmación', () => {
+  const PEDIDO = 'Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio';
+  const lineas = () => conv().slots.lineas;
+  const cant = (n) => lineas().filter((l) => l.productoId === prod(n).id).reduce((a, l) => a + l.cantidad, 0);
+  beforeEach(() => { say(PEDIDO); });
+
+  it.each(['agrega una limonada', 'añade una limonada', 'y una limonada', 'add a lemonade', 'also a lemonade'])('"%s" suma a la línea existente', (t) => {
+    const out = txt(say(t));
+    expect(cant('Limonada')).toBe(2);
+    expect(cant('Hamburguesa clásica')).toBe(2);
+    expect(conv().paso).toBe('confirmar');
+    expect(out).toMatch(/2 x Limonada/);
+    expect(out).toMatch(/2 x Hamburguesa cl/);
+    const tot = priceOrder(store.get(), lineas());
+    expect(out).toContain(fmt(tot.total));
+  });
+
+  it('agrega un producto nuevo sin perder lo anterior', () => {
+    say('añade 2 papas');
+    expect(cant('Papas fritas')).toBe(2);
+    expect(cant('Hamburguesa clásica')).toBe(2);
+    expect(cant('Limonada')).toBe(1);
+    say('also 2 fries');
+    expect(cant('Papas fritas')).toBe(4);
+  });
+
+  it('quitar una línea', () => {
+    const out = txt(say('quita la limonada'));
+    expect(cant('Limonada')).toBe(0);
+    expect(cant('Hamburguesa clásica')).toBe(2);
+    expect(out).not.toMatch(/x Limonada/);
+    say('remove the burgers');
+    expect(conv().paso ?? null).toBeNull();
+    expect(txt(say('hola'))).toBeTruthy();
+  });
+
+  it('"sin la limonada" quita la línea', () => {
+    say('sin la limonada');
+    expect(cant('Limonada')).toBe(0);
+  });
+
+  it('"mejor sin tomate" aplica el modificador a la hamburguesa', () => {
+    say('mejor sin tomate');
+    const h = lineas().find((l) => l.productoId === prod('Hamburguesa clásica').id);
+    expect(h.modificadores).toEqual(expect.arrayContaining(['sin cebolla', 'sin tomate']));
+    say('make it without onions');
+    expect(conv().paso).toBe('confirmar');
+  });
+
+  it('"mejor 3" y "make it 4" cambian la cantidad de la última línea', () => {
+    say('mejor 3');
+    expect(cant('Limonada')).toBe(3);
+    say('make it 4');
+    expect(cant('Limonada')).toBe(4);
+    expect(cant('Hamburguesa clásica')).toBe(2);
+  });
+
+  it('cantidad fuera de 1..20 se rechaza', () => {
+    say('mejor 25');
+    expect(cant('Limonada')).toBe(1);
+    say('agrega 20 limonadas');
+    expect(cant('Limonada')).toBe(1);
+  });
+
+  it('agregar un agotado se rechaza con alternativas y mantiene el pedido', () => {
+    setAvailable(store, prod('Té helado').id, store.get().sucursales[0].id, false);
+    const out = txt(say('agrega un té helado'));
+    expect(out).toMatch(/agotad/i);
+    expect(out).toMatch(/Limonada|Refresco/);
+    expect(cant('Té helado')).toBe(0);
+    expect(cant('Limonada')).toBe(1);
+  });
+
+  it('lo que no entiende da una pista útil', () => {
+    const out = txt(say('mmm no sé'));
+    expect(out).toMatch(/agrega una coca/i);
+    expect(out).toMatch(/quita la limonada/i);
+  });
+
+  it('el pedido creado refleja la edición', () => {
+    say('agrega una limonada');
+    say('sí');
+    say('yappy');
+    const p = store.get().pedidos.find((x) => x.conversacionId === 'c1');
+    expect(p.lineas.find((l) => l.productoId === prod('Limonada').id).cantidad).toBe(2);
+  });
+});
+
+describe('ronda 1: dirección exacta', () => {
+  it('con zona pero sin calle pregunta por la dirección exacta y la guarda', () => {
+    say('Quiero 1 limonada para Obarrio');
+    const out = txt(say('sí'));
+    expect(out).toMatch(/direcci[oó]n exacta|punto de referencia/i);
+    expect(out).toMatch(/yappy/i);
+    const r = txt(say('Calle 50, edificio Sol, apto 4'));
+    expect(r).toMatch(/yappy/i);
+    say('yappy');
+    const p = store.get().pedidos.find((x) => x.conversacionId === 'c1');
+    expect(p.direccion).toContain('edificio Sol');
+    expect(p.direccion).toContain('Obarrio');
+    expect(p.sucursalId).toBe(store.get().sucursales[0].id);
+  });
+
+  it('en el paso de pago acepta "retiro" y cambia el tipo', () => {
+    say('Quiero 1 limonada para Obarrio');
+    say('sí');
+    say('mejor retiro');
+    say('tarjeta');
+    expect(store.get().pedidos.find((x) => x.conversacionId === 'c1').tipo).toBe('retiro');
+  });
+
+  it('limita el largo de la dirección guardada', () => {
+    say('Quiero 1 limonada para Obarrio');
+    say('sí');
+    say(`Calle ${'x'.repeat(500)}`);
+    say('yappy');
+    expect(store.get().pedidos.find((x) => x.conversacionId === 'c1').direccion.length).toBeLessThanOrEqual(220);
+  });
+});
+
+describe('ronda 1: basura con signo de pregunta e inglés', () => {
+  it.each(['???', 'asdfgh?', '¿¿??'])('"%s" pide aclarar, no deriva', (x) => {
+    const out = txt(say(x));
+    expect(out).toMatch(/por ejemplo/i);
+    expect(out).not.toMatch(/no tengo ese dato/i);
+    expect(conv().requiereHumano).toBeFalsy();
+  });
+
+  it.each([
+    'Hi, I want a classic hamburger',
+    "I'd like a burger and a lemonade",
+  ])('"%s" se entiende en inglés', (x) => {
+    const out = txt(say(x));
+    expect(conv().paso).toBe('confirmar');
+    expect(out).toMatch(/total/i);
+    expect(out).not.toMatch(/Desea|Su pedido/);
+  });
+
+  it.each(['book for 3 on 2026-11-20 at 7 pm', 'book a table for 3 tomorrow at 7 pm'])('"%s" reserva', (x) => {
+    say(x);
+    expect(conv().paso).toBe('ocasion');
+    const out = txt(say('none'));
+    expect(out).toMatch(/confirmed/i);
+    expect(store.get().reservas.at(-1)).toMatchObject({ personas: 3, hora: '19:00' });
+  });
+
+  it('alérgenos en inglés usan etiquetas en inglés', () => {
+    const out = txt(say('Does the Hamburguesa clásica contain dairy?'));
+    expect(out).toMatch(/dairy/);
+    expect(out).not.toMatch(/lácteos/);
+    const out2 = txt(say('What allergens does the Cheesecake have?'));
+    expect(out2).toMatch(/dairy/);
+    expect(out2).not.toMatch(/lácteos|huevo/);
+  });
+});

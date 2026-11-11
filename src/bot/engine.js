@@ -5,7 +5,7 @@ import { createReservation } from '../core/reservations.js';
 import { detectLang, parseOrder } from './parser.js';
 import { horaPanama, parseFecha, parseHora, sinHora } from './datetime.js';
 import { t } from './texts.js';
-import { allergenReply, findProduct, ALERGENO_CUE } from './allergens.js';
+import { allergenReply, ALERGENO_CUE, palabras } from './allergens.js';
 
 // Motor del bot en modo guion: una máquina de pasos por conversación.
 // El paso actual (conv.paso) y los datos recogidos (conv.slots) viven en la conversación.
@@ -14,18 +14,26 @@ import { allergenReply, findProduct, ALERGENO_CUE } from './allergens.js';
 const HUMANO = /\b(pasar a una persona|hablar con (una |un )?(persona|humano|agente)|persona real|human|agent|representative|real person|speak (to|with) (a )?(person|someone))\b/;
 const CANCELAR = /^(cancelar|cancela|cancelo|cancel)\b/;
 const SI = /^(si|yes|yeah|yep|ok|okay|dale|confirmo|confirmar|confirm|claro|correcto|listo)\b/;
-const NO = /^(no|nop|nope)\b/;
+const NO = /^(no|nop|nope)(\s+(gracias|thanks|thank you))?\W*$/;
 const ES = /\b(hola|gracias|quiero|buenas|buenos|reserva|reservar|horario|pedido|manana|hoy|personas|persona|ubicacion|donde|cuanto|favor|sin|para|una|un|dos|del|dia|tarjeta|efectivo|entrega|retiro|cancelar|tiene|tienen|las|los|que|cumpleanos|ninguna)\b/;
-const EN = /\b(yes|yeah|hi|hello|hey|please|hours|open|where|status|reservation|book|table|tomorrow|today|cancel|human|agent|thanks|thank|people|order|delivery|pickup|card|cash|allergens?|allergy|my|menu|would|like|want|none|birthday)\b/;
+const EN = /\b(does|do|the|contain|contains|have|has|what|which|yes|yeah|hi|hello|hey|please|hours|open|where|status|reservation|book|table|tomorrow|today|cancel|human|agent|thanks|thank|people|order|delivery|pickup|card|cash|allergens?|allergy|my|menu|would|like|want|none|birthday)\b/;
 const ORDEN = /\b(quiero|quisiera|me regala|me da|dame|ponme|pedir|ordenar|pedido|i want|i'd like|i would like|order|can i get)\b/;
 const ESTADO = /(como va|como esta|donde (esta|va)|estado de|estatus|status|track|where is|how('?s| is)).*(pedido|orden|order)|\b(mi|my) (pedido|orden|order)\b/;
-const RESERVA = /reserv|book a table|booking|table for|mesa para|una mesa|a table/;
+const RESERVA = /reserv|\bbook\b|booking|table for|mesa para|una mesa|a table/;
 const HORARIO = /horario|hora de (atencion|apertura)|a que hora (abren|cierran|abre|cierra)|abierto|abren|cierran|\bopen\b|opening|\bhours\b|closing/;
 const UBICACION = /ubicacion|ubicad|direccion de|donde (estan|queda|quedan|se encuentran)|location|address|where (are|is)/;
 const MENU = /menu del dia|menu of the day|today'?s menu|combos?\b|especial(es)? del dia|daily special|\bmenu\b|\bcarta\b/;
 const SALUDO = /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hello|hi|hey|good (morning|afternoon|evening))\b/;
 const GRACIAS = /\b(gracias|thanks|thank you)\b/;
-const PREGUNTA = /\?|^(tienen|tiene|hay|cuanto|cuantos|puedo|se puede|aceptan|do you|is there|are there|can i|how much|what|que|donde|cuando)\b/;
+const PREGUNTA = /^(tienen|tiene|hay|cuanto|cuantos|puedo|se puede|aceptan|do you|is there|are there|can i|how much|what|que|donde|cuando|como)\b/;
+const QUITAR = /\b(quita|quitar|quitale|elimina|eliminar|saca|sacar|remove|delete|drop)\b/;
+const AGREGAR = /^(y|and|tambien|also|mas)\b|\b(agrega|agregar|agregame|anade|anadir|suma|sumar|add|ponle|ponme|dame|quiero|i want|i'd like)\b/;
+const CANT = /^(?:mejor|make it|cambia(?:lo)?(?: a)?|change it to|actually)\s+(\d+|[a-z]+)\s*$/;
+const MOD = /^(?:mejor |make it |actually |ahora )?(?:sin|without)\s+(?:la |el |los |las |the )?(.+)$/;
+const NUMS = { un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+const EN_PROD = { burger: 'hamburguesa', burgers: 'hamburguesa', lemonade: 'limonada', fries: 'papas', juice: 'jugo', water: 'agua', salad: 'ensalada', soda: 'refresco', chicken: 'pollo', tea: 'te helado', coffee: 'cafe', shake: 'batido' };
+const EN_ING = { onion: 'cebolla', onions: 'cebolla', tomato: 'tomate', tomatoes: 'tomate', sauce: 'salsa', ice: 'hielo' };
+const MAX_DIR = 200;
 const RETIRO = /\b(retiro|retirar|recoger|recojo|pickup|pick up|sucursal)\b/;
 const ENTREGA = /\b(entrega|delivery|deliver|domicilio)\b/;
 const MAX_PERSONAS = 8;
@@ -60,7 +68,7 @@ export function createBot(store, opts = {}) {
     const n = normalize(texto);
     if (!n) return actual;
     if (ES.test(n)) return 'es';
-    if (EN.test(n) || (n.split(" ").length >= 3 && detectLang(texto) === "en")) return "en";
+    if (EN.test(n) || (n.split(" ").length >= 4 && detectLang(texto) === "en")) return "en";
     return actual;
   }
 
@@ -99,7 +107,7 @@ export function createBot(store, opts = {}) {
     const sl = {
       lineas: res.lineas, sucursalId,
       tipo: z ? 'entrega' : RETIRO.test(n) ? 'retiro' : ENTREGA.test(n) ? 'entrega' : null,
-      direccion: z ? z.zona : null, eta: z?.etaMin ?? null,
+      direccion: z ? z.zona : null, zona: z?.zona ?? null, exacta: false, eta: z?.etaMin ?? null,
     };
     const out = [];
     if (res.agotados.length) out.push(textoAgotados(T, res.agotados, sucursalId));
@@ -112,14 +120,84 @@ export function createBot(store, opts = {}) {
     return [m(out.join('\n'), [T.si, T.cancelar])];
   }
 
+  const clave = (l) => `${l.productoId}|${[...l.modificadores].sort().join('|')}`;
+  function fusionar(lineas) {
+    const mapa = new Map();
+    for (const l of lineas) {
+      const k = clave(l);
+      if (mapa.has(k)) mapa.get(k).cantidad += l.cantidad;
+      else mapa.set(k, { productoId: l.productoId, cantidad: l.cantidad, modificadores: [...l.modificadores] });
+    }
+    return [...mapa.values()];
+  }
+
+  // Líneas del pedido que el texto menciona (las de mayor coincidencia de palabras del nombre).
+  function lineasMencionadas(texto, lineas) {
+    const tw = new Set(palabras(normalize(texto).split(' ').map((w) => EN_PROD[w] ?? w).join(' ')));
+    const puntaje = lineas.map((l) => palabras(nombreProd(l.productoId)).filter((w) => tw.has(w)).length);
+    const max = Math.max(0, ...puntaje);
+    return max ? lineas.filter((_, i) => puntaje[i] === max) : [];
+  }
+
+  function mostrarEdicion(id, T, sl, previo = []) {
+    if (!sl.lineas.length) { reset(id); return [m(T.pedidoVacio)]; }
+    setStep(id, 'confirmar', sl);
+    return [m([...previo, resumen(T, sl), T.confirmarPreg].join('\n'), [T.si, T.cancelar])];
+  }
+
+  function editarPedido(id, texto, n) {
+    const T = lang(id);
+    const sl = JSON.parse(JSON.stringify(getConv(id).slots));
+    const hint = (extra) => [m([extra, T.hintEdicion].filter(Boolean).join('\n'), [T.si, T.cancelar])];
+    const objetivo = lineasMencionadas(texto, sl.lineas);
+    const mc = CANT.exec(n);
+    if (mc) {
+      const q = /^\d+$/.test(mc[1]) ? Number(mc[1]) : NUMS[mc[1]];
+      if (q === undefined) return hint();
+      if (q < 1 || q > 20) return hint(T.cantidadMax);
+      sl.lineas[sl.lineas.length - 1].cantidad = q;
+      return mostrarEdicion(id, T, { ...sl, lineas: fusionar(sl.lineas) });
+    }
+    if (QUITAR.test(n) || (/^sin (el|la|los|las|the) /.test(n) && objetivo.length)) {
+      if (!objetivo.length) return hint(T.noEncuentroLinea);
+      sl.lineas = sl.lineas.filter((l) => !objetivo.includes(l));
+      return mostrarEdicion(id, T, sl);
+    }
+    const mm = MOD.exec(n);
+    if (mm && !AGREGAR.test(n)) {
+      const ing = mm[1].split(' ').map((w) => EN_ING[w] ?? w).join(' ').replace(/[^a-z ]/g, '').trim();
+      for (const cand of [ing, ing.replace(/s$/, '')]) {
+        for (let i = sl.lineas.length - 1; i >= 0; i--) {
+          const prod = state().productos.find((p) => p.id === sl.lineas[i].productoId);
+          const soportado = prod?.modificadores.find((x) => normalize(x) === `sin ${cand}`);
+          if (!soportado) continue;
+          if (!sl.lineas[i].modificadores.includes(soportado)) sl.lineas[i].modificadores.push(soportado);
+          return mostrarEdicion(id, T, { ...sl, lineas: fusionar(sl.lineas) });
+        }
+      }
+      return hint(T.noEncuentroLinea);
+    }
+    const res = parseOrder(texto, state(), sl.sucursalId);
+    const previo = [];
+    if (res.agotados.length) previo.push(textoAgotados(T, res.agotados, sl.sucursalId));
+    if (res.lineas.length) {
+      const nuevas = fusionar([...sl.lineas, ...res.lineas]);
+      if (nuevas.some((l) => l.cantidad > 20)) return hint(T.cantidadMax);
+      sl.lineas = nuevas;
+    }
+    if (!res.lineas.length && !res.agotados.length) {
+      return hint(res.desconocidos.length ? T.noEntendidos(res.desconocidos.join(', ')) : '');
+    }
+    if (res.desconocidos.length) previo.push(T.noEntendidos(res.desconocidos.join(', ')));
+    return mostrarEdicion(id, T, sl, previo);
+  }
+
   function pasoConfirmar(id, texto, n) {
     const T = lang(id);
     const sl = getConv(id).slots;
     if (NO.test(n)) { reset(id); return [m(T.cancelado, T.botonesInicio)]; }
     if (SI.test(n)) return despuesDeConfirmar(id, sl);
-    const res = parseOrder(texto, state(), sl.sucursalId);
-    if (res.lineas.length || res.agotados.length) return iniciarPedido(id, texto);
-    return [m(T.confirmarRepite, [T.si, T.cancelar])];
+    return editarPedido(id, texto, n);
   }
 
   function pedirPago(id, sl, previo = []) {
@@ -134,6 +212,7 @@ export function createBot(store, opts = {}) {
     if (sl.tipo === 'entrega' && !sl.direccion) { setStep(id, 'direccion', sl); return [m(T.pedirDireccion)]; }
     const s = state().sucursales.find((x) => x.id === sl.sucursalId);
     const previo = sl.tipo === 'retiro' ? [T.retiraEn(s.nombre, s.direccion)] : [];
+    if (sl.tipo === 'entrega' && sl.zona && !sl.exacta) previo.push(T.pedirDetalle(sl.zona));
     return pedirPago(id, sl, previo);
   }
 
@@ -154,7 +233,7 @@ export function createBot(store, opts = {}) {
       const zonas = state().sucursales.flatMap((s) => s.zonasEntrega).join(', ');
       return [m(T.fueraZona(zonas), T.botonesTipo)];
     }
-    Object.assign(sl, { tipo: 'entrega', direccion: texto.trim(), eta: z.etaMin });
+    Object.assign(sl, { tipo: 'entrega', direccion: texto.trim().slice(0, MAX_DIR), zona: z.zona, exacta: true, eta: z.etaMin });
     if (z.sucursalId !== sl.sucursalId) {
       sl.sucursalId = z.sucursalId;
       const faltan = sl.lineas.filter((l) => !isAvailable(state(), l.productoId, z.sucursalId));
@@ -173,7 +252,16 @@ export function createBot(store, opts = {}) {
     const T = lang(id);
     const sl = getConv(id).slots;
     const metodo = /yappy/.test(n) ? 'yappy' : /tarjeta|card|credit|debit|debito/.test(n) ? 'tarjeta' : /efectivo|cash/.test(n) ? 'efectivo' : null;
-    if (!metodo) return [m(T.pagoInvalido, T.botonesPago)];
+    if (!metodo) {
+      if (RETIRO.test(n)) return despuesDeConfirmar(id, { ...sl, tipo: 'retiro' });
+      if (ENTREGA.test(n) && sl.tipo !== 'entrega') return despuesDeConfirmar(id, { ...sl, tipo: 'entrega' });
+      if (sl.tipo === 'entrega' && n.length > 2) {
+        if (zonaDe(texto)) return pasoDireccion(id, texto);
+        const dir = `${texto.trim().slice(0, MAX_DIR)}${sl.zona ? `, ${sl.zona}` : ''}`;
+        return pedirPago(id, { ...sl, direccion: dir, exacta: true }, [T.direccionAnotada]);
+      }
+      return [m(T.pagoInvalido, T.botonesPago)];
+    }
     let r;
     try {
       r = createOrder(store, { lineas: sl.lineas, tipo: sl.tipo, sucursalId: sl.sucursalId, direccion: sl.direccion, canal: 'whatsapp', conversacionId: id });
@@ -284,7 +372,9 @@ export function createBot(store, opts = {}) {
     if (res.lineas.length || res.agotados.length || ORDEN.test(n)) return iniciarPedido(id, texto);
     if (SALUDO.test(n)) return [m(T.saludo, T.botonesInicio)];
     if (GRACIAS.test(n)) return [m(T.gracias)];
-    if (PREGUNTA.test(texto) || PREGUNTA.test(n)) { handoff(id); return [m(T.sinDato)]; }
+    const limpio = n.replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const nPal = limpio ? limpio.split(' ').length : 0;
+    if (nPal >= 2 && (PREGUNTA.test(limpio) || (/\?/.test(texto) && nPal >= 3))) { handoff(id); return [m(T.sinDato)]; }
     return [m(T.aclarar, T.botonesInicio)];
   }
 

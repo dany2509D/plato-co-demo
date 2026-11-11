@@ -18,7 +18,7 @@ const ALERGENO_PALABRA = /alerg|allerg|gluten|celiac|trigo|wheat|lacteo|lactosa|
 
 export const ALERGENO_CUE = (n) => /alerg|allerg/.test(n) || (CUE.test(n) && ALERGENO_PALABRA.test(n));
 
-const palabras = (s) => normalize(s).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter((w) => w.length > 3).map((w) => (w.endsWith('s') ? w.slice(0, -1) : w));
+export const palabras = (s) => normalize(s).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter((w) => w.length > 3).map((w) => (w.endsWith('s') ? w.slice(0, -1) : w));
 
 // Producto mencionado en el texto: coincidencia completa del nombre; si no, un único candidato parcial.
 export function findProduct(state, n) {
@@ -42,13 +42,14 @@ export function findProduct(state, n) {
 }
 
 export function allergenReply(T, state, n) {
+  const et = (k) => T.etiquetas?.[k] ?? k;
   const noConfirma = { handoff: true, texto: T.alergenoNoConfirma };
   const p = findProduct(state, n);
   if (!p || p.alergenosDeclarados !== true || DESCONOCIDO.test(n)) return noConfirma;
   const pedidos = ALERGENOS.filter((a) => a.re.test(n));
   if (!pedidos.length) {
-    return { handoff: false, texto: p.alergenos.length ? T.alergenoListado(p.nombre, p.alergenos.join(', ')) : T.alergenoSinListado(p.nombre) };
+    return { handoff: false, texto: p.alergenos.length ? T.alergenoListado(p.nombre, p.alergenos.map(et).join(', ')) : T.alergenoSinListado(p.nombre) };
   }
-  const texto = pedidos.map((a) => (p.alergenos.includes(a.k) ? T.alergenoCon(p.nombre, a.k) : T.alergenoNoLista(p.nombre, a.k))).join('\n');
+  const texto = pedidos.map((a) => (p.alergenos.includes(a.k) ? T.alergenoCon(p.nombre, et(a.k)) : T.alergenoNoLista(p.nombre, et(a.k)))).join('\n');
   return { handoff: false, texto };
 }
