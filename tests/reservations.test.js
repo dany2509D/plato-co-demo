@@ -5,12 +5,19 @@ import { availableTables, createReservation, assignTable, occupancyByHour } from
 const memStorage = () => ({ read: () => null, write() {} });
 // 11 nov 2026, 10:00 hora de Panamá (UTC-5).
 const AHORA = new Date('2026-11-11T15:00:00Z');
-const FECHA = '2027-03-10'; // sin reservas en el seed
+const FECHA = '2027-03-10'; // beforeEach vacía las reservas
 let store;
 const suc = () => store.get().sucursales[0];
 const datos = (o = {}) => ({ sucursalId: suc().id, fecha: FECHA, hora: '19:00', personas: 2, ocasion: 'ninguna', ...o });
 const crear = (o) => createReservation(store, datos(o), { ahora: AHORA });
-beforeEach(() => { store = createStore(memStorage()); });
+beforeEach(() => {
+  store = createStore(memStorage());
+  // Estado explícito: sin reservas del seed y horario fijo, sin depender del seed ni de la fecha.
+  store.update((s) => {
+    s.reservas = [];
+    s.sucursales[0].horario = { abre: '11:00', cierra: '22:00' };
+  });
+});
 
 describe('createReservation', () => {
   it('8 personas se reserva y recibe mesa que cabe', () => {
@@ -87,12 +94,28 @@ describe('assignTable', () => {
     expect(assignTable(store, 'x', chica.id)).toEqual({ ok: false, razon: 'no_encontrada' });
     expect(assignTable(store, a.id, 'x')).toEqual({ ok: false, razon: 'no_encontrada' });
   });
-  it('asigna mesa a una reserva pendiente sin mesa del seed y la confirma', () => {
-    const pend = store.get().reservas.find((r) => !r.mesaId);
-    const mesa = store.get().sucursales.find((s) => s.id === pend.sucursalId).mesas.at(-1);
-    const r = assignTable(store, pend.id, mesa.id);
-    if (r.ok) expect(store.get().reservas.find((x) => x.id === pend.id).estado).toBe('confirmada');
-    else expect(['mesa_ocupada', 'capacidad']).toContain(r.razon);
+  const pendienteSinMesa = (personas = 4) => {
+    store.update((s) => {
+      s.reservas.push({ id: 'res-90', sucursalId: s.sucursales[0].id, fecha: FECHA, hora: '19:00', personas, ocasion: 'ninguna', estado: 'pendiente' });
+    });
+    return store.get().reservas.find((r) => r.id === 'res-90');
+  };
+  it('asigna la mesa libre más chica a una reserva pendiente sin mesa y la confirma', () => {
+    const pend = pendienteSinMesa(4);
+    const mesa = availableTables(store.get(), pend.sucursalId, pend.fecha, pend.hora, pend.personas)[0];
+    expect(mesa.capacidad).toBeGreaterThanOrEqual(4);
+    expect(assignTable(store, pend.id, mesa.id)).toEqual({ ok: true });
+    const r = store.get().reservas.find((x) => x.id === pend.id);
+    expect(r.mesaId).toBe(mesa.id);
+    expect(r.estado).toBe('confirmada');
+  });
+  it('una reserva pendiente sin mesa no ocupa ninguna mesa; la ocupada devuelve mesa_ocupada', () => {
+    const pend = pendienteSinMesa(2);
+    const libres = availableTables(store.get(), pend.sucursalId, pend.fecha, pend.hora, 2);
+    expect(libres.length).toBe(suc().mesas.length);
+    const otra = crear({ personas: 2, hora: '19:30' }).reserva;
+    expect(assignTable(store, pend.id, otra.mesaId)).toEqual({ ok: false, razon: 'mesa_ocupada' });
+    expect(store.get().reservas.find((x) => x.id === pend.id).estado).toBe('pendiente');
   });
 });
 
