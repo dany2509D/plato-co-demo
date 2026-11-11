@@ -119,10 +119,21 @@ export function buildSeed(now) {
     [plan[i], plan[j]] = [plan[j], plan[i]];
   }
 
+  // Pedidos activos: recientes y repartidos por los umbrales de color de cocina (40% verde < 10 min,
+  // 35% amarillo 10-19, 25% rojo 21-35), tres o más por sucursal.
+  let activos = 0;
+  const PATRON = ['v', 'a', 'r', 'v', 'a', 'v', 'a', 'r']; // por sucursal, rotado: 3 verdes, 3 amarillos, 2 rojos
+  const edadActivo = (k, n) => {
+    const c = PATRON[(Math.floor(k / n) + (k % n)) % PATRON.length];
+    return c === 'v' ? entero(1, 9) : c === 'a' ? entero(10, 19) : entero(21, 35);
+  };
   const pedidos = plan.map((estado, i) => {
-    const sucursal = elegir(sucursales);
+    const activo = estado !== 'Entregado';
+    const k = activo ? activos++ : 0;
+    const sucursal = activo ? sucursales[k % sucursales.length] : elegir(sucursales);
     const tipo = estado === 'En camino' || rnd() < 0.6 ? 'entrega' : 'retiro';
-    const hace = entero(Math.min(30, maxHace), maxHace); // minutos desde la creación (siempre el día actual de Panamá)
+    // minutos desde la creación (siempre el día actual de Panamá)
+    const hace = activo ? Math.min(edadActivo(k, sucursales.length), maxHace) : entero(Math.min(30, maxHace), maxHace);
     const creado = ahora - hace * 60000;
     const flujo = tipo === 'entrega' ? ESTADOS : ESTADOS.filter((e) => e !== 'En camino');
     const pasos = flujo.slice(0, flujo.indexOf(estado) + 1);

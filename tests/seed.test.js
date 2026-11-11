@@ -56,6 +56,15 @@ describe('buildSeed', () => {
       expect(Date.parse(p.creadoEn)).toBeLessThanOrEqual(AHORA.getTime());
     }
   });
+  it('cada sucursal tiene al menos 3 pedidos activos recientes (1 a 40 min) y se reparten por colores', () => {
+    const activos = s.pedidos.filter((p) => p.estado !== 'Entregado');
+    const edades = activos.map((p) => (AHORA.getTime() - Date.parse(p.creadoEn)) / 60000);
+    for (const e of edades) { expect(e).toBeGreaterThanOrEqual(1); expect(e).toBeLessThanOrEqual(40); }
+    for (const suc of s.sucursales) expect(activos.filter((p) => p.sucursalId === suc.id).length).toBeGreaterThanOrEqual(3);
+    expect(edades.filter((e) => e < 10).length).toBeGreaterThanOrEqual(6);
+    expect(edades.filter((e) => e >= 10 && e <= 20).length).toBeGreaterThanOrEqual(5);
+    expect(edades.filter((e) => e > 20).length).toBeGreaterThanOrEqual(4);
+  });
   it('pedidos del día en Panamá aunque sea de madrugada', () => {
     const temprano = new Date('2026-11-11T06:30:00Z'); // 01:30 en Panamá
     const r = buildSeed(temprano);

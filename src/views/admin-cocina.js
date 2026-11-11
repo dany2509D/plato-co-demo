@@ -13,7 +13,7 @@ const SEMAFORO = {
 };
 
 function lineasHtml(state, p) {
-  return p.lineas.map((l) => {
+  return (p.lineas || []).map((l) => {
     const prod = state.productos.find((x) => x.id === l.productoId);
     const mods = (l.modificadores || []).map((m) => `<span class="kc-mod">${esc(m)}</span>`).join('');
     return `<li><strong>${l.cantidad} ×</strong> ${esc(prod ? prod.nombre : l.productoId)}${mods ? `<span class="kc-mods">${mods}</span>` : ''}</li>`;
@@ -49,9 +49,10 @@ function entregado(p) {
 export function adminCocina(cont) {
   cont.innerHTML = `
     <section class="kc" aria-labelledby="kc-titulo">
-      <div class="kc-cab"><h1 id="kc-titulo">Cocina</h1><p class="kc-sub" data-sub></p></div>
+      <div class="kc-cab"><h1 id="kc-titulo" tabindex="-1">Cocina</h1><p class="kc-sub" data-sub></p></div>
       <div class="kc-kpis" data-kpis></div>
       <div class="kc-cols" data-cols></div>
+      <p class="kc-aviso" role="status" aria-live="polite" data-aviso></p>
       <details class="kc-hist"><summary data-hist-t></summary><ul data-hist-l></ul></details>
     </section>`;
   const q = (s) => cont.querySelector(s);
@@ -76,14 +77,18 @@ export function adminCocina(cont) {
     q('[data-hist-t]').textContent = `Últimos entregados (${ent.length})`;
     q('[data-hist-l]').innerHTML = ent.length ? ent.map(entregado).join('') : '<li>Todavía no hay entregas.</li>';
 
-    if (foco) q(`[data-avanzar="${CSS.escape(foco)}"]`)?.focus({ preventScroll: true });
+    if (foco) (q(`[data-avanzar="${CSS.escape(foco)}"]`) || q("#kc-titulo"))?.focus({ preventScroll: true });
     if (window.scrollY !== y) window.scrollTo(0, y);
   }
 
   cont.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-avanzar]');
+    q("[data-aviso]").textContent = "";
     if (!b) return;
-    try { advanceStatus(store, b.dataset.avanzar); } catch { pintar(); }
+    try { advanceStatus(store, b.dataset.avanzar); } catch {
+      q("[data-aviso]").textContent = "El pedido ya no existe";
+      pintar();
+    }
   });
 
   pintar();

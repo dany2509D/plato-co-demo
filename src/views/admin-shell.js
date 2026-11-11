@@ -1,5 +1,6 @@
 import { store } from '../core/app-store.js';
 import { brand } from '../config/brand.js';
+import { reiniciarDemo } from '../ui/reiniciar.js';
 import { el, esc } from '../ui/dom.js';
 
 const NAV = [
@@ -38,11 +39,13 @@ export function adminShell(content, route) {
           ${NAV.map((n) => `<a href="${n.href}" ${n.ruta === route ? 'aria-current="page"' : ''}>${n.texto}</a>`).join('')}
         </nav>
         <a class="adm-volver" href="#/">Volver a la vista de cliente</a>
+        <button type="button" class="adm-volver adm-reiniciar" data-reiniciar>Reiniciar demo</button>
       </div>
       <div class="adm-contenido" data-contenido></div>
     </div>`);
   main.append(marco);
 
+  marco.querySelector('[data-reiniciar]').addEventListener('click', reiniciarDemo);
   const select = marco.querySelector('[data-suc]');
   select.value = store.get().ui.sucursalAdmin;
   select.addEventListener('change', () => {
