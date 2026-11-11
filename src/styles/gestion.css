@@ -15,7 +15,7 @@
   transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
 }
 .rv-franja:hover { border-color: var(--c-ink); }
-.rv-franja__h { grid-column: 1 / -1; font-size: .8125rem; font-weight: 700; letter-spacing: var(--tr-label); color: var(--c-adm-muted); }
+.rv-franja__h { font-size: .8125rem; font-weight: 700; letter-spacing: var(--tr-label); color: var(--c-adm-muted); }
 .rv-franja__n { font-family: var(--font-display); font-weight: 400; font-size: 2.25rem; line-height: 1; letter-spacing: var(--tr-title); }
 .rv-franja__n small { font-size: 1.125rem; color: var(--c-adm-muted); }
 .rv-franja__t { font-size: .75rem; color: var(--c-adm-muted); }
@@ -85,6 +85,7 @@
 .mn-buscar { margin: 0; width: min(100%, 360px); }
 .mn-chips { position: sticky; top: calc(var(--banner-h, 0px) + var(--adm-h, 112px)); z-index: 30; display: flex; flex-wrap: nowrap; gap: var(--sp-1); margin: 0 calc(-1 * var(--adm-pad)) var(--sp-3); padding: 10px var(--adm-pad); overflow-x: auto; background: var(--c-adm-surface); border-bottom: var(--rule-w) solid var(--c-adm-hair); scrollbar-width: thin; }
 .mn-chip { flex: none; }
+@media (max-width: 759px) { .mn-chips { top: var(--banner-h, 0px); } }
 .mn-grupo { margin-bottom: var(--sp-5); }
 .mn-grupo h2 { display: flex; align-items: center; gap: var(--sp-1); margin: 0; padding: var(--sp-1) 0 var(--sp-1); border-top: var(--rule-w) solid var(--c-ink); font-size: 2rem; }
 .mn-lista { list-style: none; margin: 0; padding: 0; }

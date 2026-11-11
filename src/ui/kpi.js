@@ -35,14 +35,3 @@ export function splitBar(a, b, { titulo }) {
     (total ? `<rect class="split-a" x="0" y="0" width="${pa.toFixed(2)}" height="14"/><rect class="split-b" x="${pa.toFixed(2)}" y="0" width="${(100 - pa).toFixed(2)}" height="14"/>` : '') +
     `</svg>`;
 }
-
-// Dona de dos segmentos (web / WhatsApp). Con 0 pedidos muestra un anillo vacío.
-export function donut(a, b, { titulo, etiquetaA, etiquetaB }) {
-  const total = a + b, r = 40, c = 2 * Math.PI * r;
-  const la = total ? (a / total) * c : 0;
-  return `<svg class="chart donut" viewBox="0 0 120 120" role="img" aria-label="${esc(titulo)}">` +
-    `<circle class="dona-b" cx="60" cy="60" r="${r}" fill="none" stroke-width="18"/>` +
-    `<circle class="dona-a" cx="60" cy="60" r="${r}" fill="none" stroke-width="18" stroke-dasharray="${la.toFixed(2)} ${(c - la).toFixed(2)}" transform="rotate(-90 60 60)"/>` +
-    `<text class="dona-total" x="60" y="62" text-anchor="middle">${total}</text><text class="dona-sub" x="60" y="78" text-anchor="middle">pedidos</text>` +
-    `<title>${esc(`${etiquetaA}: ${a}; ${etiquetaB}: ${b}`)}</title></svg>`;
-}

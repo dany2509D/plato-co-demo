@@ -10,7 +10,7 @@ body:has(.chat-pag) .site-footer { margin-top: 0; }
 .chat-etq { margin: 0 0 var(--sp-2); font-size: .8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--c-on-dark-muted); }
 
 /* ---------- Marco del dispositivo ---------- */
-.tel { --verde: #0F5C4D; --burbuja-propia: #F4E3B5; --fondo-chat: #ECE2D0; max-width: 392px; margin: 0 auto; }
+.tel { --ctx-focus: var(--c-ink); --verde: #0F5C4D; --burbuja-propia: #F4E3B5; --fondo-chat: #ECE2D0; max-width: 392px; margin: 0 auto; }
 .tel-marco { position: relative; padding: 10px; border-radius: 48px; background: #120a06; border: 1px solid #6b2e12; box-shadow: 0 32px 48px -12px rgba(0, 0, 0, .55); }
 .tel-marco::after { content: ''; position: absolute; inset: 4px; border-radius: 44px; border: 1px solid rgba(236, 226, 208, .12); pointer-events: none; }
 .tel-notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 3; width: 104px; height: 22px; background: #120a06; border-radius: 0 0 14px 14px; display: flex; align-items: center; justify-content: center; gap: 10px; }
