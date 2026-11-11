@@ -184,5 +184,6 @@ export function buildSeed(now) {
   return {
     sucursales, productos, combos, pedidos, reservas, conversaciones: [],
     ui: { sucursalAdmin: sucursales[0].id, sucursalCliente: sucursales[0].id, carrito: [], iaReal: false },
+    seedDia: fechaPanama(ahora), seedEn: new Date(ahora).toISOString(), // para detectar datos de otro día
   };
 }

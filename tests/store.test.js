@@ -50,3 +50,58 @@ describe('createStore', () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('estado viejo (staleness)', () => {
+  const guardadoA = (iso) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(iso));
+    const a = createStore(memStorage());
+    a.update((d) => { d.ui.sucursalAdmin = 'suc-3'; });
+    return JSON.parse(JSON.stringify(a.get()));
+  };
+  it('el estado lleva seedDia (Panamá) y seedEn', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T03:30:00Z')); // 22:30 del 11 en Panamá
+    const st = createStore(memStorage());
+    expect(st.get().seedDia).toBe('2026-11-11');
+    expect(st.get().seedEn).toBe('2026-11-12T03:30:00.000Z');
+  });
+  it('conserva cambios manuales dentro del mismo día y sesión corta', () => {
+    const guardado = guardadoA('2026-11-11T15:00:00Z');
+    vi.setSystemTime(new Date('2026-11-11T16:00:00Z'));
+    expect(createStore(memStorage(guardado)).get().ui.sucursalAdmin).toBe('suc-3');
+  });
+  it('re-siembra si cambió el día en Panamá', () => {
+    const guardado = guardadoA('2026-11-11T15:00:00Z');
+    vi.setSystemTime(new Date('2026-11-12T15:00:00Z'));
+    const st = createStore(memStorage(guardado));
+    expect(st.get().ui.sucursalAdmin).not.toBe('suc-3');
+    expect(st.get().seedDia).toBe('2026-11-12');
+  });
+  it('el mismo día UTC pero otro día en Panamá cuenta como otro día', () => {
+    const guardado = guardadoA('2026-11-11T20:00:00Z'); // 15:00 del 11
+    vi.setSystemTime(new Date('2026-11-12T06:00:00Z')); // 01:00 del 12
+    expect(createStore(memStorage(guardado)).get().seedDia).toBe('2026-11-12');
+  });
+  it('re-siembra si la siembra tiene más de 4 h y hay pedidos activos viejos', () => {
+    const guardado = guardadoA('2026-11-11T15:00:00Z'); // 10:00 Panamá
+    vi.setSystemTime(new Date('2026-11-11T20:30:00Z')); // 15:30 Panamá, mismo día
+    const st = createStore(memStorage(guardado));
+    expect(st.get().ui.sucursalAdmin).not.toBe('suc-3');
+    expect(st.get().seedEn).toBe('2026-11-11T20:30:00.000Z');
+  });
+  it('estado guardado sin seedDia (versión anterior) se re-siembra', () => {
+    const guardado = guardadoA('2026-11-11T15:00:00Z');
+    delete guardado.seedDia; delete guardado.seedEn;
+    expect(createStore(memStorage(guardado)).get().ui.sucursalAdmin).not.toBe('suc-3');
+  });
+  it('funciona con JSON corrupto y con localStorage bloqueado', async () => {
+    const { createStorage } = await import('../src/core/storage.js');
+    vi.stubGlobal('localStorage', { getItem: () => '{corrupto', setItem: () => { throw new Error('x'); } });
+    const st = createStore(createStorage('k'));
+    expect(st.get().seedDia).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    vi.stubGlobal('localStorage', { getItem: () => { throw new Error('bloqueado'); }, setItem: () => { throw new Error('x'); } });
+    expect(() => createStore(createStorage('k2'))).not.toThrow();
+    vi.unstubAllGlobals();
+  });
+});
