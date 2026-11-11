@@ -1,4 +1,5 @@
 import { brand } from '../config/brand.js';
+import { ESTADOS } from '../core/estados.js';
 
 // Generador pseudoaleatorio determinista (mulberry32) con semilla fija.
 function crearPrng(semilla) {
@@ -84,6 +85,8 @@ export function buildSeed(now) {
   const entero = (min, max) => min + Math.floor(rnd() * (max - min + 1));
   const elegir = (arr) => arr[Math.floor(rnd() * arr.length)];
   const ahora = Math.floor(now.getTime() / 60000) * 60000; // a minuto exacto
+  const medianoche = Math.floor((ahora + OFFSET_PANAMA_MS) / 86400000) * 86400000 - OFFSET_PANAMA_MS;
+  const maxHace = Math.max(1, Math.min(600, Math.floor((ahora - medianoche) / 60000)));
   const sucursales = JSON.parse(JSON.stringify(brand.sucursales));
 
   const productos = MENU.map(([nombre, categoria, precio, vegetariano, modificadores, alergenos, declarados], i) => {
@@ -108,8 +111,8 @@ export function buildSeed(now) {
 
   // Plan de estados: todos representados, mezclados con el PRNG
   const plan = [
-    ...Array(22).fill('entregado'), ...Array(4).fill('cancelado'), ...Array(7).fill('recibido'),
-    ...Array(8).fill('preparando'), ...Array(5).fill('listo'), ...Array(4).fill('en_camino'),
+    ...Array(26).fill('Entregado'), ...Array(7).fill('Recibido'),
+    ...Array(8).fill('En cocina'), ...Array(5).fill('Listo'), ...Array(4).fill('En camino'),
   ];
   for (let i = plan.length - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
@@ -118,14 +121,13 @@ export function buildSeed(now) {
 
   const pedidos = plan.map((estado, i) => {
     const sucursal = elegir(sucursales);
-    const tipo = estado === 'en_camino' || rnd() < 0.6 ? 'entrega' : 'retiro';
-    const hace = entero(30, 600); // minutos desde la creación
+    const tipo = estado === 'En camino' || rnd() < 0.6 ? 'entrega' : 'retiro';
+    const hace = entero(Math.min(30, maxHace), maxHace); // minutos desde la creación (siempre el día actual de Panamá)
     const creado = ahora - hace * 60000;
-    const flujo = tipo === 'entrega'
-      ? ['recibido', 'preparando', 'listo', 'en_camino', 'entregado']
-      : ['recibido', 'preparando', 'listo', 'entregado'];
-    const pasos = estado === 'cancelado' ? ['recibido', 'cancelado'] : flujo.slice(0, flujo.indexOf(estado) + 1);
-    const historial = pasos.map((e, k) => ({ estado: e, en: new Date(creado + k * 4 * 60000).toISOString() }));
+    const flujo = tipo === 'entrega' ? ESTADOS : ESTADOS.filter((e) => e !== 'En camino');
+    const pasos = flujo.slice(0, flujo.indexOf(estado) + 1);
+    const paso = Math.min(4, hace / pasos.length) * 60000; // nunca pasa de 'ahora'
+    const historial = pasos.map((e, k) => ({ estado: e, en: new Date(creado + k * paso).toISOString() }));
 
     const lineas = [];
     for (let k = entero(1, 3); k > 0; k--) {
@@ -138,7 +140,7 @@ export function buildSeed(now) {
       canal: rnd() < 0.55 ? 'web' : 'whatsapp',
       sucursalId: sucursal.id,
       lineas, tipo, estado, historial,
-      pago: { metodo: rnd() < 0.6 ? 'tarjeta' : 'efectivo', estado: estado === 'entregado' ? 'pagado' : 'pendiente' },
+      pago: { metodo: rnd() < 0.6 ? 'tarjeta' : 'efectivo', estado: estado === 'Entregado' ? 'pagado' : 'pendiente' },
       creadoEn: new Date(creado).toISOString(),
     };
     if (tipo === 'entrega') {

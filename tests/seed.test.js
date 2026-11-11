@@ -3,7 +3,7 @@ import { buildSeed } from '../src/data/seed.js';
 import { brand } from '../src/config/brand.js';
 
 const AHORA = new Date('2026-11-11T15:00:00Z');
-const ORDEN = ['recibido', 'preparando', 'listo', 'en_camino', 'entregado'];
+import { ESTADOS } from '../src/core/estados.js';
 
 describe('buildSeed', () => {
   const s = buildSeed(AHORA);
@@ -38,25 +38,33 @@ describe('buildSeed', () => {
     expect(new Set(s.pedidos.map((p) => p.canal))).toEqual(new Set(['web', 'whatsapp']));
     expect(new Set(s.pedidos.map((p) => p.tipo))).toEqual(new Set(['entrega', 'retiro']));
     const estados = new Set(s.pedidos.map((p) => p.estado));
-    for (const e of [...ORDEN, 'cancelado']) expect(estados.has(e)).toBe(true);
+    for (const e of ESTADOS) expect(estados.has(e)).toBe(true);
     const ids = new Set(s.productos.map((p) => p.id));
     for (const p of s.pedidos) {
       expect(p.historial.length).toBeGreaterThan(0);
       expect(p.historial.at(-1).estado).toBe(p.estado);
-      expect(p.historial[0].estado).toBe('recibido');
+      expect(p.historial[0].estado).toBe('Recibido');
       const tiempos = p.historial.map((h) => Date.parse(h.en));
       expect([...tiempos].sort((a, b) => a - b)).toEqual(tiempos);
-      if (p.estado !== 'cancelado') {
-        const flujo = p.tipo === 'entrega' ? ORDEN : ORDEN.filter((e) => e !== 'en_camino');
-        expect(p.historial.map((h) => h.estado)).toEqual(flujo.slice(0, flujo.indexOf(p.estado) + 1));
-      } else {
-        expect(p.historial.map((h) => h.estado)).toEqual(['recibido', 'cancelado']);
-      }
+      expect(ESTADOS).toContain(p.estado);
+      const flujo = p.tipo === 'entrega' ? ESTADOS : ESTADOS.filter((e) => e !== 'En camino');
+      expect(p.historial.map((h) => h.estado)).toEqual(flujo.slice(0, flujo.indexOf(p.estado) + 1));
       if (p.tipo === 'entrega') expect(p.direccion).toBeTruthy();
       else expect(p.direccion).toBeUndefined();
       expect(p.lineas.length).toBeGreaterThan(0);
       for (const l of p.lineas) expect(ids.has(l.productoId)).toBe(true);
       expect(Date.parse(p.creadoEn)).toBeLessThanOrEqual(AHORA.getTime());
+    }
+  });
+  it('pedidos del día en Panamá aunque sea de madrugada', () => {
+    const temprano = new Date('2026-11-11T06:30:00Z'); // 01:30 en Panamá
+    const r = buildSeed(temprano);
+    expect(r.pedidos).toHaveLength(50);
+    for (const p of r.pedidos) {
+      const t = Date.parse(p.creadoEn);
+      expect(t).toBeLessThanOrEqual(temprano.getTime());
+      expect(new Date(t - 5 * 3600000).toISOString().slice(0, 10)).toBe('2026-11-11');
+      for (const h of p.historial) expect(Date.parse(h.en)).toBeLessThanOrEqual(temprano.getTime());
     }
   });
   it('reservas', () => {
