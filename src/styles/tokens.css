@@ -1,0 +1,14 @@
+:root {
+  --crema: #FFF6E5;
+  --crema-2: #FBE9C8;
+  --terracota: #B4472A;
+  --terracota-osc: #8E3520;
+  --amarillo: #F5B82E;
+  --tinta: #2B1810;
+  --tinta-suave: #5A4036;
+  --blanco: #FFFFFF;
+  --radio: 14px;
+  --sombra: 0 4px 0 rgba(43, 24, 16, 0.9);
+  --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --gutter: 16px;
+}
