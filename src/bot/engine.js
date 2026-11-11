@@ -335,7 +335,7 @@ export function createBot(store, opts = {}) {
     try {
       r = createReservation(store, { sucursalId: sl.sucursalId, fecha: sl.fecha, hora: sl.hora, personas: sl.personas, ocasion: sl.ocasion }, { ahora: ahora() });
     } catch { return falla(id); }
-    if (r.ok) { reset(id); return [m(T.reservaOk(r.reserva, sucNombre(sl.sucursalId)))]; }
+    if (r.ok) { reset(id); return [m(T.reservaOk(r.reserva, sucNombre(sl.sucursalId)), undefined, [{ type: 'reserva:creada', payload: { reservaId: r.reserva.id } }])]; }
     const suc = state().sucursales.find((s) => s.id === sl.sucursalId);
     switch (r.razon) {
       case 'handoff': handoff(id); reset(id); return [m(T.handoffReserva)];

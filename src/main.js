@@ -14,23 +14,25 @@ import { vistaInicio } from './views/inicio.js';
 import { vistaMenu } from './views/menu.js';
 import { vistaCarrito } from './views/carrito.js';
 import { vistaPedido } from './views/pedido.js';
-import { adminShell, proximamente } from './views/admin-shell.js';
+import { adminShell } from './views/admin-shell.js';
 import { adminCocina } from './views/admin-cocina.js';
 import { adminReservas } from './views/admin-reservas.js';
 import { adminMenu } from './views/admin-menu.js';
+import { renderIndicadores } from './views/admin-indicadores.js';
+import { vistaChat } from './views/chat.js';
 
 const TITULOS = {
   inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', pedido: 'Seguimiento de pedido',
   'admin-cocina': 'Cocina', 'admin-reservas': 'Reservas', 'admin-menu': 'Administrar menú', 'admin-indicadores': 'Indicadores',
 };
 
-const VISTAS = { inicio: vistaInicio, menu: vistaMenu, carrito: vistaCarrito, pedido: vistaPedido };
+const VISTAS = { inicio: vistaInicio, menu: vistaMenu, carrito: vistaCarrito, pedido: vistaPedido, chat: vistaChat };
 
 const ADMIN = {
   'admin-cocina': adminCocina,
   'admin-reservas': adminReservas,
   'admin-menu': adminMenu,
-  'admin-indicadores': proximamente('Indicadores', 'Aquí verá las ventas, los tiempos de preparación y los platos más pedidos.'),
+  'admin-indicadores': (cont) => renderIndicadores(cont, store),
 };
 
 const app = document.getElementById('app');

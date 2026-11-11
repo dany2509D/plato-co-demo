@@ -175,6 +175,13 @@ describe('alérgenos', () => {
 });
 
 describe('reservas', () => {
+  it('el mensaje de confirmación lleva la acción reserva:creada (panel En vivo)', () => {
+    const msgs = say('reserva mañana a las 8 pm para 4 personas');
+    say('no');
+    const todos = [...msgs, ...conv().mensajes];
+    const r = store.get().reservas.at(-1);
+    expect(todos.some((m) => m.actions?.some((a) => a.type === 'reserva:creada' && a.payload.reservaId === r.id))).toBe(true);
+  });
   it('flujo por pasos: fecha, hora, personas, ocasión', () => {
     expect(txt(say('Quiero reservar una mesa'))).toMatch(/fecha|d[ií]a/i);
     expect(txt(say('mañana'))).toMatch(/hora/i);
