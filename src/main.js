@@ -3,6 +3,7 @@ import './styles/base.css';
 import './styles/client.css';
 import './styles/admin.css';
 import './styles/kitchen.css';
+import './styles/gestion.css';
 import { brand } from './config/brand.js';
 import { crearBanner } from './ui/banner.js';
 import { onRouteChange, parseRoute } from './ui/router.js';
@@ -15,6 +16,8 @@ import { vistaCarrito } from './views/carrito.js';
 import { vistaPedido } from './views/pedido.js';
 import { adminShell, proximamente } from './views/admin-shell.js';
 import { adminCocina } from './views/admin-cocina.js';
+import { adminReservas } from './views/admin-reservas.js';
+import { adminMenu } from './views/admin-menu.js';
 
 const TITULOS = {
   inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', pedido: 'Seguimiento de pedido',
@@ -25,8 +28,8 @@ const VISTAS = { inicio: vistaInicio, menu: vistaMenu, carrito: vistaCarrito, pe
 
 const ADMIN = {
   'admin-cocina': adminCocina,
-  'admin-reservas': proximamente('Reservas', 'Aquí verá las reservas del día y las mesas de la sucursal.'),
-  'admin-menu': proximamente('Administrar menú', 'Aquí podrá marcar platos como agotados por sucursal.'),
+  'admin-reservas': adminReservas,
+  'admin-menu': adminMenu,
   'admin-indicadores': proximamente('Indicadores', 'Aquí verá las ventas, los tiempos de preparación y los platos más pedidos.'),
 };
 
