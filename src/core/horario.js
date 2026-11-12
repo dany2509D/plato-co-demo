@@ -42,3 +42,11 @@ export function menuDelDiaActivo(fecha = new Date()) {
   const { dia, minutos } = horaPanama(fecha);
   return dia >= 1 && dia <= 5 && minutos >= 11 * 60 && minutos < 15 * 60;
 }
+
+// Aviso informativo del pago cuando la sucursal elegida está cerrada ahora (no bloquea el pedido). '' si está abierta.
+export function avisoSucursalCerrada(sucursal, fecha = new Date()) {
+  if (!sucursal) return '';
+  const st = estadoSucursal(sucursal.horario, fecha);
+  if (st.abierto || st.etiqueta !== 'Cerrado') return '';
+  return `${sucursal.nombre} está cerrada ahora (${st.detalle.charAt(0).toLowerCase()}${st.detalle.slice(1)}). Puede enviar su pedido igualmente: quedará programado para cuando abra.`;
+}

@@ -404,3 +404,4 @@ dialog.modal-hoja { width: 100%; max-width: none; max-height: 88vh; margin: auto
   .dish__media .dish-art, .suc-fila, .dish, .combo { transition: none; }
   .dish:hover .dish__media .dish-art { transform: none; }
 }
+.ck-cerrada { display: flex; align-items: flex-start; width: 100%; margin: 0 0 var(--sp-3); border-radius: var(--r-card); font-weight: 600; line-height: 1.45; }

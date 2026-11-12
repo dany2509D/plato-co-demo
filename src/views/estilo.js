@@ -1,3 +1,4 @@
+import { bindMarquee } from '../ui/marquee.js';
 import '../styles/estilo.css';
 import { brand } from '../config/brand.js';
 
@@ -178,6 +179,7 @@ export function vistaEstilo(main) {
     </section>
   </div>`;
 
+  bindMarquee(main);
   main.querySelectorAll('[data-ir]').forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();
     main.querySelector('#' + a.dataset.ir)?.scrollIntoView({ behavior: 'smooth', block: 'start' });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { horaPanama, aMinutos, estaAbierto, estadoSucursal, menuDelDiaActivo } from '../src/core/horario.js';
+import { horaPanama, aMinutos, estaAbierto, estadoSucursal, menuDelDiaActivo, avisoSucursalCerrada } from '../src/core/horario.js';
 
 // Panamá = UTC-5 todo el año: 15:00Z son las 10:00 en Panamá.
 const enPanama = (fecha, hhmm) => new Date(`${fecha}T${hhmm}:00-05:00`);
@@ -81,5 +81,20 @@ describe('menuDelDiaActivo', () => {
     expect(menuDelDiaActivo(enPanama('2026-11-11', '14:59'))).toBe(true);
     expect(menuDelDiaActivo(enPanama('2026-11-11', '15:00'))).toBe(false);
     expect(menuDelDiaActivo(enPanama('2026-11-14', '12:00'))).toBe(false); // sábado
+  });
+});
+
+describe('avisoSucursalCerrada', () => {
+  const suc = { nombre: 'Plato & Co. Centro', horario: centro };
+  it('avisa cuando la sucursal está cerrada y dice cuándo abre', () => {
+    const t = avisoSucursalCerrada(suc, enPanama('2026-11-11', '23:30'));
+    expect(t).toContain('cerrada ahora');
+    expect(t).toContain('abre mañana a las 11:00');
+    expect(t).toContain('quedará programado');
+  });
+  it('no avisa si está abierta, sin sucursal o con horario inválido', () => {
+    expect(avisoSucursalCerrada(suc, enPanama('2026-11-11', '13:00'))).toBe('');
+    expect(avisoSucursalCerrada(null)).toBe('');
+    expect(avisoSucursalCerrada({ nombre: 'X', horario: {} })).toBe('');
   });
 });

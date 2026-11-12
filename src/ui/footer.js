@@ -7,7 +7,7 @@ export function crearFooter() {
   const el = document.createElement('footer');
   el.className = 'site-footer band band--dark grain';
   el.innerHTML = `
-    <div class="container">
+    <div class="container--wide">
       <a class="site-footer__mark" href="#/" aria-label="${esc(brand.nombre)}, ir al inicio">${esc(brand.nombre)}</a>
       <hr class="rule-dotted-gold">
       <div class="site-footer__grid">

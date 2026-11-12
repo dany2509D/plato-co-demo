@@ -4,6 +4,7 @@ import { el, esc, money, irA } from '../ui/dom.js';
 import { branchPicker } from '../ui/branch-picker.js';
 import { cart } from '../ui/cart-singleton.js';
 import { precioHTML } from '../ui/product-card.js';
+import { avisoSucursalCerrada } from '../core/horario.js';
 import { dishArt } from '../ui/dish-art.js';
 
 const METODOS = [
@@ -72,6 +73,7 @@ export function vistaCarrito(main) {
     const suc = state.sucursales.find((s) => s.id === state.ui.sucursalCliente) ?? state.sucursales[0];
     const zona = form.tipo === 'entrega' && form.direccion.trim() ? assignBranch(state, form.direccion) : null;
     const sucZona = zona ? state.sucursales.find((s) => s.id === zona.sucursalId) : null;
+    const cerrada = avisoSucursalCerrada(form.tipo === 'retiro' ? suc : sucZona);
     const desde = suc.etaBaseMin - 10 > 0 ? suc.etaBaseMin - 10 : 15;
 
     nodo.innerHTML = `
@@ -113,6 +115,7 @@ export function vistaCarrito(main) {
             <p class="ck-sim"><strong>Pago simulado</strong> · Datos ficticios · No ingrese información real</p>
           </fieldset>
 
+          ${cerrada ? `<p class="ck-chip ck-chip--warn ck-cerrada" role="status"><span aria-hidden="true">!</span> ${esc(cerrada)}</p>` : ''}
           ${avisoHTML()}
           <button type="submit" class="btn btn--lg btn--block ck-enviar">Confirmar pedido · ${money(t.total)}</button>
         </form>

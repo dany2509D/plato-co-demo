@@ -23,7 +23,7 @@ export function combosHTML(state, sucursalId) {
         </div>
       </article>`;
   }).join('');
-  return `<div class="combos-grid">${tarjetas}</div>
+  return `<div class="combos-grid" role="region" aria-label="Combos" tabindex="0">${tarjetas}</div>
     <p class="help combos-nota">En esta demo cada combo se agrega plato por plato, al precio de lista del menú.</p>`;
 }
 

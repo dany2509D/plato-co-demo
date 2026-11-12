@@ -4,6 +4,7 @@ import { el, esc } from '../ui/dom.js';
 import { heroArt, selloArt } from '../ui/dish-art.js';
 import { branchPicker } from '../ui/branch-picker.js';
 import { productCardHTML, bindAdd } from '../ui/product-card.js';
+import { bindMarquee } from '../ui/marquee.js';
 import { combosHTML, bindCombos, menuDelDiaHTML } from '../ui/combos.js';
 
 const DESTACADOS = [
@@ -98,7 +99,7 @@ export function vistaInicio(main) {
             <div><p class="eyebrow">Los favoritos de la casa</p><h2 id="dest-t" class="c-h2">Lo que más se pide</h2></div>
             <a class="btn btn--ghost" href="#/menu">Ver todo el menú <span aria-hidden="true">→</span></a>
           </div>
-          <div class="dish-grid dish-grid--fila" data-destacados>${elegidos.map((p) => productCardHTML(p, { clase: rv.trim() })).join('')}</div>
+          <div class="dish-grid dish-grid--fila" data-destacados role="region" aria-label="Platos destacados" tabindex="0">${elegidos.map((p) => productCardHTML(p, { clase: rv.trim() })).join('')}</div>
         </div>
       </section>
 
@@ -163,6 +164,7 @@ export function vistaInicio(main) {
     nodo.querySelector('[data-picker]').append(branchPicker(store, pintarSeguro, { variante: 'filas' }));
     bindAdd(nodo.querySelector('[data-destacados]'), store);
     bindCombos(nodo.querySelector('[data-combos]'), store);
+    bindMarquee(nodo);
   }
   // Al cambiar de sucursal se repinta, devolviendo el foco al selector.
   function pintarSeguro(valor) {
