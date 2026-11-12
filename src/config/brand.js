@@ -1,18 +1,37 @@
-const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Plato &amp; Co.">
-  <circle cx="24" cy="24" r="22" fill="#823513"/>
-  <circle cx="24" cy="24" r="14" fill="#ECE2D0"/>
-  <circle cx="24" cy="24" r="8" fill="#FAAE33"/>
-</svg>`;
+import { plato, coloresPlato } from '../assets/brand/geometria.js';
+
+// ---------------------------------------------------------------------------------------------------------------
+// MARCA (plantilla). Para otra identidad cambie nombre, iniciales, lema y colores: todo lo demás (logo, sello,
+// sellos de sucursal, patrón, favicon) se deriva de aquí. Guía: docs/brand/identidad-visual.md («Cambiar de marca»).
+// ---------------------------------------------------------------------------------------------------------------
+const nombre = 'Plato & Co.';
+
+// Paleta «tomate y mostaza» (bloque V, 11 nov 2026). Los mismos hex que tokens.css (--c-ember, --c-gold…).
+const colores = {
+  crema: '#ECE2D0',   // pergamino: fondo de página
+  papel: '#F6F0E4',   // cuerpo del plato, tarjetas claras
+  tinta: '#2A1A12',   // texto y logotipo sobre claro
+  carbon: '#281006',  // bandas oscuras
+  tomate: '#8E1F16',  // borde esmaltado del plato, enlaces sobre crema (= --c-ember)
+  oro: '#EFC547',     // el «sol» del plato, acento sobre oscuro (= --c-gold, mostaza)
+};
+colores.terracota = colores.tomate; // alias antiguos (no borrar: otros módulos pueden leerlos)
+colores.amarillo = colores.oro;
+
+const escAttr = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+// Símbolo cuadrado para la cabecera (32/28 px), el panel y el avatar del chat. Contrato: viewBox 48×48 y
+// ` role="img" aria-label="…"` seguidos (cabecera.js y phone.js los sustituyen por aria-hidden).
+const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="${escAttr(nombre)}">${plato(24, 24, 23.5, {
+  color: coloresPlato({ tomate: colores.tomate, papel: colores.papel, oro: colores.oro }),
+})}</svg>`;
 
 export const brand = {
-  nombre: 'Plato & Co.',
+  nombre,
+  iniciales: 'P&C',             // monograma dentro del plato
+  lema: 'Hecho al momento',     // texto del sello redondo
   logoSvg,
-  colores: {
-    crema: '#ECE2D0',
-    terracota: '#823513',
-    amarillo: '#FAAE33',
-    tinta: '#2A1A12',
-  },
+  colores,
   moneda: 'US$',
   itbms: 0.07,
   telefono: '+507 6000-0000',

@@ -1,3 +1,4 @@
+/* CAMBIOS: 11 nov 2026 (bloque V, identidad) brasa #823513→#8e1f16 «tomate», oro #faae33→#efc547 «mostaza», ember-deep #6b2a0e→#731811, line-dark #6b2e12→#74241a, gold-hover #ffc25c→#f6d677 (contrastes re-verificados con script; docs/brand/identidad-visual.md). */
 /*
  * PLATO & CO. · TOKENS DE DISEÑO (fuente única de verdad)
  * Mira la guía viva en  #/estilo  y la documentación en docs/design/system.md
@@ -12,18 +13,18 @@
  * Contraste (WCAG 2.1, calculado con un script; AA texto normal ≥ 4,5, texto grande/UI ≥ 3):
  *   ink #2a1a12 / canvas #ece2d0 13,03 · / linen #e0d3bb 11,32 · / paper #f6f0e4 14,5
  *   ink-soft #5a483c / canvas 6,74 · / linen 5,85       ink-muted #65554a / canvas 5,54 · / linen 4,81
- *   ember #823513 / canvas 6,63 · / linen 5,76 (texto y enlaces sobre crema = ink o ember, NUNCA oro)
- *   canvas / ink 13,03 · canvas / ember 6,63 · on-dark #ece2d0 / char #281006 14,02 · / card #402011 11,42
- *   on-dark-muted #d2c4ab / char 10,48 · / card 8,53 · / ember 4,95
- *   gold #faae33 / char 9,57 · / card 7,79 · / ember 4,53 · / ink 8,90   (oro = relleno, borde, texto grande/oscuro)
- *   char / gold (texto de botón oro) 9,57 · char / gold-hover 11,25
+ *   ember #8e1f16 / canvas 6,94 · / linen 6,02 · / paper 7,85 (texto y enlaces sobre crema = ink o ember, NUNCA oro)
+ *   canvas / ink 13,03 · canvas / ember 6,94 · canvas / ember-deep 8,76 · on-dark #ece2d0 / char #281006 14,02 · / card #402011 11,42
+ *   on-dark-muted #d2c4ab / char 10,48 · / card 8,53 · / ember 5,18
+ *   gold #efc547 / char 10,92 · / card 8,90 · / ember 5,41 · / ink 10,16   (oro = relleno, borde, texto grande/oscuro; sobre crema 1,28: NUNCA texto)
+ *   char / gold (texto de botón oro) 10,92 · char / gold-hover 12,69
  *   white / chili #d1255c 5,08 (solo insignias)
  *   success #2a6218 / okBg #d5e6c3 · warn #7a4a00 / #f7e0a8 5,77 · danger #a3132f / #f6d3d8 5,66  (ver tabla completa en el informe)
  *   admin: muted #736f7c / blanco 4,89 · / soft #f6f6f5 4,52 · ink / blanco 16,73
  *   line-strong #7d6d58 (borde de inputs) / canvas ≥ 3,5 (componente de UI ≥ 3)
  *   Velos de foto (rediseño 2; carbón rgb(40 16 6) con alfa; peor caso = foto blanca debajo; script, 11 nov 2026):
- *     --scrim-t/-b (.85/.80 en su punto más opaco): on-dark #ece2d0 9,08 / 7,58 · blanco 11,66 / 9,73 · oro 6,20 / 5,17 (todo ≥ 4,5)
- *     --veil (.82): on-dark 8,15 · blanco 10,47 · oro 5,57 sobre foto blanca; ≥ 11 sobre foto media
+ *     --scrim-t/-b (.85/.80 en su punto más opaco): on-dark #ece2d0 9,08 / 7,58 · blanco 11,66 / 9,73 · oro 7,08 / 5,91 (todo ≥ 4,5)
+ *     --veil (.82): on-dark 8,15 · blanco 10,47 · oro 6,36 sobre foto blanca; ≥ 11 sobre foto media
  *     --veil-soft (.35) NO garantiza AA por sí solo (on-dark 4,94 sobre gris medio, 1,75 sobre blanco): úselo solo sobre fotos
  *       oscuras (cta_ingredientes: el centro es pizarra negra, ≥ 15) y con texto grande (≥ 3).
  *     El velo se desvanece a 0: el texto debe quedar en la zona opaca (primer 28 % del velo superior, primer 50 % del inferior).
@@ -42,15 +43,15 @@
   /* ---------- Bandas oscuras ---------- */
   --c-char: #281006;          /* carbón: héroe, pie, bandas */
   --c-card: #402011;          /* marrón medio: tarjetas sobre carbón */
-  --c-ember: #823513;         /* brasa / óxido: banda de acento, enlaces sobre crema */
-  --c-ember-deep: #6b2a0e;    /* hover/pressed de brasa */
-  --c-line-dark: #6b2e12;     /* filete 1 px sobre bandas oscuras */
+  --c-ember: #8e1f16;         /* tomate (antes brasa/óxido): borde del plato, banda de acento, enlaces sobre crema */
+  --c-ember-deep: #731811;    /* hover/pressed de tomate */
+  --c-line-dark: #74241a;     /* filete 1 px sobre bandas oscuras */
   --c-on-dark: #ece2d0;       /* texto sobre bandas */
   --c-on-dark-muted: #d2c4ab; /* texto secundario sobre bandas */
 
   /* ---------- Acento único ---------- */
-  --c-gold: #faae33;          /* relleno, borde, texto grande sobre oscuro. NUNCA texto pequeño sobre crema */
-  --c-gold-hover: #ffc25c;
+  --c-gold: #efc547;          /* mostaza: el «sol» del plato. Relleno, borde, texto grande sobre oscuro. NUNCA texto sobre crema */
+  --c-gold-hover: #f6d677;
   --c-chili: #d1255c;         /* solo insignias diminutas de alerta/picante (texto blanco) */
 
   /* ---------- Semánticos de cocina (siempre con texto/icono, nunca solo color) ---------- */
