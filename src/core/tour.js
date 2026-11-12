@@ -124,13 +124,17 @@ export function elegirAgotado(state, sucursalId) {
   return disp.find((p) => p.nombre === 'Hamburguesa clásica') ?? disp.find((p) => p.categoria === 'Hamburguesas') ?? null;
 }
 
+// Anota qué plato se va a agotar y cómo estaba (sin tocar el menú): así se puede restaurar al salir.
+export function registrarAgotado(state, ctx, productoId, sucursalId) {
+  if (ctx.agotadoProductId === productoId && ctx.agotadoSucursalId === sucursalId) return;
+  ctx.agotadoPrevio = isAvailable(state, productoId, sucursalId);
+  ctx.agotadoProductId = productoId;
+  ctx.agotadoSucursalId = sucursalId;
+  ctx.agotadoPedido = false;
+}
+
 export function marcarAgotado(store, ctx, productoId, sucursalId) {
-  if (ctx.agotadoProductId !== productoId) {
-    ctx.agotadoPrevio = isAvailable(store.get(), productoId, sucursalId);
-    ctx.agotadoProductId = productoId;
-    ctx.agotadoSucursalId = sucursalId;
-    ctx.agotadoPedido = false;
-  }
+  registrarAgotado(store.get(), ctx, productoId, sucursalId);
   setAvailable(store, productoId, sucursalId, false);
 }
 

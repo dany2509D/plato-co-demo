@@ -26,6 +26,7 @@ import { vistaEstilo } from './views/estilo.js';
 import { crearFooter } from './ui/footer.js';
 import { vigilarReveal } from './ui/reveal.js';
 import { getAppBot } from './bot/instance.js';
+import { montarPresentacion } from './ui/presenter.js';
 
 const TITULOS = {
   inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', estilo: 'Guía de estilo', pedido: 'Seguimiento de pedido',
@@ -142,4 +143,5 @@ function renderVista(ruta) {
   window.scrollTo(0, 0);
 }
 
+montarPresentacion(); // botón flotante «Presentación» (modo guiado para reuniones)
 onRouteChange(renderVista);

@@ -1,0 +1,76 @@
+/* Modo Presentación: botón flotante, barra del presentador y anillo de resaltado.
+   Usa solo tokens del sistema (docs/design/system.md): sin sombras ni degradados, foco visible, 44 px. */
+
+.pres-lanzar {
+  position: fixed; right: var(--sp-3); bottom: var(--sp-3); z-index: var(--z-float);
+  --btn-bd: var(--c-gold);
+  outline-offset: 3px;
+}
+.pres-lanzar[hidden] { display: none; }
+.pres-lanzar svg { flex: none; }
+body.pres-activa { padding-bottom: var(--pres-h, 160px); }
+
+.pres-barra {
+  position: fixed; left: 50%; bottom: var(--sp-3); transform: translateX(-50%);
+  z-index: calc(var(--z-float) + 1);
+  width: min(760px, calc(100% - 2 * var(--sp-3)));
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--c-char); color: var(--c-on-dark);
+  border: var(--rule-w) solid var(--c-gold); border-radius: var(--r-card);
+}
+.pres-barra:focus { outline: none; }
+.pres-cab { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+.pres-paso {
+  margin: 0; flex: none; padding: 2px 12px;
+  border: var(--rule-w) solid var(--c-gold); border-radius: var(--r-pill);
+  color: var(--c-gold); font-size: .75rem; font-weight: 700; letter-spacing: var(--tr-label); text-transform: uppercase; white-space: nowrap;
+}
+.pres-tit { margin: 0; flex: 1; min-width: 0; font-size: 1.125rem; line-height: 1.15; letter-spacing: var(--tr-title); color: var(--c-on-dark); }
+.pres-min svg { transition: transform var(--dur) var(--ease); }
+.pres-barra.pres-min .pres-min svg { transform: rotate(180deg); }
+.pres-nota { margin: 0; font-size: .9375rem; line-height: 1.45; color: var(--c-on-dark); max-width: 62ch; }
+.pres-estado { margin: 0; font-size: .875rem; font-weight: 700; color: var(--c-gold); }
+.pres-estado[hidden] { display: none; }
+.pres-acc { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1); }
+.pres-acc [hidden] { display: none; }
+.pres-acc .btn { white-space: nowrap; }
+.pres-acc [data-salir] { margin-left: auto; }
+
+/* Panel minimizado: píldora compacta con el paso y el botón principal. */
+.pres-barra.pres-min { grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-radius: var(--r-pill); padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-2); }
+.pres-barra.pres-min .pres-cuerpo, .pres-barra.pres-min .pres-tit { display: none; }
+.pres-barra.pres-min .pres-cab { gap: var(--sp-1); }
+.pres-barra.pres-min .pres-acc { justify-content: flex-end; flex-wrap: nowrap; }
+.pres-barra.pres-min [data-ant], .pres-barra.pres-min [data-salir] { display: none; }
+.pres-barra.pres-min .pres-cab { order: 2; }
+.pres-barra.pres-min .pres-largo { display: none; }
+.pres-barra.pres-min .pres-paso { padding: 2px 8px; }
+.pres-barra.pres-min .pres-acc { order: 1; }
+
+/* Anillo de resaltado: fijo y sin eventos, no desplaza nada. Doble trazo para verse sobre crema y sobre carbón. */
+.pres-anillo {
+  position: fixed; z-index: var(--z-float); pointer-events: none;
+  border: 3px solid var(--c-gold); border-radius: var(--r-card);
+  outline: 2px solid var(--c-char); outline-offset: 0;
+  animation: pres-latido 1.4s var(--ease) infinite;
+}
+.pres-anillo[hidden] { display: none; }
+@keyframes pres-latido { 50% { opacity: .55; } }
+
+@media (max-width: 600px) {
+  .pres-barra { left: var(--sp-1); right: var(--sp-1); bottom: var(--sp-1); width: auto; transform: none; padding: var(--sp-2); }
+  .pres-lanzar { right: var(--sp-2); bottom: var(--sp-2); }
+  .pres-tit { font-size: 1rem; }
+  .pres-acc .btn { padding: 0 1.1em; }
+  .pres-barra:not(.pres-min) .pres-acc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .pres-barra:not(.pres-min) .pres-acc .btn { white-space: normal; text-align: center; padding: 6px 12px; }
+  .pres-barra:not(.pres-min) [data-cta] { grid-column: 1 / -1; }
+  .pres-barra:not(.pres-min) .pres-tit { overflow-wrap: anywhere; }
+  .pres-barra:not(.pres-min) [data-salir] { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pres-anillo { animation: none; }
+  .pres-min svg { transition: none; }
+}
