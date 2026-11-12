@@ -16,7 +16,9 @@ describe('createStore', () => {
     const st = createStore(memStorage());
     st.update((d) => { d.pedidos.length = 0; });
     st.reset();
-    expect(st.get()).toEqual(buildSeed(new Date()));
+    const { ultimaActividad, ...sinSello } = st.get(); // el sello de actividad es volátil
+    expect(ultimaActividad).toBe(new Date().toISOString());
+    expect(sinSello).toEqual(buildSeed(new Date()));
   });
   it('update guarda y notifica', () => {
     const storage = memStorage();
@@ -103,5 +105,49 @@ describe('estado viejo (staleness)', () => {
     vi.stubGlobal('localStorage', { getItem: () => { throw new Error('bloqueado'); }, setItem: () => { throw new Error('x'); } });
     expect(() => createStore(createStorage('k2'))).not.toThrow();
     vi.unstubAllGlobals();
+  });
+});
+
+describe('actividad reciente (nunca se pierde una sesión viva)', () => {
+  const sembrarA = (iso) => { vi.useFakeTimers(); vi.setSystemTime(new Date(iso)); return createStore(memStorage()); };
+  const guardar = (st) => JSON.parse(JSON.stringify(st.get()));
+  it('sembrado 09:00, actividad 12:50, recarga 13:05: se conserva', () => {
+    const st = sembrarA('2026-11-11T14:00:00Z'); // 09:00 Panamá
+    vi.setSystemTime(new Date('2026-11-11T17:50:00Z'));
+    st.update((d) => { d.ui.sucursalAdmin = 'suc-3'; });
+    vi.setSystemTime(new Date('2026-11-11T18:05:00Z'));
+    expect(createStore(memStorage(guardar(st))).get().ui.sucursalAdmin).toBe('suc-3');
+  });
+  it('actividad 08:00, recarga 13:05: se re-siembra', () => {
+    const st = sembrarA('2026-11-11T13:00:00Z'); // 08:00
+    st.update((d) => { d.ui.sucursalAdmin = 'suc-3'; });
+    vi.setSystemTime(new Date('2026-11-11T18:05:00Z'));
+    const nuevo = createStore(memStorage(guardar(st)));
+    expect(nuevo.get().ui.sucursalAdmin).not.toBe('suc-3');
+    expect(nuevo.get().seedEn).toBe('2026-11-11T18:05:00.000Z');
+  });
+  it('al día siguiente en Panamá: se re-siembra aunque haya actividad reciente', () => {
+    const st = sembrarA('2026-11-12T04:00:00Z'); // 23:00 del 11
+    vi.setSystemTime(new Date('2026-11-12T05:30:00Z')); // 00:30 del 12
+    st.update((d) => { d.ui.sucursalAdmin = 'suc-3'; });
+    vi.setSystemTime(new Date('2026-11-12T05:40:00Z'));
+    expect(createStore(memStorage(guardar(st))).get().seedDia).toBe('2026-11-12');
+  });
+  it('sin sello de actividad: se re-siembra una sola vez', () => {
+    const st = sembrarA('2026-11-11T15:00:00Z');
+    st.update((d) => { d.ui.sucursalAdmin = 'suc-3'; });
+    const g = guardar(st);
+    delete g.ultimaActividad;
+    const a = createStore(memStorage(g));
+    expect(a.get().ui.sucursalAdmin).not.toBe('suc-3');
+    expect(typeof a.get().ultimaActividad).toBe('string');
+    a.update((d) => { d.ui.sucursalAdmin = 'suc-2'; });
+    expect(createStore(memStorage(guardar(a))).get().ui.sucursalAdmin).toBe('suc-2');
+  });
+  it('sello corrupto cuenta como faltante', () => {
+    const st = sembrarA('2026-11-11T15:00:00Z');
+    const g = guardar(st);
+    g.ultimaActividad = 'ayer';
+    expect(createStore(memStorage(g)).get().ultimaActividad).toBe('2026-11-11T15:00:00.000Z');
   });
 });

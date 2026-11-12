@@ -70,7 +70,7 @@ function crearSesion() {
     </div>
     <div class="pres-cuerpo" data-cuerpo>
       <p class="pres-nota" data-nota></p>
-      <p class="pres-estado" data-estado></p>
+      <p class="pres-estado" data-estado role="status" aria-live="polite"></p>
     </div>
     <div class="pres-acc">
       <button type="button" class="btn btn--ghost" data-ant>Anterior</button>
@@ -138,7 +138,7 @@ function crearSesion() {
         await fn();
         if (!mia.cancelado) alTerminar?.();
       } catch (e) {
-        if (!(e instanceof Cancelado)) avisar('No se pudo completar este paso solo; puede seguirlo a mano.', 0);
+        if (!(e instanceof Cancelado)) avisar(`${e?.message || 'No se pudo completar este paso solo.'} Puede seguir a mano: pulse «Siguiente».`, 0);
       } finally {
         quitarResaltado();
         if (actual === mia) { corriendo = false; pausado = false; pintar(); }
@@ -191,12 +191,13 @@ function crearSesion() {
 
   async function chatQuieto() {
     let estable = 0;
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 150; i++) { // ~15 s
       await esperar(100);
       const inp = $('.tel-texto');
       const ocupado = !inp || inp.disabled || $('.tel-escribiendo');
       if (ocupado) estable = 0; else if (++estable >= 4) return;
     }
+    throw new Error('El asistente no respondió.');
   }
 
   async function escribir(input, texto) {
@@ -272,11 +273,18 @@ function crearSesion() {
     const p = pedidoDelTour(store.get(), ctx);
     if (!p) return;
     let pasos = 0;
+    const estadoDe = () => store.get().pedidos.find((x) => x.id === ctx.orderId)?.estado;
     while (falta('avanzar', store.get(), ctx)) {
+      if (pasos >= 8) throw new Error('El pedido no terminó de avanzar.');
       fijarSucursal(ctx.sucursalId);
       await ir('#/admin/cocina');
+      const antes = estadoDe();
       const btn = await esperarEl(`[data-avanzar="${CSS.escape(ctx.orderId)}"]`);
       await clic(btn);
+      for (let t = 0; estadoDe() === antes; t += 100) {
+        if (t >= 5000) throw new Error('La cocina no avanzó el pedido.');
+        await esperar(100);
+      }
       pasos += 1;
       await esperar(900);
       if (pasos % 2 === 0 || !falta('avanzar', store.get(), ctx)) {
@@ -333,14 +341,18 @@ function crearSesion() {
   const ACCIONES = { pedido: hacerPedido, cocina: hacerCocina, agotado: hacerAgotado, reserva: hacerReserva };
 
   // ---------- Entrada a un paso (navega y resalta, sin cambiar datos) ----------
+  let entradaId = 0;
   async function entrar() {
     const paso = tour.step;
+    const yo = ++entradaId;
+    const vigente = () => tour.activo && yo === entradaId && tour.step === paso;
     await cancelarCorrida();
+    if (!vigente()) return;
     quitarResaltado();
     if (paso.id === 'cocina' || paso.id === 'agotado') fijarSucursal(ctx.sucursalId);
     if (paso.id === 'reserva') { const r = reservaDelTour(store.get(), ctx); if (r) fijarSucursal(r.sucursalId); }
     await ir(paso.ruta);
-    if (!tour.activo) return;
+    if (!vigente()) return;
     pintar();
     if (paso.id === 'envivo') {
       await correr(async () => {
@@ -424,6 +436,7 @@ function crearSesion() {
   async function salir() {
     if (!tour.exit()) return;
     document.removeEventListener('keydown', teclas, true);
+    window.removeEventListener('pagehide', alSalirPagina);
     if (actual) actual.cancelado = true;
     cancelAnimationFrame(vigilarAnillo);
     clearTimeout(avisoTimer);
@@ -452,7 +465,11 @@ function crearSesion() {
     if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
     const t = ev.target;
     // No se secuestran las flechas mientras alguien escribe; con el campo vacío no hay nada que mover.
-    if (t instanceof HTMLElement && (t.isContentEditable || t.tagName === 'SELECT' || (/^(INPUT|TEXTAREA)$/.test(t.tagName) && t.value))) return;
+    if (t instanceof HTMLElement) {
+      if (t.isContentEditable || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') return;
+      if (t.tagName === 'INPUT' && !(t.classList.contains('tel-texto') && !t.value)) return;
+      if (t.closest('[role=tab],[role=tablist],[role=slider],[role=listbox],[role=menu],[role=menubar],[role=radiogroup],[data-franja],[data-franjas],[data-mesa],.fp-mesa')) return;
+    }
     if (ev.key === 'ArrowRight') { ev.preventDefault(); siguiente(); }
     else if (ev.key === 'ArrowLeft') { ev.preventDefault(); anterior(); }
   }
@@ -464,6 +481,9 @@ function crearSesion() {
   q('[data-salir]').addEventListener('click', salir);
   q('[data-min]').addEventListener('click', () => { min = !min; pintar(); });
   document.addEventListener('keydown', teclas, true);
+  // Red de seguridad: si se recarga o cierra la pestaña a mitad del recorrido, el plato vuelve a estar disponible.
+  const alSalirPagina = () => { if (tour.activo) restaurarAgotado(store, ctx); };
+  window.addEventListener('pagehide', alSalirPagina);
 
   // ---------- Arranque: reinicio completo de datos y llegada al chat ----------
   reiniciarParaTour(store, ctx);
