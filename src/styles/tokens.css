@@ -21,6 +21,12 @@
  *   success #2a6218 / okBg #d5e6c3 · warn #7a4a00 / #f7e0a8 5,77 · danger #a3132f / #f6d3d8 5,66  (ver tabla completa en el informe)
  *   admin: muted #736f7c / blanco 4,89 · / soft #f6f6f5 4,52 · ink / blanco 16,73
  *   line-strong #7d6d58 (borde de inputs) / canvas ≥ 3,5 (componente de UI ≥ 3)
+ *   Velos de foto (rediseño 2; carbón rgb(40 16 6) con alfa; peor caso = foto blanca debajo; script, 11 nov 2026):
+ *     --scrim-t/-b (.85/.80 en su punto más opaco): on-dark #ece2d0 9,08 / 7,58 · blanco 11,66 / 9,73 · oro 6,20 / 5,17 (todo ≥ 4,5)
+ *     --veil (.82): on-dark 8,15 · blanco 10,47 · oro 5,57 sobre foto blanca; ≥ 11 sobre foto media
+ *     --veil-soft (.35) NO garantiza AA por sí solo (on-dark 4,94 sobre gris medio, 1,75 sobre blanco): úselo solo sobre fotos
+ *       oscuras (cta_ingredientes: el centro es pizarra negra, ≥ 15) y con texto grande (≥ 3).
+ *     El velo se desvanece a 0: el texto debe quedar en la zona opaca (primer 28 % del velo superior, primer 50 % del inferior).
  */
 :root {
   /* ---------- Lienzo y tinta (cliente, claro) ---------- */
@@ -83,6 +89,11 @@
   --fs-base: 1rem;
   --fs-sm: .875rem;
   --fs-xs: .75rem;
+  /* Rediseño 2 (docs/design/direccion-v2.md §4). Anton solo ≥ 48 px o en cifras; máx. 3 usos por viewport */
+  --fs-hero: clamp(5.25rem, calc((100vw - 2 * var(--gutter)) / 7.6), 11.5rem);  /* titular de una línea: 181 px a 1440 */
+  --fs-h2: clamp(3rem, 5vw + 1.25rem, 6rem);                                   /* título de sección: 92 px a 1440, 48 a 390 */
+  --fs-statement: clamp(1.875rem, 1.2rem + 2.2vw, 3rem);                       /* frase grande: DM Sans 400, −.03em, lh 1.08 */
+  --fs-wordmark: calc((100vw - 2 * var(--gutter)) / 4.2);                      /* logotipo del pie, de borde a borde */
   --lh-display: .88;  --lh-tight: 1.1;  --lh-body: 1.55;
   --tr-display: -0.02em;   /* ≥ 64 px */
   --tr-title: -0.01em;     /* 28–64 px */
@@ -90,14 +101,16 @@
 
   /* ---------- Espaciado (rejilla de 8 px) ---------- */
   --sp-0: 4px;  --sp-1: 8px;  --sp-2: 16px;  --sp-3: 24px;  --sp-4: 32px;
-  --sp-5: 48px; --sp-6: 64px; --sp-7: 80px;  --sp-8: 120px;
+  --sp-5: 48px; --sp-6: 64px; --sp-7: 80px;  --sp-8: 120px;  --sp-9: 160px; /* huecos grandes dentro de bandas */
   --gutter: clamp(16px, 4vw, 32px);
-  --section-y: clamp(56px, 4vw + 36px, 120px);
+  --section-y: clamp(88px, 3vw + 92px, 136px);   /* rediseño 2: 136 px a 1440, 88 px a 390 (antes 56→120) */
 
   /* ---------- Geometría ---------- */
   --r-sharp: 0;
   --r-card: 6px;
   --r-pill: 9999px;
+  --r-photo: 0;               /* fotos del cliente: esquinas rectas */
+  --r-panel: 16px;            /* SOLO panel admin y ventana «En vivo» (software del restaurante) */
   --rule-w: 1px;
   --tap: 44px;               /* tamaño mínimo táctil */
   --w-content: 1200px;
@@ -106,7 +119,20 @@
   /* ---------- Movimiento ---------- */
   --dur: .4s;
   --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --dur-fast: .2s;            /* controles: color, fondo, borde */
+  --dur-photo: .7s;           /* revelado de foto con máscara */
   --shadow-sticky: 0 12px 32px rgba(42, 26, 18, .14); /* ÚNICA sombra: cabecera con scroll */
+
+  /* ---------- Fotografía (rediseño 2) ---------- */
+  --photo-filter: saturate(.92) contrast(1.05) sepia(.08);       /* unifica fotos claras y oscuras */
+  --photo-filter-warm: saturate(.85) sepia(.18) contrast(1.04);  /* para fotos frías (sucursal_1) */
+  /* Velos: ÚNICO degradado permitido, solo detrás de texto sobre foto (ver system.md, regla 5) */
+  --scrim-t: linear-gradient(to bottom, rgb(40 16 6 / .85), rgb(40 16 6 / 0) 28%);
+  --scrim-b: linear-gradient(to top, rgb(40 16 6 / .8), rgb(40 16 6 / 0) 50%);
+  --veil: rgb(40 16 6 / .82);        /* velo sólido: fondo del chat */
+  --veil-soft: rgb(40 16 6 / .35);   /* velo sólido suave: banda CTA (solo foto oscura) */
+  --header-h: 72px;                  /* cabecera de escritorio; 56 px < 900 px (ver abajo) */
 
   /* ---------- Capas ---------- */
   --z-base: 1; --z-sticky: 40; --z-banner: 100; --z-float: 120; --z-modal: 200; --z-toast: 300;
@@ -126,3 +152,4 @@
   --sombra: none;
   --fuente: var(--font-body);
 }
+@media (max-width: 899px) { :root { --header-h: 56px; } }
