@@ -6,6 +6,8 @@ import { precioHTML } from './product-card.js';
 import { fotoProducto } from './photo.js';
 
 const ROMANOS = ['I', 'II', 'III', 'IV', 'V'];
+const ROL = ['Entrada', 'Plato fuerte', 'Bebida'];
+const aro = (i) => `<span class="num-aro" aria-hidden="true">${ROMANOS[i]}</span>`;
 
 export function combosHTML(state, sucursalId) {
   const tarjetas = state.combos.map((c) => {
@@ -16,7 +18,7 @@ export function combosHTML(state, sucursalId) {
       <article class="combo">
         <div class="combo__head"><h3>${esc(c.nombre)}</h3>${precioHTML(c.precio, 'combo__price')}</div>
         <ol class="combo__pasos">
-          ${prods.map((p, i) => `<li>${fotoProducto(p, { variante: 'mini' })}<span class="numeral-pill" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}
+          ${prods.map((p, i) => `<li><div class="combo__foto">${fotoProducto(p, { variante: 'grid' })}${aro(i)}</div><span class="combo__n">${esc(p.nombre)}</span></li>`).join('')}
         </ol>
         <div class="combo__pie">
           ${suma > c.precio ? `<span class="combo__antes">Por separado <s>${money(suma)}</s></span>` : '<span></span>'}
@@ -46,13 +48,13 @@ export function menuDelDiaHTML(state, sucursalId, { id = '' } = {}) {
   if (partes.length < 2) return '';
   const activo = menuDelDiaActivo();
   return `
-    <div class="mdd">
+    <div class="mdd-wrap"><div class="mdd">
       <div class="mdd__izq">
         <span class="badge ${activo ? 'badge--ok' : 'badge--outline'}">${activo ? '● Disponible ahora' : 'Solo almuerzo · lun a vie'}</span>
         <h2 class="mdd__t"${id ? ` id="${esc(id)}"` : ''}>Menú del día</h2>
         <p class="mdd__h">De lunes a viernes, de 11:00 a 15:00. Entrada, plato fuerte y bebida.</p>
         <div class="mdd__precio">${precioHTML(9.95, 'mdd__cifra')}<span>por persona · solo en sala</span></div>
       </div>
-      <ol class="mdd__lista">${partes.map((p, i) => `<li>${fotoProducto(p, { variante: 'fila', clase: 'foto--mdd' })}<span class="numeral-pill" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}</ol>
-    </div>`;
+      <ol class="mdd__lista" aria-label="Qué incluye el menú del día" tabindex="0">${partes.map((p, i) => `<li><div class="mdd__foto">${fotoProducto(p, { variante: 'grid' })}${aro(i)}</div><span class="mdd__n">${esc(p.nombre)}</span><span class="mdd__d">${ROL[i] ?? ''}</span></li>`).join('')}</ol>
+    </div></div>`;
 }

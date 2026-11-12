@@ -74,12 +74,18 @@ dialog.modal-mod { border-radius: 0; border-width: 0; }
 .mdd__cifra { font: 600 2.5rem/1 var(--font-body); text-transform: none; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .mdd__cifra .precio__mon { font-size: .875rem; margin-right: .4em; }
 .mdd__precio > span:last-child { font-size: .8125rem; color: var(--c-ink-muted); }
-.mdd__lista { border-top: 1px solid var(--c-rule); }
-.mdd__lista li { display: flex; align-items: center; gap: 20px; min-height: 104px; padding: 16px 0; border-bottom: 1px solid var(--c-rule); font: 500 1.25rem/1.25 var(--font-body); }
-.mdd__lista .foto { width: 96px; }
-.numeral-pill { font: 600 .9375rem/1 var(--font-body); }
-@media (min-width: 900px) { .mdd { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); align-items: start; } .mdd__lista { margin-top: var(--sp-2); } }
-@media (max-width: 599px) { .mdd__lista li { gap: 12px; min-height: 88px; font-size: 1.0625rem; } .mdd__lista .foto { width: 80px; } }
+/* Fotos grandes: tres teselas 4:3 con numeral en aro sobre la foto */
+.num-aro { position: absolute; left: 8px; top: 8px; z-index: 2; display: grid; place-items: center; width: 36px; height: 36px; font: 600 .875rem/1 var(--font-body); color: var(--c-ink); background: var(--c-paper); border: 1px solid var(--c-ink); border-radius: 50%; }
+.mdd__lista { display: grid; gap: var(--sp-3); margin: 0; cursor: default; }
+.mdd__lista li { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mdd__foto, .combo__foto { position: relative; }
+.mdd__lista .foto-host, .mdd__foto .foto { width: 100%; }
+.mdd__n { margin-top: 10px; font: 500 1.25rem/1.25 var(--font-body); }
+.mdd__d { font-size: .875rem; color: var(--c-ink-muted); }
+.mdd-wrap { container-type: inline-size; }
+@container (min-width: 600px) { .mdd__lista { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container (max-width: 599px) { .mdd__lista { grid-auto-flow: column; grid-auto-columns: 78%; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: var(--sp-1); } .mdd__lista li { scroll-snap-align: start; } }
+@container (min-width: 1000px) { .mdd { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); align-items: start; } }
 
 .combos-grid { grid-template-columns: 1fr; gap: 0; }
 .combo { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-4) 0; background: none; border: 0; border-top: 1px solid var(--c-rule); border-radius: 0; }
@@ -87,20 +93,22 @@ dialog.modal-mod { border-radius: 0; border-width: 0; }
 .combo:hover { border-color: var(--c-rule); }
 .combo:first-child:hover { border-color: transparent; }
 .combo__head { align-items: baseline; gap: 16px; padding: 0; border: 0; }
-.combo__head h3 { flex: 1; min-width: 0; font: 600 1.375rem/1.2 var(--font-body); letter-spacing: 0; text-transform: none; }
-.combo__price { flex: none; font: 600 1.375rem/1.2 var(--font-body); text-transform: none; font-variant-numeric: tabular-nums; }
+.combo__head h3 { flex: 1; min-width: 0; font: 600 1.5rem/1.2 var(--font-body); letter-spacing: 0; text-transform: none; }
+.combo__price { flex: none; font: 600 1.5rem/1.2 var(--font-body); text-transform: none; font-variant-numeric: tabular-nums; }
 .combo__price .precio__mon { font-size: .75rem; margin-right: .3em; }
-.combo__pasos { display: grid; gap: 12px; margin: 0; }
-.combo__pasos li { display: flex; align-items: center; gap: 12px; font-weight: 500; line-height: 1.3; }
-.combo__pasos .foto { width: 64px; }
-.combo__pasos .numeral-pill { min-width: 28px; height: 28px; padding: 0 4px; font-size: .75rem; }
+.combo__pasos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.combo__pasos li { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.combo__foto .foto { width: 100%; }
+.combo__foto .num-aro { left: 6px; top: 6px; width: 28px; height: 28px; font-size: .75rem; }
+.combo__n { font-size: .9375rem; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.combo__pie .btn { min-height: 44px; }
 .combo__pie { margin-top: auto; padding-top: var(--sp-1); align-items: center; flex-wrap: wrap; }
-.combo__antes { font-size: .8125rem; color: var(--c-ink-muted); }
+.combo__antes { font-size: .875rem; color: var(--c-ink-muted); }
 .combos-nota { margin-top: var(--sp-3); font-size: .8125rem; color: var(--c-ink-muted); }
 .combos-wrap { container-type: inline-size; }
 @container (min-width: 560px) {
   .combos-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .combo { padding-inline: var(--sp-4); }
+  .combo { padding-inline: var(--sp-3); }
   .combo:nth-child(2) { border-top: 0; padding-top: 0; }
   .combo:nth-child(2n+1) { padding-left: 0; }
   .combo:nth-child(2n) { padding-right: 0; border-left: 1px solid var(--c-rule); }
@@ -108,7 +116,7 @@ dialog.modal-mod { border-radius: 0; border-width: 0; }
 @container (min-width: 1000px) {
   .combos-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .combo:nth-child(3) { border-top: 0; padding-top: 0; }
-  .combo:nth-child(n) { padding-inline: var(--sp-4); border-left: 1px solid var(--c-rule); }
+  .combo:nth-child(n) { padding-inline: var(--sp-3); border-left: 1px solid var(--c-rule); }
   .combo:nth-child(3n+1) { padding-left: 0; border-left: 0; }
   .combo:nth-child(3n) { padding-right: 0; }
 }
