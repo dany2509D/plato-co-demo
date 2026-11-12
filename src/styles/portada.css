@@ -21,6 +21,9 @@
   margin: 0; font-size: var(--fs-hero); line-height: .86; letter-spacing: -.02em; color: var(--c-on-dark);
   text-wrap: balance; overflow-wrap: normal;
 }
+/* Escritorio: el titular nunca parte en dos líneas. Con la fuente de respaldo (más ancha) partía y, al llegar Anton,
+   la foto subía 156 px (CLS 0,09): ahora la cabecera mide lo mismo antes y después; el exceso se recorta en horizontal. */
+@media (min-width: 900px) { .c-hero__t { white-space: nowrap; overflow-x: clip; } }
 .c-hero__escena { position: relative; min-height: 0; }
 .c-hero .c-hero__foto { position: absolute; inset: 0; aspect-ratio: auto; background: var(--c-char); }
 /* El espacio negativo de la foto está arriba a la izquierda (fondo negro): ahí va el texto; la hamburguesa queda abajo */
@@ -52,11 +55,11 @@
   .c-hero__cab { padding-block: var(--sp-2) var(--sp-2); }
   .c-hero__eyebrow { font-size: .75rem; margin-bottom: 8px; }
   .c-hero__escena { display: flex; flex-direction: column; }
-  /* Celular: foto → valoración → lead → CTA; los CTA terminan antes de y ≈ 735 a 390×844 (y 712 a 360×780), así el
+  /* Celular: foto → valoración → lead → CTA; los CTA terminan antes de y ≈ 730 a 390×844, así el
      círculo «Presentación» (abajo a la izquierda) cae sobre espacio vacío en el primer viewport */
-  .c-hero .c-hero__foto { position: relative; inset: auto; height: clamp(240px, 70vw, 480px); }
+  .c-hero .c-hero__foto { position: relative; inset: auto; height: clamp(240px, 70vw, 360px); }
   .c-hero__foto img { object-position: 40% 80%; }
-  .c-hero__escena::before { bottom: auto; height: clamp(240px, 70vw, 480px); }
+  .c-hero__escena::before { bottom: auto; height: clamp(240px, 70vw, 360px); }
   .c-hero__sobre { display: block; height: auto; padding-block: 16px var(--sp-5); }
   .c-hero__lead { font-size: 1.0625rem; margin-bottom: var(--sp-2); max-width: 46ch; }
   .c-hero__cta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
