@@ -5,7 +5,7 @@ import { advanceStatus } from '../src/core/orders.js';
 import { isAvailable, setAvailable } from '../src/core/menu.js';
 import {
   STEPS, FRASE_PEDIDO, FRASE_AGOTADO, FRASE_RESERVA, createTour, createContext, falta,
-  pedidoDelTour, elegirAgotado, restaurarAgotado, reiniciarParaTour, marcarAgotado,
+  pedidoDelTour, elegirAgotado, restaurarAgotado, reiniciarParaTour, marcarAgotado, DIRECCION, siguienteAccionPedido,
 } from '../src/core/tour.js';
 
 const mem = () => { let v = null; return { read: () => v, write: (o) => { v = JSON.parse(JSON.stringify(o)); } }; };
@@ -162,5 +162,68 @@ describe('reserva', () => {
     expect(falta('reserva', store.get(), ctx)).toBe(false);
     expect(ctx.reservaId).toMatch(/^res-/);
     expect(store.get().reservas.find((r) => r.id === ctx.reservaId).personas).toBe(4);
+  });
+});
+
+describe('guarda del paso 1 (I12): el pedido del recorrido de verdad existe', () => {
+  // Misma regla que el presentador: pide la siguiente acción y la ejecuta por el chat real.
+  const FRASES = { frase: FRASE_PEDIDO, cancelar: 'cancelar', confirmar: 'Sí, confirmar', direccion: DIRECCION, yappy: 'Yappy' };
+  function conducir(store, bot, ctx) {
+    const hechas = [];
+    for (let i = 0; i < 8; i++) {
+      const a = siguienteAccionPedido(store.get(), ctx);
+      if (a === 'listo' || a === 'detener') { hechas.push(a); break; }
+      hechas.push(a);
+      bot.reply('c-web', FRASES[a]);
+    }
+    return hechas;
+  }
+  it('conversación limpia: frase, confirmar, dirección y Yappy', () => {
+    const { store, bot } = mundo();
+    const ctx = createContext();
+    expect(conducir(store, bot, ctx)).toEqual(['frase', 'confirmar', 'yappy', 'listo']);
+    expect(falta('pedido', store.get(), ctx)).toBe(false);
+  });
+  it('si el presentador escribió "hola" antes, igual se envía la frase del pedido', () => {
+    const { store, bot } = mundo();
+    const ctx = createContext();
+    bot.reply('c-web', 'hola');
+    const acciones = conducir(store, bot, ctx);
+    expect(acciones[0]).toBe('frase');
+    expect(acciones.at(-1)).toBe('listo');
+    expect(falta('pedido', store.get(), ctx)).toBe(false);
+    expect(pedidoDelTour(store.get(), ctx).lineas).toHaveLength(2);
+  });
+  it('si dejó otro pedido a medias, primero cancela y luego envía la frase', () => {
+    const { store, bot } = mundo();
+    const ctx = createContext();
+    bot.reply('c-web', 'Quiero una limonada para Obarrio'); // queda en confirmar
+    const acciones = conducir(store, bot, ctx);
+    expect(acciones.slice(0, 2)).toEqual(['cancelar', 'frase']);
+    expect(acciones.at(-1)).toBe('listo');
+    expect(pedidoDelTour(store.get(), ctx).lineas.map((l) => l.cantidad)).toEqual([2, 1]);
+  });
+  it('si dejó una reserva a medias, también cancela primero', () => {
+    const { store, bot } = mundo();
+    const ctx = createContext();
+    bot.reply('c-web', 'reserva para 2');
+    expect(store.get().conversaciones[0].paso).toBeTruthy();
+    const acciones = conducir(store, bot, ctx);
+    expect(acciones[0]).toBe('cancelar');
+    expect(falta('pedido', store.get(), ctx)).toBe(false);
+  });
+  it('si el flujo termina sin pedido (p. ej. todo agotado) se detiene y el paso no se da por hecho', () => {
+    const { store, bot } = mundo();
+    const ctx = createContext();
+    for (const p of store.get().productos) for (const s of store.get().sucursales) setAvailable(store, p.id, s.id, false);
+    const acciones = conducir(store, bot, ctx);
+    expect(acciones.at(-1)).toBe('detener');
+    expect(falta('pedido', store.get(), ctx)).toBe(true);
+  });
+  it('con el pedido ya hecho no hace nada (idempotente)', () => {
+    const { store, bot } = mundo();
+    const ctx = createContext();
+    conducir(store, bot, ctx);
+    expect(siguienteAccionPedido(store.get(), ctx)).toBe('listo');
   });
 });

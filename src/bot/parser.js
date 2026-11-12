@@ -1,5 +1,5 @@
 import { normalize } from '../core/text.js';
-import { findProducts, isAvailable } from '../core/menu.js';
+import { findProductsScored, isAvailable } from '../core/menu.js';
 
 // Parser de pedidos en texto libre (español de Panamá e inglés).
 // Política de duplicados: la misma línea (mismo producto y mismos modificadores)
@@ -51,24 +51,27 @@ const PALABRAS_EN = {
   ribs: 'costillas', fish: 'pescado', soup: 'sopa', wings: 'alitas', cheese: 'queso', onion: 'cebolla',
   onions: 'cebolla', tomato: 'tomate', tomatoes: 'tomate', sauce: 'salsa', ice: 'hielo', no: 'sin',
   without: 'sin', large: 'grande', big: 'grande', burger: 'hamburguesa', burgers: 'hamburguesa', hamburger: 'hamburguesa', hamburgers: 'hamburguesa',
-  steak: 'churrasco', dessert: 'postre', pork: 'cerdo',
+  steak: 'churrasco', dessert: 'postre', pork: 'cerdo', coke: 'refresco', cokes: 'refresco', cola: 'refresco', colas: 'refresco', coca: 'refresco', cocas: 'refresco',
 };
 // Mismos sinónimos que usa findProducts, para validar contra palabras reales del menú.
 const ALIAS = {
   burger: 'hamburguesa', hamburgesa: 'hamburguesa', pasta: 'espagueti', spaghetti: 'espagueti', spagueti: 'espagueti',
-  gaseosa: 'refresco', soda: 'refresco', camaron: 'camarones', costilla: 'costillas',
+  gaseosa: 'refresco', soda: 'refresco', camaron: 'camarones', costilla: 'costillas', coca: 'refresco', coke: 'refresco', cola: 'refresco',
 };
 
 const RELLENO = new Set(['quiero', 'quisiera', 'quisieramos', 'necesito', 'me', 'das', 'dame', 'ponme', 'pon', 'por', 'favor', 'porfa',
   'hola', 'buenas', 'buenos', 'tardes', 'noches', 'dias', 'gracias', 'orden', 'ordenes', 'porcion', 'pedido', 'tambien', 'agrega',
   'agregar', 'para', 'i', 'id', "i'd", 'want', 'would', 'like', 'please', 'can', 'could', 'have', 'get', 'give', 'a', 'an', 'the',
-  'also', 'add', 'order', 'of', 'to', 'for', 'mas', 'tengo', 'hello', 'hi', 'thanks', 'quiere', 'regala', 'regalas', 'regalame', 'colabora', 'colaboras', 'da', 'dar', 'pido', 'queria', 'gustaria', 'ordenar', 'pedir']);
+  'also', 'add', 'order', 'of', 'to', 'for', 'mas', 'tengo', 'hello', 'hi', 'thanks', 'quiere', 'regala', 'regalas', 'regalame', 'colabora', 'colaboras', 'da', 'dar', 'pido', 'queria', 'gustaria', 'ordenar', 'pedir', 'agregale', 'agregales', 'agregame', 'adiciona', 'anade', 'anademe']);
 const FUNCIONALES = new Set(['de', 'la', 'el', 'los', 'las', 'del', 'con', 'al']);
 const MODS_TERMINO = [
   [/\btermino medio\b|\bmedio\b|\bmedium\b/g, 'término medio'],
   [/\btres cuartos\b/g, 'término tres cuartos'],
   [/\bbien cocid[oa]\b/g, 'término bien cocido'],
 ];
+
+// Lectura segura de un objeto con palabras del usuario: "constructor" o "__proto__" no son claves.
+const own = (obj, k) => (Object.hasOwn(obj, k) ? obj[k] : undefined);
 
 // Singular simple: quita una "s" final (clásicas -> clasica, papas -> papa).
 const uno = (w) => (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w);
@@ -107,7 +110,7 @@ function sinConector(f) {
 function traducir(t) {
   let s = ` ${t} `;
   for (const [a, b] of FRASES_EN) s = s.split(` ${a} `).join(` ${b} `);
-  return s.trim().split(' ').map((w) => PALABRAS_EN[w] ?? PALABRAS_EN[uno(w)] ?? w).join(' ');
+  return s.trim().split(' ').map((w) => own(PALABRAS_EN, w) ?? own(PALABRAS_EN, uno(w)) ?? w).join(' ');
 }
 
 // Marcadores de destino/entrega: lo que sigue no es parte del pedido ("para Obarrio").
@@ -144,30 +147,48 @@ function parseFragmento(frag, ingred) {
   const nombre = [];
   for (const w of t.split(' ').filter(Boolean)) {
     const m = /^x?(-?\d+(?:[.,]\d+)?)x?$/.exec(w);
-    if (cantidad === null && (m || w in NUMEROS)) cantidad = m ? Number(m[1].replace(',', '.')) : NUMEROS[w];
+    if (cantidad === null && (m || own(NUMEROS, w) !== undefined)) cantidad = m ? Number(m[1].replace(',', '.')) : own(NUMEROS, w);
     else if (!RELLENO.has(w)) nombre.push(w);
   }
   const invalida = cantidad !== null && (!Number.isInteger(cantidad) || cantidad < MIN_CANT || cantidad > MAX_CANT);
   return { nombre, conCantidad: cantidad !== null, cantidad: cantidad ?? 1, invalida, termino, agrandar, sin };
 }
 
+// Devuelve { p } si hay un producto claro, { ambiguo: [nombres] } si varios calzan igual de bien
+// ("helado": Té helado, Helado de vainilla, Brownie con helado) o null.
 // findProducts busca por subcadena: cada palabra de la consulta debe además ser una
 // palabra COMPLETA del producto (así "te" no acepta "hamburguesa") y al menos una del nombre.
 function buscar(state, palabras, sucursalId) {
   const q = palabras.map(uno).filter((w) => w.length > 1); // una letra suelta ("y") nunca identifica un producto
   if (!q.length) return null;
-  for (const p of findProducts(state, q.join(' '), sucursalId)) {
-    const nom = new Set(normalize(p.nombre).split(' ').map(uno));
-    const todo = new Set([...nom, ...normalize(p.categoria).split(' ').map(uno)]);
-    const en = (set, w) => set.has(w) || set.has(ALIAS[w] ?? '\0');
-    if (q.every((w) => en(todo, w)) && q.some((w) => en(nom, w))) return p;
+  const validos = [];
+  for (const r of findProductsScored(state, q.join(' '), sucursalId)) {
+    const nom = new Set(normalize(r.p.nombre).split(' ').map(uno));
+    const todo = new Set([...nom, ...normalize(r.p.categoria).split(' ').map(uno)]);
+    const en = (set, w) => set.has(w) || set.has(own(ALIAS, w) ?? '\0');
+    if (q.every((w) => en(todo, w)) && q.some((w) => en(nom, w))) validos.push(r);
   }
-  return null;
+  if (!validos.length) return null;
+  const mejor = Math.max(...validos.map((r) => r.clase));
+  const empatados = validos.filter((r) => r.clase === mejor);
+  if (empatados.length > 1) {
+    // Una categoría pedida por su nombre ("una hamburguesa") toma el primer plato del menú de esa categoría;
+    // en cualquier otro empate ("un helado": té, postre y brownie) se pregunta cuál.
+    const cat = new Set(normalize(empatados[0].p.categoria).split(' ').map(uno));
+    const mismaCategoria = empatados.every((r) => r.p.categoria === empatados[0].p.categoria);
+    if (mismaCategoria && q.every((w) => cat.has(w))) return { p: empatados[0].p };
+    return { ambiguo: empatados.map((r) => r.p.nombre) };
+  }
+  return { p: empatados[0].p };
 }
 
 export function parseOrder(texto, state, sucursalId) {
-  const res = { lineas: [], agotados: [], desconocidos: [] };
-  const norm = normalize(texto).replace(/[!?¡¿."]/g, ' ').replace(/\s+/g, ' ').trim();
+  const res = { lineas: [], agotados: [], desconocidos: [], ambiguos: [], invalidas: [] };
+  const norm = normalize(texto)
+    .replace(/(\d),(\d)/g, '$1.$2') // coma decimal: «1,5» es un número, no dos fragmentos
+    .replace(/(?<=[a-z])-(?=[a-z])/g, ' ') // «coca-cola»
+    .replace(/[!?¡¿"]/g, ' ').replace(/(?<!\d)\.|\.(?!\d)/g, ' ')
+    .replace(/\s+/g, ' ').trim();
   if (!norm) return res;
   const ingred = ingredientesSin(state);
   const fragmentos = proteger(norm, state)
@@ -200,13 +221,20 @@ export function parseOrder(texto, state, sucursalId) {
       }
       continue;
     }
-    let p = buscar(state, nombre, sucursalId) ?? buscar(state, nombre.filter((w) => !FUNCIONALES.has(w)), sucursalId);
+    let hallado = buscar(state, nombre, sucursalId) ?? buscar(state, nombre.filter((w) => !FUNCIONALES.has(w)), sucursalId);
     // con cantidad explícita se toleran palabras desconocidas al inicio o al final
-    for (let i = 1; !p && f.conCantidad && i < nombre.length; i++) {
-      p = buscar(state, nombre.slice(i), sucursalId) ?? buscar(state, nombre.slice(0, nombre.length - i), sucursalId);
+    for (let i = 1; !hallado && f.conCantidad && i < nombre.length; i++) {
+      hallado = buscar(state, nombre.slice(i), sucursalId) ?? buscar(state, nombre.slice(0, nombre.length - i), sucursalId);
     }
+    if (hallado?.ambiguo && !f.invalida) {
+      res.ambiguos.push({ frag, termino: nombre.join(' '), opciones: hallado.ambiguo });
+      ultima = null;
+      continue;
+    }
+    const p = hallado?.p;
     if (!p || f.invalida) {
       res.desconocidos.push(frag);
+      if (p && f.invalida) res.invalidas.push({ frag, motivo: Number.isInteger(f.cantidad) ? 'rango' : 'entera' });
       ultima = null;
       continue;
     }

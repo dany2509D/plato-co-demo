@@ -20,36 +20,67 @@ export const ALERGENO_CUE = (n) => /alerg|allerg/.test(n) || (CUE.test(n) && ALE
 
 export const palabras = (s) => normalize(s).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter((w) => w.length > 3).map((w) => (w.endsWith('s') ? w.slice(0, -1) : w));
 
-// Producto mencionado en el texto: coincidencia completa del nombre; si no, un único candidato parcial.
-export function findProduct(state, n) {
-  const tw = new Set(palabras(n));
-  let completos = [];
-  const parciales = [];
-  for (const p of state.productos) {
-    const nw = palabras(p.nombre);
-    const hits = nw.filter((w) => tw.has(w)).length;
-    if (!hits) continue;
-    if (hits === nw.length) completos.push({ p, len: nw.length });
-    else parciales.push({ p, hits });
+// Inglés -> palabras del menú (los nombres de los platos están en español).
+const TRAD_EN = [['iced tea', 'te helado'], ['ice cream', 'helado'], ['french fries', 'papas fritas'], ['onion rings', 'aros de cebolla'],
+  ['burger', 'hamburguesa'], ['caesar', 'cesar'], ['salad', 'ensalada'], ['steak', 'churrasco'], ['shrimp', 'camarones'], ['ribs', 'costillas'],
+  ['fries', 'papas'], ['lemonade', 'limonada'], ['soda', 'refresco'], ['coke', 'refresco'], ['juice', 'jugo'], ['coffee', 'cafe']];
+const STOP = new Set(['de', 'la', 'el', 'los', 'las', 'con', 'al', 'del', 'a', 'y', 'en']);
+// Ingredientes que aparecen en varios nombres: no cuentan como "otro plato" cuando ya se identificó uno.
+const INGREDIENTE = new Set(['queso', 'salsa', 'tomate', 'cebolla', 'pollo', 'arroz', 'carne', 'huevo', 'leche']);
+const sing = (w) => (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w);
+const tokens = (s) => normalize(s).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter(Boolean).map(sing);
+const traducir = (n) => TRAD_EN.reduce((t, [a, b]) => t.replace(new RegExp(String.raw`\b${a}s?\b`, 'g'), b), ` ${n} `);
+const palabrasNombre = (p) => tokens(p.nombre).filter((w) => !STOP.has(w));
+
+// Productos mencionados en el texto, sin elegir "por parecido":
+//  - completo: TODAS las palabras del nombre están en el texto ("té helado" necesita «té» y «helado»);
+//  - único: el texto trae una palabra (de más de 3 letras) que solo existe en un nombre ("churrasco", "cheesecake");
+//  - si una palabra del texto calza con varios platos y ninguno quedó identificado por lo anterior, es ambiguo
+//    ("helado": té helado, helado de vainilla, brownie con helado) y se pregunta cuál.
+export function identificarProductos(state, n) {
+  const tw = new Set(tokens(traducir(n)));
+  const info = state.productos.map((p) => ({ p, ws: palabrasNombre(p) }));
+  const frecuencia = new Map();
+  for (const { ws } of info) for (const w of new Set(ws)) frecuencia.set(w, (frecuencia.get(w) ?? 0) + 1);
+
+  let hallados = info.filter(({ ws }) => ws.length && ws.every((w) => tw.has(w)));
+  // un nombre cuyas palabras están contenidas en las de otro hallado (p. ej. «helado» dentro de «brownie con helado») no cuenta
+  hallados = hallados.filter((a) => !hallados.some((b) => b !== a && b.ws.length > a.ws.length && a.ws.every((w) => b.ws.includes(w))));
+  for (const x of info) {
+    if (hallados.includes(x)) continue;
+    if (x.ws.some((w) => w.length > 3 && tw.has(w) && frecuencia.get(w) === 1)) hallados.push(x);
   }
-  if (completos.length) return completos.sort((a, b) => b.len - a.len)[0].p;
-  if (parciales.length) {
-    const max = Math.max(...parciales.map((x) => x.hits));
-    const mejores = parciales.filter((x) => x.hits === max);
-    if (mejores.length === 1) return mejores[0].p;
+  const usadas = new Set(hallados.flatMap((x) => x.ws));
+  const ambiguos = [];
+  const vistos = new Set();
+  for (const w of tw) {
+    if (w.length <= 3 || usadas.has(w) || (frecuencia.get(w) ?? 0) < 2) continue;
+    if (hallados.length && INGREDIENTE.has(w)) continue;
+    const grupo = info.filter((x) => x.ws.includes(w)).map((x) => x.p.nombre);
+    const clave = grupo.join('|');
+    if (!vistos.has(clave)) { vistos.add(clave); ambiguos.push(grupo); }
   }
-  return null;
+  return { productos: hallados.map((x) => x.p), ambiguos };
 }
 
 export function allergenReply(T, state, n) {
   const et = (k) => T.etiquetas?.[k] ?? k;
   const noConfirma = { handoff: true, texto: T.alergenoNoConfirma };
-  const p = findProduct(state, n);
-  if (!p || p.alergenosDeclarados !== true || DESCONOCIDO.test(n)) return noConfirma;
+  const { productos, ambiguos } = identificarProductos(state, n);
+  if (DESCONOCIDO.test(n) || (!productos.length && !ambiguos.length)) return noConfirma;
   const pedidos = ALERGENOS.filter((a) => a.re.test(n));
-  if (!pedidos.length) {
-    return { handoff: false, texto: p.alergenos.length ? T.alergenoListado(p.nombre, p.alergenos.map(et).join(', ')) : T.alergenoSinListado(p.nombre) };
+  const partes = [];
+  let handoff = false;
+  for (const p of productos) {
+    if (p.alergenosDeclarados !== true) {
+      handoff = true;
+      partes.push(productos.length === 1 && !ambiguos.length ? T.alergenoNoConfirma : T.alergenoProductoNoDeclarado(p.nombre));
+    } else if (!pedidos.length) {
+      partes.push(p.alergenos.length ? T.alergenoListado(p.nombre, p.alergenos.map(et).join(', ')) : T.alergenoSinListado(p.nombre));
+    } else {
+      partes.push(...pedidos.map((a) => (p.alergenos.includes(a.k) ? T.alergenoCon(p.nombre, et(a.k)) : T.alergenoNoLista(p.nombre, et(a.k)))));
+    }
   }
-  const texto = pedidos.map((a) => (p.alergenos.includes(a.k) ? T.alergenoCon(p.nombre, et(a.k)) : T.alergenoNoLista(p.nombre, et(a.k)))).join('\n');
-  return { handoff: false, texto };
+  for (const g of ambiguos) partes.push(T.alergenoCual(g));
+  return { handoff, texto: partes.join('\n') };
 }

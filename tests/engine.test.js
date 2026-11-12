@@ -530,10 +530,10 @@ describe('ronda 1: basura con signo de pregunta e inglés', () => {
 });
 
 describe('ronda 2: conector "y" y dirección', () => {
-  it('"y una coca" no cambia el pedido en la confirmación', () => {
+  it('"y una pepsi" no cambia el pedido en la confirmación', () => {
     say('Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio');
     const antes = JSON.stringify(conv().slots.lineas);
-    const out = txt(say('y una coca'));
+    const out = txt(say('y una pepsi'));
     expect(JSON.stringify(conv().slots.lineas)).toBe(antes);
     expect(out).toMatch(/coca/i);
     expect(out).toMatch(/agrega una coca/i);
@@ -542,8 +542,8 @@ describe('ronda 2: conector "y" y dirección', () => {
     expect(JSON.stringify(conv().slots.lineas)).toBe(antes);
   });
 
-  it('"y una coca" como primer mensaje no inicia nada', () => {
-    const out = txt(say('y una coca'));
+  it('"y una pepsi" como primer mensaje no inicia nada', () => {
+    const out = txt(say('y una pepsi'));
     expect(conv().paso ?? null).toBeNull();
     expect(out).not.toMatch(/Bowl/);
     expect(store.get().pedidos.some((p) => p.conversacionId === 'c1')).toBe(false);

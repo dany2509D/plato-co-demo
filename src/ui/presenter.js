@@ -5,7 +5,7 @@ import { parseRoute } from './router.js';
 import {
   CONV, FRASE_PEDIDO, FRASE_AGOTADO, FRASE_RESERVA, DIRECCION, URL_DIAGNOSTICO,
   createTour, createContext, falta, pedidoDelTour, reservaDelTour, elegirAgotado, registrarAgotado,
-  restaurarAgotado, reiniciarParaTour,
+  restaurarAgotado, reiniciarParaTour, siguienteAccionPedido,
 } from '../core/tour.js';
 
 // Modo Presentación (DOM): barra flotante, resaltado, escritura animada y automatización de cada paso.
@@ -249,15 +249,16 @@ function crearSesion() {
   async function hacerPedido() {
     await ir('#/chat');
     await esperarEl('.tel-texto');
-    for (let i = 0; i < 8 && falta('pedido', store.get(), ctx); i++) {
-      const msgs = conv()?.mensajes ?? [];
-      const clientes = msgs.filter((m) => m.de === 'cliente');
-      const ult = [...msgs].reverse().find((m) => m.de === 'bot');
-      if (!clientes.length) await enviarTexto(FRASE_PEDIDO);
-      else if (ult?.botones?.includes('Sí, confirmar')) await tocarRapido('Sí, confirmar');
-      else if (!clientes.some((m) => m.texto === DIRECCION) && /direcci/i.test(ult?.texto ?? '')) await enviarTexto(DIRECCION);
-      else if (ult?.botones?.includes('Yappy')) await tocarRapido('Yappy');
-      else break;
+    // La decisión sale de lo que hay de verdad en el chat (core/tour.js): si el presentador escribió algo
+    // antes, se cancela el flujo a medias y se envía la frase del pedido.
+    for (let i = 0; i < 8; i++) {
+      const accion = siguienteAccionPedido(store.get(), ctx);
+      if (accion === 'listo' || accion === 'detener') break;
+      if (accion === 'frase') await enviarTexto(FRASE_PEDIDO);
+      else if (accion === 'cancelar') await enviarTexto('cancelar');
+      else if (accion === 'confirmar') await tocarRapido('Sí, confirmar');
+      else if (accion === 'direccion') await enviarTexto(DIRECCION);
+      else if (accion === 'yappy') await tocarRapido('Yappy');
     }
     const p = pedidoDelTour(store.get(), ctx);
     if (p) fijarSucursal(p.sucursalId);
@@ -295,6 +296,12 @@ function crearSesion() {
     }
   }
 
+  // Si quedó un flujo a medias en el chat (algo que escribió el presentador), se cancela antes de seguir el guion.
+  async function limpiarChat() {
+    if (!conv()?.paso) return;
+    await enviarTexto('cancelar');
+  }
+
   async function hacerAgotado() {
     const suc = ctx.sucursalId ?? store.get().ui.sucursalAdmin;
     ctx.sucursalId = suc;
@@ -313,6 +320,7 @@ function crearSesion() {
     if (falta('pedirAgotado', store.get(), ctx)) {
       await ir('#/chat');
       await esperarEl('.tel-texto');
+      await limpiarChat();
       await enviarTexto(FRASE_AGOTADO);
       ctx.agotadoPedido = true;
       await esperar(1500);
@@ -323,6 +331,7 @@ function crearSesion() {
     if (falta('reserva', store.get(), ctx)) {
       await ir('#/chat');
       await esperarEl('.tel-texto');
+      await limpiarChat();
       await enviarTexto(FRASE_RESERVA);
       await esperar(1200);
     }
@@ -424,7 +433,19 @@ function crearSesion() {
     const accion = ACCIONES[tour.step.id];
     if (!accion || corriendo) return;
     const id = tour.step.id;
-    correr(accion, { alTerminar: () => { tour.marcar(id); pintar(); } });
+    // El paso solo se da por hecho si su resultado de verdad existe (no basta con que la acción haya terminado).
+    const completo = {
+      pedido: () => !falta('pedido', store.get(), ctx),
+      cocina: () => !falta('pedido', store.get(), ctx) && !falta('avanzar', store.get(), ctx),
+      agotado: () => !falta('marcarAgotado', store.get(), ctx) && !falta('pedirAgotado', store.get(), ctx),
+      reserva: () => !falta('reserva', store.get(), ctx),
+    }[id];
+    correr(accion, {
+      alTerminar: () => {
+        if (completo && !completo()) { avisar('No se pudo completar este paso solo. Puede seguir a mano: pulse «Siguiente».', 0); return; }
+        tour.marcar(id); pintar();
+      },
+    });
   }
   function pausar() {
     if (!corriendo) return;

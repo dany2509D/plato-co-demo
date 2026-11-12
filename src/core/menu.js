@@ -15,9 +15,17 @@ const SINONIMOS = {
   ensaladas: 'ensalada',
   camaron: 'camarones',
   costilla: 'costillas',
+  coca: 'refresco',
+  cocas: 'refresco',
+  coke: 'refresco',
+  cokes: 'refresco',
+  cola: 'refresco',
+  colas: 'refresco',
 };
 
-const palabras = (t) => normalize(t).split(' ').filter(Boolean).map((w) => SINONIMOS[w] ?? w);
+// Búsqueda segura en un objeto con texto del usuario: "constructor" o "__proto__" no son claves.
+const propio = (obj, k) => (Object.hasOwn(obj, k) ? obj[k] : undefined);
+const palabras = (t) => normalize(t).split(' ').filter(Boolean).map((w) => propio(SINONIMOS, w) ?? w);
 
 export function isAvailable(state, productoId, sucursalId) {
   const p = state.productos.find((x) => x.id === productoId);
@@ -41,8 +49,9 @@ export function setPrice(store, productoId, precio) {
   });
 }
 
-// Devuelve coincidencias aunque estén agotadas: el bot necesita encontrarlas para rechazarlas.
-export function findProducts(state, texto, sucursalId) {
+// Coincidencias con su clase de calce (3 nombre exacto, 2 el nombre contiene la consulta, 1 otro) y puntaje
+// (la clase más 0,5 si está disponible). Incluye las agotadas: el bot necesita encontrarlas para rechazarlas.
+export function findProductsScored(state, texto, sucursalId) {
   const q = palabras(texto);
   if (!q.length) return [];
   const qJoin = q.join(' ');
@@ -51,11 +60,14 @@ export function findProducts(state, texto, sucursalId) {
     const nombre = normalize(p.nombre);
     const campo = `${nombre} ${normalize(p.categoria)}`;
     if (!q.every((w) => campo.includes(w))) continue;
-    let score = nombre === qJoin ? 3 : nombre.includes(qJoin) ? 2 : 1;
-    if (isAvailable(state, p.id, sucursalId)) score += 0.5;
-    res.push({ p, score });
+    const clase = nombre === qJoin ? 3 : nombre.includes(qJoin) ? 2 : 1;
+    res.push({ p, clase, score: clase + (isAvailable(state, p.id, sucursalId) ? 0.5 : 0) });
   }
-  return res.sort((a, b) => b.score - a.score).map((r) => r.p);
+  return res.sort((a, b) => b.score - a.score);
+}
+
+export function findProducts(state, texto, sucursalId) {
+  return findProductsScored(state, texto, sucursalId).map((r) => r.p);
 }
 
 export function alternativesFor(state, productoId, sucursalId) {

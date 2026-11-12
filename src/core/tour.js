@@ -106,6 +106,27 @@ export function reservaDelTour(state, ctx) {
   return r ?? null;
 }
 
+// Siguiente acción del paso 1 («Hacer el pedido por mí») según lo que de verdad hay en el chat:
+//  'listo'    el pedido del recorrido ya existe;
+//  'cancelar' hay un flujo a medias que no es el del recorrido (otro pedido, una reserva, etc.): se empieza de cero;
+//  'frase' | 'confirmar' | 'direccion' | 'yappy'   el siguiente mensaje o toque del guion;
+//  'detener'  el guion ya se envió y no se puede avanzar (p. ej. todo agotado): el paso NO debe darse por hecho.
+export function siguienteAccionPedido(state, ctx) {
+  if (!falta('pedido', state, ctx)) return 'listo';
+  const conv = state.conversaciones.find((c) => c.id === CONV);
+  const msgs = conv?.mensajes ?? [];
+  let ini = 0;
+  msgs.forEach((m, i) => { if (m.de === 'cliente' && /^\s*cancelar\s*$/i.test(m.texto)) ini = i + 1; });
+  const tramo = msgs.slice(ini); // lo escrito después del último «cancelar»
+  const paso = conv?.paso ?? null;
+  if (!tramo.some((m) => m.de === 'cliente' && m.texto === FRASE_PEDIDO)) return paso ? 'cancelar' : 'frase';
+  const ult = [...tramo].reverse().find((m) => m.de === 'bot');
+  if (paso === 'confirmar' && ult?.botones?.includes('Sí, confirmar')) return 'confirmar';
+  if (paso === 'direccion' && !tramo.some((m) => m.de === 'cliente' && m.texto === DIRECCION)) return 'direccion';
+  if (paso === 'pago' && ult?.botones?.includes('Yappy')) return 'yappy';
+  return 'detener';
+}
+
 // ¿Falta hacer esta acción? Es la guarda que vuelve idempotentes los pasos.
 export function falta(accion, state, ctx) {
   switch (accion) {

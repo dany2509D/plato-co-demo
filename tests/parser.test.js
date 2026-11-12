@@ -214,13 +214,13 @@ describe('parseOrder', () => {
 
 describe('conector "y" suelto', () => {
   const bowl = () => id('Bowl de pollo y arroz');
-  it.each(['y una coca', 'y una pizza', 'y 2 pepsi', 'y', 'and', 'también una coca', 'also a pizza'])('"%s" no agrega ningún producto', (t) => {
+  it.each(['y una pizza', 'y 2 pepsi', 'y', 'and', 'también una pepsi', 'also a pizza'])('"%s" no agrega ningún producto', (t) => {
     expect(parse(t).lineas).toEqual([]);
   });
   it('un producto desconocido tras "y" va a desconocidos', () => {
-    const r = parse('y una coca');
+    const r = parse('y una pepsi');
     expect(r.lineas).toEqual([]);
-    expect(r.desconocidos.join(' ')).toContain('coca');
+    expect(r.desconocidos.join(' ')).toContain('pepsi');
   });
   it('conector al final no pierde el producto', () => {
     expect(parse('una limonada y').lineas.map((l) => l.productoId)).toEqual([id('Limonada')]);
@@ -231,5 +231,55 @@ describe('conector "y" suelto', () => {
   it('los nombres con " y " siguen funcionando', () => {
     expect(parse('quiero un bowl de pollo y arroz').lineas.map((l) => l.productoId)).toEqual([bowl()]);
     expect(parse('un bowl de pollo y una limonada').lineas.map((l) => l.productoId)).toEqual([id('Bowl de pollo y arroz'), id('Limonada')]);
+  });
+});
+
+describe('sinónimos de refresco (I11)', () => {
+  it.each([['agrega una coca', 1], ['add a coke', 1], ['dame 2 cocas', 2], ['una cola', 1], ['2 colas', 2], ['y una coca', 1], ['una coca-cola', 1], ['a soda', 1]])('"%s" -> Refresco x%i', (t, q) => {
+    expect(parse(t).lineas).toEqual([{ productoId: id('Refresco'), cantidad: q, modificadores: [] }]);
+  });
+});
+
+describe('palabras que son propiedades de Object (M1)', () => {
+  it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf', 'isPrototypeOf'])('"%s" es desconocido y no rompe', (w) => {
+    for (const t of [`quiero 2 ${w}`, `${w}`, `una limonada y ${w}`, `2 ${w} sin ${w}`, `${w} ${w}`]) {
+      const r = parse(t);
+      expect(() => JSON.stringify(r)).not.toThrow();
+      for (const l of r.lineas) expect(typeof l.cantidad).toBe('number');
+      expect(r.lineas.every((l) => l.productoId === id('Limonada'))).toBe(true);
+    }
+    expect(parse(`${w} ${w}`).lineas).toEqual([]);
+  });
+});
+
+describe('ambigüedad, enteros y límites (M9)', () => {
+  it('"quiero un helado" no elige: lista las opciones', () => {
+    const r = parse('quiero un helado');
+    expect(r.lineas).toEqual([]);
+    expect(r.ambiguos).toHaveLength(1);
+    expect(r.ambiguos[0].opciones.sort()).toEqual(['Brownie con helado', 'Helado de vainilla', 'Té helado']);
+  });
+  it('nombres completos o exactos no son ambiguos', () => {
+    expect(parse('un helado de vainilla').lineas[0].productoId).toBe(id('Helado de vainilla'));
+    expect(parse('un te helado').lineas[0].productoId).toBe(id('Té helado'));
+    expect(parse('un brownie').lineas[0].productoId).toBe(id('Brownie con helado'));
+    expect(parse('una hamburguesa clásica').ambiguos).toEqual([]);
+  });
+  it('"1.5 limonadas" y "1,5 limonadas" son cantidades no enteras', () => {
+    for (const t of ['1.5 limonadas', '1,5 limonadas']) {
+      const r = parse(t);
+      expect(r.lineas, t).toEqual([]);
+      expect(r.invalidas, t).toEqual([expect.objectContaining({ motivo: 'entera' })]);
+    }
+  });
+  it('"25 limonadas" y "0 limonadas" son fuera de rango', () => {
+    for (const t of ['25 limonadas', '0 limonadas']) {
+      expect(parse(t).invalidas, t).toEqual([expect.objectContaining({ motivo: 'rango' })]);
+    }
+  });
+  it('un decimal en medio de otra frase no corrompe el resto', () => {
+    const r = parse('2 limonadas y 1.5 hamburguesas clásicas');
+    expect(r.lineas).toEqual([{ productoId: id('Limonada'), cantidad: 2, modificadores: [] }]);
+    expect(r.invalidas).toHaveLength(1);
   });
 });
