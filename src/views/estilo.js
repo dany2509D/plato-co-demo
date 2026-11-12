@@ -5,6 +5,7 @@ import { productCardHTML, miniProducto } from '../ui/product-card.js';
 import { combosHTML, menuDelDiaHTML } from '../ui/combos.js';
 import { fotoEscena } from '../ui/photo.js';
 import { buildSeed } from '../data/seed.js';
+import { seccionMomentos } from './estilo-momentos.js'; // bloque M
 
 // Guía de estilo viva (#/estilo): pinta cada token y componente con los estilos reales.
 // Los contrastes se calculan en el navegador a partir de las variables CSS actuales.
@@ -223,5 +224,6 @@ export function vistaEstilo(main) {
     e.preventDefault();
     main.querySelector('#' + a.dataset.ir)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
+  seccionMomentos(main); // ---- bloque M: «Momentos de marca» (no editar aquí; ver estilo-momentos.js) ----
   return null;
 }
