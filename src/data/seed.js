@@ -1,5 +1,7 @@
 import { brand } from '../config/brand.js';
 import { ESTADOS } from '../core/estados.js';
+import { priceOrder } from '../core/orders.js';
+import { availableTables } from '../core/reservations.js';
 
 // Generador pseudoaleatorio determinista (mulberry32) con semilla fija.
 function crearPrng(semilla) {
@@ -127,6 +129,7 @@ export function buildSeed(now) {
     const c = PATRON[(Math.floor(k / n) + (k % n)) % PATRON.length];
     return c === 'v' ? entero(1, 9) : c === 'a' ? entero(10, 19) : entero(21, 35);
   };
+  const seedId = `s${Math.floor(now.getTime() / 1000).toString(36)}`;
   const pedidos = plan.map((estado, i) => {
     const activo = estado !== 'Entregado';
     const k = activo ? activos++ : 0;
@@ -153,6 +156,8 @@ export function buildSeed(now) {
       lineas, tipo, estado, historial,
       pago: { metodo: rnd() < 0.6 ? 'tarjeta' : 'efectivo', estado: estado === 'Entregado' ? 'pagado' : 'pendiente' },
       creadoEn: new Date(creado).toISOString(),
+      ...priceOrder({ productos }, lineas), // totales guardados: un cambio de precio no re-cotiza pedidos viejos
+      seedId,
     };
     if (tipo === 'entrega') {
       pedido.direccion = `${elegir(CALLES)}, casa ${entero(1, 99)}, ${elegir(sucursal.zonasEntrega)}`;
@@ -161,29 +166,53 @@ export function buildSeed(now) {
   });
   pedidos.sort((a, b) => Date.parse(b.creadoEn) - Date.parse(a.creadoEn)); // más recientes primero
 
-  const reservas = Array.from({ length: 15 }, (_, i) => {
+  // Facturas SIMULADAS de los pedidos entregados (numeradas de la más antigua a la más reciente).
+  let nFactura = 0;
+  for (const p of [...pedidos].reverse()) {
+    if (p.estado !== 'Entregado') continue;
+    nFactura++;
+    const id = `fac-${String(nFactura).padStart(4, '0')}`;
+    const base = `${p.id}${Date.parse(p.historial.at(-1).en).toString(16)}`.replace(/[^a-z0-9]/gi, '').toUpperCase();
+    p.facturaId = id;
+    p.factura = { id, cufe: `SIMULADO-${base}-NO-VALIDO-FISCALMENTE`, simulada: true, emitidaEn: p.historial.at(-1).en };
+  }
+
+  const reservas = [];
+  for (let i = 0; i < 15; i++) {
     const sucursal = sucursales[i % 3];
     const personas = elegir([2, 2, 3, 4, 4, 5, 6, 8]);
-    const mesa = sucursal.mesas.find((m) => m.capacidad >= personas);
     const hAbre = Number(sucursal.horario.abre.split(':')[0]);
     const hCierra = Number(sucursal.horario.cierra.split(':')[0]);
-    const hora = entero(Math.max(hAbre, 12), hCierra - 2);
-    const confirmada = i % 5 !== 4;
-    return {
+    const hora0 = entero(Math.max(hAbre, 12), hCierra - 2);
+    const minutos = elegir(['00', '30']);
+    const ocasion = elegir(OCASIONES);
+    const fecha = fechaPanama(ahora + Math.floor(i / 5) * 86400000);
+    let hora = `${String(hora0).padStart(2, '0')}:${minutos}`;
+    let confirmada = i % 5 !== 4;
+    let mesa = null;
+    if (confirmada) {
+      // misma lógica de disponibilidad que las reservas reales: sin dobles reservas de una mesa
+      const estado = { sucursales, reservas };
+      const hMin = Math.max(hAbre, 12), hMax = hCierra - 2, n = hMax - hMin + 1;
+      for (let k = 0; k < n && !mesa; k++) {
+        const cand = `${String(hMin + ((hora0 - hMin + k) % n)).padStart(2, '0')}:${minutos}`;
+        mesa = availableTables(estado, sucursal.id, fecha, cand, personas)[0] ?? null;
+        if (mesa) hora = cand;
+      }
+      if (!mesa) confirmada = false; // sin mesa para ese grupo: queda pendiente de asignar
+    }
+    reservas.push({
       id: `res-${String(i + 1).padStart(2, '0')}`,
       sucursalId: sucursal.id,
-      fecha: fechaPanama(ahora + Math.floor(i / 5) * 86400000),
-      hora: `${String(hora).padStart(2, '0')}:${elegir(['00', '30'])}`,
-      personas,
-      ocasion: elegir(OCASIONES),
-      ...(confirmada && mesa ? { mesaId: mesa.id } : {}),
+      fecha, hora, personas, ocasion,
+      ...(mesa ? { mesaId: mesa.id } : {}),
       estado: confirmada ? 'confirmada' : 'pendiente',
-    };
-  });
+    });
+  }
 
   return {
     sucursales, productos, combos, pedidos, reservas, conversaciones: [],
     ui: { sucursalAdmin: sucursales[0].id, sucursalCliente: sucursales[0].id, carrito: [], iaReal: false },
-    seedDia: fechaPanama(ahora), seedEn: new Date(ahora).toISOString(), // para detectar datos de otro día
+    seedId, seedDia: fechaPanama(ahora), seedEn: new Date(ahora).toISOString(), // para detectar datos de otro día
   };
 }

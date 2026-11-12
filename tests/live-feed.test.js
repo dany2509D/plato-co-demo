@@ -13,6 +13,20 @@ const pedido = (s, extra = {}) => ({
   historial: [{ estado: 'Recibido', en: '2026-11-11T20:00:00Z' }], creadoEn: '2026-11-11T20:00:00Z', conversacionId: 'c-web', ...extra,
 });
 
+describe('construirFeed: totales guardados (I9)', () => {
+  it('un cambio de precio no re-cotiza el total mostrado de un pedido existente', () => {
+    const s = base();
+    s.pedidos = [pedido(s, { total: 7.49 })];
+    s.productos[0].precio = 99;
+    expect(construirFeed(s)[0].detalle).toContain('Total US$ 7.49');
+  });
+  it('sin total guardado (pedido viejo) cae al cálculo con precios actuales', () => {
+    const s = base();
+    s.pedidos = [pedido(s)];
+    expect(construirFeed(s)[0].detalle).toMatch(/Total US\$ \d+\.\d{2}/);
+  });
+});
+
 describe('construirFeed', () => {
   it('vacío sin actividad del chat', () => {
     const s = base();

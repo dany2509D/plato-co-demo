@@ -24,11 +24,19 @@ describe('metrics', () => {
     const suma = s.pedidos.reduce((a, p) => a + priceOrder(s, p.lineas).total, 0);
     expect(metrics(s, 'todas').ticketPromedio).toBe(r2(suma / s.pedidos.length));
   });
-  it('ignora p.total y usa priceOrder', () => {
+  it('usa el total guardado del pedido (p.total) y cae a priceOrder si falta', () => {
     const s = state();
-    s.pedidos.forEach((p) => { p.total = 9999; });
-    const suma = s.pedidos.reduce((a, p) => a + priceOrder(s, p.lineas).total, 0);
-    expect(metrics(s, 'todas').ticketPromedio).toBe(r2(suma / 50));
+    s.pedidos.forEach((p) => { p.total = 10; });
+    expect(metrics(s, 'todas').ticketPromedio).toBe(10);
+    delete s.pedidos[0].total;
+    const esperado = r2((priceOrder(s, s.pedidos[0].lineas).total + 49 * 10) / 50);
+    expect(metrics(s, 'todas').ticketPromedio).toBe(esperado);
+  });
+  it('editar un precio NO cambia el ticket promedio de pedidos existentes (I9)', () => {
+    const s = state();
+    const antes = metrics(s, 'todas').ticketPromedio;
+    for (const p of s.productos) p.precio = r2(p.precio * 3);
+    expect(metrics(s, 'todas').ticketPromedio).toBe(antes);
   });
   it('sin pedidos devuelve ceros sin NaN', () => {
     const s = state(); s.pedidos = [];

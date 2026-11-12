@@ -44,6 +44,7 @@ describe('robustez', () => {
   });
 
   it('un pedido sin total (seed) no rompe "¿cómo va mi pedido?"', () => {
+    store.update((s) => { delete s.pedidos[0].total; delete s.pedidos[0].subtotal; delete s.pedidos[0].itbms; }); // pedido de una versión anterior
     const seed = store.get().pedidos[0];
     expect(seed.total).toBeUndefined();
     store.update((s) => { s.pedidos[0].conversacionId = 'c1'; });

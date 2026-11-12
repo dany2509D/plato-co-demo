@@ -17,7 +17,7 @@ export function metrics(state, sucursalId = 'todas') {
   for (const p of pedidos) {
     if (p.canal === 'whatsapp') pedidosPorCanal.whatsapp++;
     else pedidosPorCanal.web++;
-    centavos += Math.round(priceOrder(state, p.lineas).total * 100);
+    centavos += Math.round((p.total ?? priceOrder(state, p.lineas).total) * 100); // total guardado: no se re-cotiza
     const m = prepMinutes(p);
     if (m !== null && Number.isFinite(m)) preps.push(m);
     for (const l of p.lineas) unidades.set(l.productoId, (unidades.get(l.productoId) ?? 0) + l.cantidad);

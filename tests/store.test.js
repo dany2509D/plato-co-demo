@@ -16,9 +16,13 @@ describe('createStore', () => {
     const st = createStore(memStorage());
     st.update((d) => { d.pedidos.length = 0; });
     st.reset();
-    const { ultimaActividad, ...sinSello } = st.get(); // el sello de actividad es volátil
+    const { ultimaActividad, rev, ...sinSello } = st.get(); // sellos volátiles (actividad y revisión)
+    expect(rev).toBeGreaterThan(0);
     expect(ultimaActividad).toBe(new Date().toISOString());
-    expect(sinSello).toEqual(buildSeed(new Date()));
+    const esperado = buildSeed(new Date());
+    expect(sinSello.seedId).not.toBe(esperado.seedId); // en el mismo instante igual cambia (nunca se repite)
+    const norm = (x) => JSON.parse(JSON.stringify(x).split(sinSello.seedId).join('X').split(esperado.seedId).join('X'));
+    expect(norm(sinSello)).toEqual(norm(esperado));
   });
   it('update guarda y notifica', () => {
     const storage = memStorage();
@@ -126,11 +130,19 @@ describe('actividad reciente (nunca se pierde una sesión viva)', () => {
     expect(nuevo.get().ui.sucursalAdmin).not.toBe('suc-3');
     expect(nuevo.get().seedEn).toBe('2026-11-11T18:05:00.000Z');
   });
-  it('al día siguiente en Panamá: se re-siembra aunque haya actividad reciente', () => {
+  it('cruza la medianoche de Panamá con actividad reciente: NO se re-siembra (presentador a las 23:50, recarga 00:05)', () => {
     const st = sembrarA('2026-11-12T04:00:00Z'); // 23:00 del 11
-    vi.setSystemTime(new Date('2026-11-12T05:30:00Z')); // 00:30 del 12
+    vi.setSystemTime(new Date('2026-11-12T04:50:00Z')); // 23:50
     st.update((d) => { d.ui.sucursalAdmin = 'suc-3'; });
-    vi.setSystemTime(new Date('2026-11-12T05:40:00Z'));
+    vi.setSystemTime(new Date('2026-11-12T05:05:00Z')); // 00:05 del 12
+    const nuevo = createStore(memStorage(guardar(st)));
+    expect(nuevo.get().ui.sucursalAdmin).toBe('suc-3');
+    expect(nuevo.get().seedDia).toBe('2026-11-11');
+  });
+  it('otro día de Panamá y SIN actividad reciente: se re-siembra', () => {
+    const st = sembrarA('2026-11-12T01:00:00Z'); // 20:00 del 11
+    st.update((d) => { d.ui.sucursalAdmin = 'suc-3'; });
+    vi.setSystemTime(new Date('2026-11-12T13:00:00Z')); // 08:00 del 12, 12 h después
     expect(createStore(memStorage(guardar(st))).get().seedDia).toBe('2026-11-12');
   });
   it('sin sello de actividad: se re-siembra una sola vez', () => {

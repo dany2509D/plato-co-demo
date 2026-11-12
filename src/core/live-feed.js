@@ -13,7 +13,7 @@ export function construirFeed(state, { limite = 12, humanoEn = {} } = {}) {
   const items = [];
   for (const p of state.pedidos ?? []) {
     if (!p.conversacionId) continue;
-    const total = priceOrder(state, p.lineas ?? []).total;
+    const total = p.total ?? priceOrder(state, p.lineas ?? []).total; // total guardado al crear el pedido
     items.push({
       id: `pedido-${p.id}`, tipo: 'pedido', icono: '🧾', en: p.creadoEn, hora: formatHora(p.creadoEn),
       titulo: `Pedido ${p.id} creado`,

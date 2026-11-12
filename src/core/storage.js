@@ -18,6 +18,14 @@ export function createStorage(key) {
       }
       try { return memoria ? JSON.parse(memoria) : null; } catch { return null; }
     },
+    // Avisa cuando OTRA pestaña/ventana escribe esta clave (evento `storage`). Nunca lanza.
+    subscribe(cb) {
+      const w = typeof window !== 'undefined' ? window : null;
+      if (!w || typeof w.addEventListener !== 'function') return () => {};
+      const h = (e) => { if (e && (e.key === key || e.key === null)) { try { cb(); } catch { /* un oyente roto no afecta a los demás */ } } };
+      w.addEventListener('storage', h);
+      return () => w.removeEventListener('storage', h);
+    },
     write(obj) {
       let texto;
       try { texto = JSON.stringify(obj); } catch { return; }
