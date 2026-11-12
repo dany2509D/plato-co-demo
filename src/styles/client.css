@@ -21,6 +21,7 @@
 }
 /* Titulares de póster */
 .c-hero__t, .m-hero__t, .c-cta__t, .ck-titulo, .pd-titulo__estado { font-size: var(--cli-poster); line-height: var(--cli-lh); letter-spacing: -.025em; margin: 0; }
+.ck-titulo, .pd-titulo__estado { overflow-wrap: anywhere; text-wrap: balance; }
 .c-h2, .mdd__t, .m-sec__t { line-height: .9; letter-spacing: -.02em; margin: 0; }
 .mdd__t, .m-sec__t { font-size: clamp(3rem, 1rem + 6vw, 7rem); }
 .dish__name, .combo__head h3, .cart-panel__t, .ck-resumen__t, .mod-head h2, .pd-factura__cab h3 { margin: 0; line-height: .95; }
