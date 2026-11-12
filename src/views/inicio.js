@@ -39,10 +39,10 @@ export const estrellasHTML = (n, clase = '') => `<span class="estrellas ${esc(cl
   Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${ESTRELLA}" class="${i < n ? 'on' : ''}"/></svg>`).join('')}</span>`;
 
 // Cifra con contador: el valor real en .sr-only; el número animado (aria-hidden) lo maneja reveal.js.
-function cifra(valor, { dec = 0, unidad = '', etiqueta, animar }) {
+function cifra(valor, { dec = 0, unidad = '', unidadSr = unidad, etiqueta, animar }) {
   const txt = formatearCifra(valor, dec);
   return `<div class="c-cifra">
-    <p class="c-cifra__num"><span class="sr-only">${esc(txt)}${unidad ? ` ${esc(unidad)}` : ''}</span><span aria-hidden="true"${animar ? ` data-count="${Number(valor)}" data-dec="${Number(dec)}"` : ''}>${esc(txt)}</span>${unidad ? `<span class="c-cifra__u" aria-hidden="true">${esc(unidad)}</span>` : ''}</p>
+    <p class="c-cifra__num"><span class="sr-only">${esc(txt)}${unidadSr ? ` ${esc(unidadSr)}` : ''}</span><span aria-hidden="true"${animar ? ` data-count="${Number(valor)}" data-dec="${Number(dec)}"` : ''}>${esc(txt)}</span>${unidad ? `<span class="c-cifra__u" aria-hidden="true">${esc(unidad)}</span>` : ''}</p>
     <p class="c-cifra__lbl">${esc(etiqueta)}</p>
   </div>`;
 }
@@ -140,12 +140,12 @@ export function vistaInicio(main) {
           </ol>
           <ul class="c-roles" role="list" aria-label="Una mesa, tres personas">
             ${ROLES.map(([foto, rol, titulo, href, cta]) => `<li class="c-rol">
-              ${fotoEscena(foto, { alt: '', ratio: '437/520', clase: 'c-rol__foto reveal--foto' })}
-              <div class="c-rol__txt">
+              <div class="c-rol__media">
+                ${fotoEscena(foto, { alt: '', ratio: '437/520', clase: 'c-rol__foto reveal--foto' })}
                 <p class="c-rol__rol">${esc(rol)}</p>
-                <h3 class="c-rol__t">${esc(titulo)}</h3>
-                <a class="c-rol__cta" href="${esc(href)}">${esc(cta)} ${icono('flecha', { tam: 18 })}</a>
               </div>
+              <h3 class="c-rol__t">${esc(titulo)}</h3>
+              <a class="c-rol__cta" href="${esc(href)}">${esc(cta)} ${icono('flecha', { tam: 18 })}</a>
             </li>`).join('')}
           </ul>
         </div>
@@ -156,9 +156,9 @@ export function vistaInicio(main) {
           <h2 id="cifras-t" class="eyebrow c-stats__t">Plato &amp; Co. en cifras</h2>
           <div class="c-stats__row">
             ${cifra(state.sucursales.length, { etiqueta: 'sucursales en Ciudad de Panamá', animar })}
-            ${cifra(12, { unidad: 'min', etiqueta: 'en cocina, en promedio', animar })}
+            ${cifra(12, { unidad: 'min', unidadSr: 'minutos', etiqueta: 'en cocina, en promedio', animar })}
             ${cifra(state.productos.length, { etiqueta: 'platos en la carta', animar })}
-            ${cifra(4.8, { dec: 1, unidad: '★', etiqueta: 'de 5 en 2.140 reseñas', animar })}
+            ${cifra(4.8, { dec: 1, unidad: '★', unidadSr: '', etiqueta: 'de 5 en 2.140 reseñas', animar })}
           </div>
           <p class="c-stats__nota">Cifras ficticias de la demostración.</p>
         </div>

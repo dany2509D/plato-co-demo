@@ -40,7 +40,7 @@ export function branchPicker(store, onChange, { variante = 'tarjetas', leyenda =
         <span class="suc-foto__dir">${esc(s.direccion)}</span>
         <span class="suc-foto__hor">Hoy de ${esc(s.horario.abre)} a ${esc(s.horario.cierra)}</span>
         <span class="suc-foto__pie">
-          <span class="suc-estado suc-estado--corto${st.abierto ? ' is-abierto' : ''}">${esc(estadoCorto(st, s.horario))}</span>
+          <span class="suc-estado suc-estado--corto${st.abierto ? ' is-abierto' : ''}${st.cierraPronto ? ' is-pronto' : ''}">${esc(estadoCorto(st, s.horario))}</span>
           <span class="suc-foto__eta"><b>${eta(s)} min</b> <small>entrega aprox.</small></span>
         </span>
       </label>`;

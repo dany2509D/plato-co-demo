@@ -34,7 +34,7 @@
 .c-hero__lead { max-width: 440px; margin: 0 0 var(--sp-3); font-size: 1.1875rem; line-height: 1.45; color: var(--c-on-dark); }
 .c-hero__cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .c-hero__btn { min-height: 52px; padding: 0 28px; font-size: 1rem; }
-.c-hero__btn--ghost { --btn-fg: var(--c-on-dark); --btn-bd: var(--c-on-dark); --btn-hover-bg: var(--c-on-dark); --btn-hover-fg: var(--c-char); }
+.c-hero .c-hero__btn--ghost { --btn-fg: var(--c-on-dark); --btn-bd: var(--c-on-dark); --btn-hover-bg: var(--c-on-dark); --btn-hover-fg: var(--c-char); }
 /* Valoración: tarjeta pergamino afilada que sobresale 40 px bajo la foto (Amrit). A la izquierda: la píldora
    flotante «Presentación» ocupa la esquina inferior derecha y la taparía. */
 .c-proof {
@@ -101,6 +101,7 @@
 .suc-foto__dir, .suc-foto__hor { font-size: .9375rem; line-height: 1.5; color: var(--c-ink-soft); }
 .suc-foto__pie { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-top: var(--sp-2); padding-top: 12px; border-top: var(--rule-w) solid var(--c-rule); }
 .suc-estado--corto { font-size: .9375rem; color: var(--c-ink-soft); }
+.suc-estado.is-abierto.is-pronto { color: var(--c-warn); }
 .suc-foto__eta { font-size: .8125rem; color: var(--c-ink-soft); white-space: nowrap; }
 .suc-foto__eta b { font: 600 1.0625rem/1 var(--font-body); color: var(--c-ink); font-variant-numeric: tabular-nums; }
 .suc-foto:hover .suc-foto__nombre { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .12em; }
@@ -193,15 +194,19 @@
   .c-how__paso:first-child { padding-left: 0; border-left: 0; }
 }
 
-/* Tarjetas por rol con foto (Sunday): 437×520, velo arriba y abajo solo detrás del texto */
+/* Tarjetas por rol con foto (Sunday «una mesa, tres personas»): foto 437×520 y pie de foto debajo. El título NO va
+   sobre la foto: la llamarada de ambiente_parrilla es casi blanca y ningún velo localizado garantizaba AA. */
 .c-roles { list-style: none; margin: var(--sp-8) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
-.c-rol { position: relative; isolation: isolate; min-width: 0; color: var(--c-on-dark); }
+.c-rol { position: relative; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; color: var(--c-on-dark); }
+.c-rol__media { position: relative; width: 100%; }
 .c-rol__foto { width: 100%; }
-.c-rol__txt { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; padding: 28px; background: var(--scrim-t), var(--scrim-b); }
-.c-rol__rol { margin: 0; font: 700 .75rem/1.2 var(--font-body); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--c-gold); }
-.c-rol__t { margin: 10px 0 0; max-width: 17ch; font: 500 1.625rem/1.15 var(--font-body); letter-spacing: -.01em; text-transform: none; color: var(--c-on-dark); }
+.c-rol__rol {
+  position: absolute; left: 16px; top: 16px; z-index: 2; margin: 0; padding: 7px 12px; border-radius: var(--r-pill);
+  font: 700 .75rem/1 var(--font-body); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--c-gold); background: var(--c-char);
+}
+.c-rol__t { margin: var(--sp-3) 0 4px; max-width: 18ch; font: 500 1.625rem/1.15 var(--font-body); letter-spacing: -.01em; text-transform: none; color: var(--c-on-dark); }
 .c-rol__cta {
-  margin-top: auto; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap);
+  display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap);
   font-weight: 700; color: var(--c-on-dark); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: .3em;
   transition: text-decoration-color var(--dur-fast) var(--ease-out), gap var(--dur-fast) var(--ease-out);
 }
@@ -278,7 +283,7 @@
 .c-cta__t { margin: 0; max-width: none; font-size: clamp(4.5rem, 2rem + 12vw, 12.5rem); line-height: .86; letter-spacing: -.02em; color: var(--c-on-dark); }
 .c-cta__lead { max-width: 44ch; margin: var(--sp-4) 0 var(--sp-4); font-size: 1.1875rem; line-height: 1.5; color: var(--c-on-dark); }
 .c-cta__acc { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-.c-cta__ghost { --btn-fg: var(--c-on-dark); --btn-bd: var(--c-on-dark); --btn-hover-bg: var(--c-on-dark); --btn-hover-fg: var(--c-char); }
+.c-cta .c-cta__ghost { --btn-fg: var(--c-on-dark); --btn-bd: var(--c-on-dark); --btn-hover-bg: var(--c-on-dark); --btn-hover-fg: var(--c-char); }
 @media (max-width: 899px) { .c-cta__t { max-width: 6ch; } }
 
 @media (prefers-reduced-motion: reduce) {
