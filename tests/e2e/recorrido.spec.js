@@ -133,6 +133,7 @@ for (const [nombre, width, height] of VISTAS) {
       await ir(page, '#/chat');
       await page.locator('[data-humano]').click();
       await expect(page.locator('.tel-log')).toContainText(/persona del equipo/);
+      await expect(page.locator('.vivo')).toContainText('Requiere persona');
 
       // indicadores
       await ir(page, '#/admin/indicadores');
