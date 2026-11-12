@@ -54,7 +54,7 @@ export function vistaCarrito(main) {
         const clave = claveFotoSucursal(state, s.id);
         return `<label class="ck-suc">
           <input type="radio" name="sucursal-cliente" value="${esc(s.id)}" ${s.id === actual ? 'checked' : ''}>
-          <span class="ck-suc__foto">${fotoEscena(clave, { ratio: '4/3', alt: '', clase: clave === 'sucursal_1' ? 'foto--warm' : '' })}<span class="ck-suc__marca">${icono('check', { tam: 16 })} Su sucursal</span></span>
+          <span class="ck-suc__foto">${fotoEscena(clave, { ratio: '4/3', alt: '', clase: clave === 'sucursal_1' ? 'foto--warm' : '' })}<span class="ck-suc__marca" aria-hidden="true">${icono('check', { tam: 16 })}<span class="ck-suc__marca-l">Su sucursal</span><span class="ck-suc__marca-c">Elegida</span></span></span>
           <span class="ck-suc__n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
           <span class="ck-suc__nombre">${esc(nombreCorto(s))}</span>
           <span class="ck-suc__dato">${esc(s.direccion)}</span>
