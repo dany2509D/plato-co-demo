@@ -33,7 +33,7 @@ export function pareceDireccion(n, zonas, { fuerte = false, debil = false } = {}
 }
 
 // ---------- ocasión de la reserva ----------
-const SIN_OCASION = /^(no|ninguna|nada|ninguno|none|nope|nop|nothing|no occasion|no special occasion|sin ocasion)\W*$/;
+const SIN_OCASION = /^(no|ninguna|nada|ninguno|none|nope|nop|nothing|no occasion|no special occasion|sin ocasion|nothing special|nada especial|no special)(\W+(gracias|thanks|thank you))?\W*$/;
 const OCASION_RECONOCIDA = /cumple|birthday|aniversario|anniversary|\bcita\b|\bdate\b|reunion|meeting|familia|family|negocio|business|graduacion|graduation|despedida|celebracion|celebration|boda|wedding|compromiso|engagement|\bcena\b|dinner|almuerzo|lunch|evento|event/;
 const RESERVA_KW = /reserv|\bbook\b|booking|table for|mesa para|una mesa|a table|personas?|people|guests?|pax|comensales/;
 export { RESERVA_KW };

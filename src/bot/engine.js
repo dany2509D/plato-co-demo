@@ -36,6 +36,10 @@ const GRACIAS = /\b(gracias|thanks|thank you)\b/;
 const PREGUNTA = /^(tienen|tiene|hay|cuanto|cuantos|puedo|se puede|aceptan|do you|is there|are there|can i|how much|what|que|donde|cuando|como)\b/;
 const QUITAR = /\b(quita|quitar|quitale|elimina|eliminar|saca|sacar|remove|delete|drop)\b/;
 const AGREGAR = /^(y|and|tambien|also|mas)\b|\b(agrega|agregar|agregame|agregale|anade|anadir|suma|sumar|add|ponle|ponme|dame|quiero|i want|i'd like)\b/;
+const TOTAL = /^(?:(?:cual es )?(?:el )?total(?: a pagar)?|cuanto (?:es|cuesta|seria|son|me sale|va a ser)(?: en total)?|a como sale|how much(?: is it| does it cost| is the total| in total)?|(?:what'?s|what is|whats) the total)\W*$/;
+const RETIRO_VERBO = /retir|recog|recoj|pickup|pick up/;
+const MAS_N = /^(\d+|[a-z]+)\s+(?:mas|more)\W*$/;
+const OTRA = /^(?:otra|otro|another|another one|one more|otra mas|otro mas|una mas|uno mas)\W*$/;
 const CANT_PROD = /^(?:mejor|make it|cambia(?:lo|la|r)?(?: a)?|change it to|actually|ahora)\s+(\d+|[a-z]+)\s+([a-z ]+)$/;
 const CANT = /^(?:mejor|make it|cambia(?:lo)?(?: a)?|change it to|actually)\s+(\d+|[a-z]+)\s*$/;
 const MOD = /^(?:mejor |make it |actually |ahora )?(?:sin|without)\s+(?:la |el |los |las |the )?(.+)$/;
@@ -214,6 +218,14 @@ export function createBot(store, opts = {}) {
     const sl = JSON.parse(JSON.stringify(getConv(id).slots));
     const hint = (extra) => [m([extra, T.hintEdicion].filter(Boolean).join('\n'), [T.si, T.cancelar])];
     const objetivo = lineasMencionadas(texto, sl.lineas);
+    const mmas = MAS_N.exec(n);
+    const qmas = OTRA.test(n) ? 1 : mmas ? (/^\d+$/.test(mmas[1]) ? Number(mmas[1]) : own(NUMS, mmas[1])) : undefined;
+    if (qmas !== undefined && sl.lineas.length) {
+      const ult = sl.lineas[sl.lineas.length - 1];
+      if (qmas < 1 || ult.cantidad + qmas > 20) return hint(T.cantidadMax);
+      ult.cantidad += qmas;
+      return mostrarEdicion(id, T, { ...sl, lineas: fusionar(sl.lineas) });
+    }
     const mp = CANT_PROD.exec(n);
     const qp = mp ? (/^\d+$/.test(mp[1]) ? Number(mp[1]) : own(NUMS, mp[1])) : undefined;
     if (mp && qp !== undefined) {
@@ -301,7 +313,7 @@ export function createBot(store, opts = {}) {
     if (!sl.tipo) { setStep(id, 'tipo', sl); return [m(T.pedirTipo, T.botonesTipo)]; }
     if (sl.tipo === 'entrega' && !sl.direccion) { setStep(id, 'direccion', sl); return [m(T.pedirDireccion)]; }
     const s = state().sucursales.find((x) => x.id === sl.sucursalId);
-    const previo = sl.tipo === 'retiro' && !resumenMostrado ? [T.retiraEn(s.nombre, s.direccion)] : [];
+    const previo = sl.tipo === 'retiro' && !resumenMostrado ? [T.retiraEn(s.nombre, s.direccion), T.sucursalEta(s.nombre, s.etaBaseMin)] : [];
     if (sl.tipo === 'entrega' && sl.zona && !sl.exacta) previo.push(T.pedirDetalle(sl.zona));
     return pedirPago(id, sl, previo);
   }
@@ -319,10 +331,10 @@ export function createBot(store, opts = {}) {
   function aplicarRetiro(id, sl, n) {
     const T = lang(id);
     const nuevo = sucursalNombrada(n);
-    const base = { ...sl, tipo: 'retiro' };
+    const base = { ...sl, tipo: 'retiro', eta: null, direccion: null, zona: null, exacta: false };
+    delete base.fallosDir;
     if (nuevo && nuevo !== sl.sucursalId) {
       base.sucursalId = nuevo;
-      base.eta = null;
       const faltan = sl.lineas.filter((l) => !isAvailable(state(), l.productoId, nuevo));
       if (faltan.length) {
         base.lineas = sl.lineas.filter((l) => isAvailable(state(), l.productoId, nuevo));
@@ -338,12 +350,24 @@ export function createBot(store, opts = {}) {
   function pasoDireccion(id, texto) {
     const T = lang(id);
     const sl = { ...getConv(id).slots };
+    const n = normalize(texto);
     const z = zonaDe(texto);
+    // salida a retiro: «retiro», «Retiro en sucursal», «pickup», «lo recojo yo», «retirar en Norte»…
+    if (RETIRO.test(n) && (RETIRO_VERBO.test(n) || !z)) return aplicarRetiro(id, sl, n);
+    // «Entrega a domicilio» / «Delivery»: se mantiene la entrega y se pide de nuevo la dirección
+    if (!z && ENTREGA.test(n) && !/\d/.test(n) && n.split(' ').length <= 4) {
+      setStep(id, 'direccion', { ...sl, fallosDir: 0 });
+      return [m(T.pedirDireccion)];
+    }
     if (!z) {
-      if (!parecedir(texto, normalize(texto))) return [m(T.direccionNoValida)];
+      const fallos = (sl.fallosDir ?? 0) + 1;
+      setStep(id, 'direccion', { ...sl, fallosDir: fallos });
       const zonas = state().sucursales.flatMap((s) => s.zonasEntrega).join(', ');
+      if (fallos >= 2) return [m(T.ofrecerOpciones(zonas), T.botonesTipo)];
+      if (!parecedir(texto, n)) return [m(T.direccionNoValida, T.botonesTipo)];
       return [m(T.fueraZona(zonas), T.botonesTipo)];
     }
+    delete sl.fallosDir;
     Object.assign(sl, { tipo: 'entrega', direccion: texto.trim().slice(0, MAX_DIR), zona: z.zona, exacta: true, eta: z.etaMin });
     if (z.sucursalId !== sl.sucursalId) {
       sl.sucursalId = z.sucursalId;
@@ -427,8 +451,8 @@ export function createBot(store, opts = {}) {
       else if (/evento|event/.test(n)) sl.ocasion = 'evento';
       else if (esperado === 'ocasion') {
         if (ocasionNinguna(n)) sl.ocasion = 'ninguna';
-        else if (ocasionReconocida(n) || ocasionLibre(texto, n)) sl.ocasion = texto.trim().slice(0, 60);
-        else { setStep(id, 'ocasion', sl); return [m(T.ocasionRepite, T.botonesOcasion)]; }
+        else if (ocasionReconocida(n) || ocasionLibre(texto, n) || (sl.rechazos ?? 0) >= 2) sl.ocasion = texto.trim().slice(0, 60);
+        else { setStep(id, 'ocasion', { ...sl, rechazos: (sl.rechazos ?? 0) + 1 }); return [m(T.ocasionRepite, T.botonesOcasion)]; }
       }
     }
     sl.sucursalId = sucursalNombrada(n) ?? sl.sucursalId ?? sucDefault();
@@ -569,6 +593,8 @@ export function createBot(store, opts = {}) {
     const T = lang(id);
     const s = state();
     const preg = esPregunta(texto, n);
+    const lineasPedido = getConv(id).slots?.lineas;
+    if (TOTAL.test(n.replace(/^[^a-z0-9]+/, '')) && lineasPedido?.length) return conRepeticion(id, [m(T.totalEs(priceOrder(s, lineasPedido).total))]);
     const c = consulta(id, n);
     if (c) return conRepeticion(id, c);
     const hu = horarioUbicacion(T, s, n);
@@ -583,7 +609,7 @@ export function createBot(store, opts = {}) {
     } else if (paso === 'tipo') {
       if (RETIRO.test(n) || ENTREGA.test(n) || zonaDe(texto)) return null;
     } else if (paso === 'direccion') {
-      if (zonaDe(texto)) return null;
+      if (zonaDe(texto) || RETIRO.test(n) || ENTREGA.test(n)) return null;
     } else if (paso === 'confirmar') {
       if (CANT.test(n) || QUITAR.test(n) || AGREGAR.test(n) || MOD.test(n)) return null;
       const r = parseOrder(texto, s, sl.sucursalId);

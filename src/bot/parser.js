@@ -13,7 +13,7 @@ const MIN_CANT = 1;
 const MAX_CANT = 20;
 
 const NUMEROS = {
-  un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10,
+  un: 1, una: 1, uno: 1, unas: 1, unos: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10,
   one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
   cero: 0, zero: 0,
 };
@@ -114,7 +114,7 @@ function traducir(t) {
 }
 
 // Marcadores de destino/entrega: lo que sigue no es parte del pedido ("para Obarrio").
-const RE_DESTINO = /(^|\s)(para|en|entrega|entregar|deliver|delivered|to|for|at)(\s(?!(agrandar|grande)\b).*)?$/;
+const RE_DESTINO = /(^|\s)(para|en|a domicilio|domicilio|entrega|entregar|deliver|delivered|to|for|at)(\s(?!(agrandar|grande)\b).*)?$/;
 
 function parseFragmento(frag, ingred) {
   let t = traducir(frag).replace(RE_DESTINO, ' ').trim();
