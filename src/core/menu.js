@@ -41,8 +41,10 @@ export function setAvailable(store, productoId, sucursalId, valor) {
   store.emit('menu:cambio', { productoId, sucursalId, valor });
 }
 
+export const PRECIO_MAX = 999.99;
+
 export function setPrice(store, productoId, precio) {
-  if (typeof precio !== 'number' || !Number.isFinite(precio) || precio <= 0) return;
+  if (typeof precio !== 'number' || !Number.isFinite(precio) || precio <= 0 || precio > PRECIO_MAX) return;
   store.update((s) => {
     const p = s.productos.find((x) => x.id === productoId);
     if (p) p.precio = precio;

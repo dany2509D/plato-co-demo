@@ -21,7 +21,11 @@ export const ALERGENO_CUE = (n) => /alerg|allerg/.test(n) || (CUE.test(n) && ALE
 export const palabras = (s) => normalize(s).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter((w) => w.length > 3).map((w) => (w.endsWith('s') ? w.slice(0, -1) : w));
 
 // Inglés -> palabras del menú (los nombres de los platos están en español).
-const TRAD_EN = [['iced tea', 'te helado'], ['ice cream', 'helado'], ['french fries', 'papas fritas'], ['onion rings', 'aros de cebolla'],
+// (alias derivados de los nombres reales del menú: hamburguesa clásica/doble/de pollo/vegetariana/picante/con tocino, etc.)
+const TRAD_EN = [['iced tea', 'te helado'], ['classic', 'clasica'], ['double', 'doble'], ['chicken burger', 'hamburguesa de pollo'], ['grilled chicken', 'pollo a la parrilla'],
+  ['veggie', 'vegetariana'], ['vegetarian', 'vegetariana'], ['spicy', 'picante'], ['bacon', 'tocino'], ['strawberry shake', 'batido de fresa'], ['milkshake', 'batido'],
+  ['orange juice', 'jugo de naranja'], ['vanilla', 'vainilla'], ['apple pie', 'tarta de manzana'], ['tomato soup', 'sopa de tomate'], ['mac and cheese', 'macarrones con queso'],
+  ['lasagna', 'lasana'], ['mineral water', 'agua mineral'], ['pork chop', 'chuleta de cerdo'], ['cookie', 'galleta'], ['ice cream', 'helado'], ['french fries', 'papas fritas'], ['onion rings', 'aros de cebolla'],
   ['burger', 'hamburguesa'], ['caesar', 'cesar'], ['salad', 'ensalada'], ['steak', 'churrasco'], ['shrimp', 'camarones'], ['ribs', 'costillas'],
   ['fries', 'papas'], ['lemonade', 'limonada'], ['soda', 'refresco'], ['coke', 'refresco'], ['juice', 'jugo'], ['coffee', 'cafe']];
 const STOP = new Set(['de', 'la', 'el', 'los', 'las', 'con', 'al', 'del', 'a', 'y', 'en']);

@@ -119,7 +119,7 @@ describe('I3: preguntas dentro de un paso', () => {
   it('"¿dónde están ubicados?" y "¿cómo va mi pedido?" también', () => {
     expect(txt(say('¿dónde están ubicados?'))).toContain('Calle Ficticia 123');
     expect(conv().paso).toBe('pago');
-    expect(txt(say('¿cómo va mi pedido?'))).toMatch(/No encuentro un pedido/);
+    expect(txt(say('¿cómo va mi pedido?'))).toMatch(/Aún no lo he registrado/);
     expect(conv().paso).toBe('pago');
   });
   it('"¿aceptan tarjeta?" no cobra: repite los métodos', () => {

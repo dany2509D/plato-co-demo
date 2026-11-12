@@ -62,7 +62,7 @@ const ALIAS = {
 const RELLENO = new Set(['quiero', 'quisiera', 'quisieramos', 'necesito', 'me', 'das', 'dame', 'ponme', 'pon', 'por', 'favor', 'porfa',
   'hola', 'buenas', 'buenos', 'tardes', 'noches', 'dias', 'gracias', 'orden', 'ordenes', 'porcion', 'pedido', 'tambien', 'agrega',
   'agregar', 'para', 'i', 'id', "i'd", 'want', 'would', 'like', 'please', 'can', 'could', 'have', 'get', 'give', 'a', 'an', 'the',
-  'also', 'add', 'order', 'of', 'to', 'for', 'mas', 'tengo', 'hello', 'hi', 'thanks', 'quiere', 'regala', 'regalas', 'regalame', 'colabora', 'colaboras', 'da', 'dar', 'pido', 'queria', 'gustaria', 'ordenar', 'pedir', 'agregale', 'agregales', 'agregame', 'adiciona', 'anade', 'anademe']);
+  'also', 'add', 'order', 'of', 'to', 'for', 'mas', 'tengo', 'hello', 'hi', 'thanks', 'quiere', 'regala', 'regalas', 'regalame', 'colabora', 'colaboras', 'da', 'dar', 'pido', 'queria', 'gustaria', 'ordenar', 'pedir', 'otra', 'otro', 'another', 'agregale', 'agregales', 'agregame', 'adiciona', 'anade', 'anademe']);
 const FUNCIONALES = new Set(['de', 'la', 'el', 'los', 'las', 'del', 'con', 'al']);
 const MODS_TERMINO = [
   [/\btermino medio\b|\bmedio\b|\bmedium\b/g, 'término medio'],

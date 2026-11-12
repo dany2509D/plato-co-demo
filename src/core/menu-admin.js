@@ -1,5 +1,6 @@
 import { normalize } from './text.js';
-import { isAvailable } from './menu.js';
+import { isAvailable, PRECIO_MAX } from './menu.js';
+export { PRECIO_MAX };
 
 // Productos agrupados por categoría (orden de aparición), incluyendo agotados con la bandera `agotado`.
 // filtros: {texto, categoria, soloAgotados}
@@ -31,5 +32,16 @@ export function parsePrecio(texto) {
   const t = String(texto).trim().replace(',', '.');
   if (!/^\d+(\.\d+)?$/.test(t)) return null;
   const n = Math.round(Number(t) * 100) / 100;
-  return Number.isFinite(n) && n > 0 ? n : null;
+  return Number.isFinite(n) && n > 0 && n <= PRECIO_MAX ? n : null;
+}
+
+// Mensaje claro para un precio inválido ('' si es válido).
+export function mensajePrecio(texto) {
+  if (parsePrecio(texto) !== null) return '';
+  const t = String(texto ?? '').trim().replace(',', '.');
+  if (Number.isFinite(Number(t)) && Number(t) > PRECIO_MAX) return `El precio máximo es US$ ${PRECIO_MAX.toFixed(2)}.`;
+  if (!/^\d+(\.\d+)?$/.test(t)) return 'Escriba un precio numérico válido, por ejemplo 9.50.';
+  const n = Number(t);
+  if (!Number.isFinite(n) || n > PRECIO_MAX) return `El precio máximo es US$ ${PRECIO_MAX.toFixed(2)}.`;
+  return 'El precio debe ser mayor que 0.';
 }
