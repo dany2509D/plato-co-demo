@@ -1,6 +1,11 @@
 import { bindMarquee } from '../ui/marquee.js';
 import '../styles/estilo.css';
 import { brand } from '../config/brand.js';
+import { icono, circuloIcono, ICONOS } from '../ui/icons.js';
+import { productCardHTML, miniProducto } from '../ui/product-card.js';
+import { combosHTML, menuDelDiaHTML } from '../ui/combos.js';
+import { fotoEscena } from '../ui/photo.js';
+import { buildSeed } from '../data/seed.js';
 
 // Guía de estilo viva (#/estilo): pinta cada token y componente con los estilos reales.
 // Los contrastes se calculan en el navegador a partir de las variables CSS actuales.
@@ -90,7 +95,19 @@ const tipo = [
   ['t-numeral', '--fs-d1', '3.500+', '72 → 200 px · cifras gigantes'], ['t-hero', '--fs-d2', 'Sabor de barrio', '52 → 128 px · héroe'], ['t-title', '--fs-d3', 'Nuestro menú', '40 → 72 px · título de sección (h1)'],
   ['t-sub', '--fs-d4', 'Platos del día', '28 → 48 px · subtítulo (h2)'], ['t-card', '--fs-d5', 'Fettuccine Alfredo', '20 → 26 px · título de tarjeta (h3)'],
 ];
-const SECCIONES = ['colores', 'contraste', 'tipografia', 'botones', 'formularios', 'insignias', 'tarjetas', 'bandas', 'estadisticas', 'movimiento', 'geometria'];
+const MUESTRAS = [
+  { id: 'prod-07-hamburguesa-clasica', nombre: 'Hamburguesa clásica', precio: 8.95, alergenosDeclarados: true, alergenos: ['gluten', 'lácteos'], vegetariano: false },
+  { id: 'prod-12-hamburguesa-picante', nombre: 'Hamburguesa picante', precio: 9.95, alergenosDeclarados: false, alergenos: [], vegetariano: false },
+  { id: 'prod-11-hamburguesa-vegetariana', nombre: 'Hamburguesa vegetariana', precio: 9.25, alergenosDeclarados: true, alergenos: ['gluten', 'soya'], vegetariano: true },
+];
+let MDD = ''; let COMBOS = '';
+try {
+  const st = buildSeed(new Date());
+  const suc = st.sucursales[0].id;
+  MDD = menuDelDiaHTML(st, suc);
+  COMBOS = combosHTML({ ...st, combos: st.combos.slice(0, 3) }, suc);
+} catch { /* la guía sigue sin esta muestra */ }
+const SECCIONES = ['colores', 'contraste', 'tipografia', 'botones', 'formularios', 'insignias', 'tarjetas', 'fotos', 'iconos', 'carta', 'bandas', 'estadisticas', 'movimiento', 'geometria'];
 
 export function vistaEstilo(main) {
   main.innerHTML = `
@@ -137,6 +154,35 @@ export function vistaEstilo(main) {
         <div class="card card--linen"><p class="eyebrow">.card--linen</p><h3>Un escalón más</h3><p>Profundidad por tono.</p></div>
       </div>
       <div class="band band--dark eg-banda"><div class="grid-auto"><div class="card"><p class="eyebrow">.card en banda oscura</p><h3 class="t-gold-on-dark">Costillas BBQ</h3><p>Marrón medio con filete oscuro.</p></div><div class="card"><p class="eyebrow">Otra</p><h3>Churrasco</h3><p>Texto sobre card #402011.</p></div></div></div>
+    </section>
+
+
+    <section id="eg-fotos"><h2>Tarjeta con foto</h2>
+      <p class="t-muted">Sin caja, foto 4:3 con filtro <code>--photo-filter</code>, zoom 1,04 al pasar el cursor, «+» de 44 px. Meta solo con alérgenos declarados.</p>
+      <h3>grid (portada y menú desktop)</h3>
+      <div class="dish-grid dish-grid--menu">${MUESTRAS.map((p) => productCardHTML(p)).join('')}</div>
+      <h3>Agotado</h3>
+      <div class="dish-grid dish-grid--menu">${productCardHTML(MUESTRAS[0], { agotado: true })}</div>
+      <h3>fila (menú en celular, &lt; 600 px)</h3>
+      <div class="eg-fila-demo">${MUESTRAS.slice(0, 3).map((p) => productCardHTML(p, { variante: 'fila' })).join('')}</div>
+      <h3>mini (64×48: carrito, pedido, admin)</h3>
+      <div class="cluster" style="--gap:12px">${MUESTRAS.map((p) => miniProducto(p)).join('')}</div>
+      <h3>Texto sobre foto con velo (el único degradado permitido)</h3>
+      <div class="eg-velo">${fotoEscena('delivery', { ratio: '16/9' })}<div class="eg-velo__t"><p class="eyebrow">Quien pide</p><p>Pide por WhatsApp en un minuto</p></div></div>
+    </section>
+
+    <section id="eg-iconos"><h2>Iconos SVG</h2>
+      <p class="t-muted">24×24, trazo 1,5 px, <code>currentColor</code>. Decorativos (aria-hidden) salvo con <code>etiqueta</code>.</p>
+      <div class="eg-iconos">${ICONOS.map((n) => `<div class="eg-icono">${icono(n, { tam: 24 })}<code>${n}</code></div>`).join('')}</div>
+      <h3>Anillo (estilo Tiger)</h3>
+      <div class="cluster" style="--gap:16px">${circuloIcono('pedido')}${circuloIcono('cocina')}${circuloIcono('en-camino')}${circuloIcono('entregado')}</div>
+      <div class="band band--dark eg-banda"><div class="cluster" style="--gap:16px">${circuloIcono('chat', { tono: 'oscuro' })}${circuloIcono('reserva', { tono: 'oscuro' })}${circuloIcono('persona', { tono: 'oscuro' })}${circuloIcono('check', { tono: 'oscuro' })}</div></div>
+    </section>
+
+    <section id="eg-carta"><h2>Menú del día y combos</h2>
+      ${MDD}
+      <h3>Combos</h3>
+      ${COMBOS}
     </section>
 
     <section id="eg-bandas"><h2>Bandas y filetes</h2>

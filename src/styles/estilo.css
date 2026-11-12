@@ -24,3 +24,25 @@
 .eg-geo { display: grid; place-items: center; min-width: 96px; height: 96px; padding: 8px; background: var(--c-linen); border: var(--rule-w) solid var(--c-line-strong); font-size: .8125rem; text-align: center; }
 .eg-esp { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-3); font-size: .75rem; }
 .eg-esp div { display: flex; flex-direction: column; gap: 4px; }
+
+/* Fotos, iconos y carta */
+.eg-fila-demo { max-width: 420px; }
+.eg-fila-demo .dish { display: grid; grid-template-columns: 120px minmax(0, 1fr); column-gap: 14px; align-items: start; padding-block: 14px; border-bottom: 1px solid var(--c-rule); }
+.eg-fila-demo .dish__media { display: contents; }
+.eg-fila-demo .foto { grid-column: 1; grid-row: 1; }
+.eg-fila-demo .dish__body { grid-column: 2; grid-row: 1; min-height: 90px; padding: 0; }
+.eg-fila-demo .dish__meta { padding-right: 52px; }
+.eg-fila-demo .dish__head { flex-direction: column; gap: 2px; }
+.eg-fila-demo .dish__price { text-align: left; font-size: 1rem; }
+.eg-fila-demo .dish__add { right: 0; bottom: 14px; }
+.eg-fila-demo .dish__picante { left: 6px; top: 20px; }
+.eg-velo { position: relative; overflow: hidden; max-width: 720px; }
+.eg-velo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgb(40 16 6 / .88), rgb(40 16 6 / 0) 58%); pointer-events: none; }
+.eg-velo__t { position: absolute; left: 20px; top: 16px; z-index: 1; color: var(--c-on-dark); font: 500 1.625rem/1.2 var(--font-body); }
+.eg-velo__t .eyebrow { margin: 0 0 6px; color: var(--c-on-dark); }
+.eg-velo__t p:last-child { margin: 0; }
+.eg-iconos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+.eg-icono { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 4px; border-top: 1px solid var(--c-rule); }
+.eg .dish__name, .eg .combo__head h3 { margin: 0; }
+.eg .mdd__t { margin: var(--sp-3) 0 var(--sp-2); }
+.eg .eg-velo { max-width: 640px; }
