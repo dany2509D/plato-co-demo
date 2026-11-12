@@ -5,25 +5,42 @@ import { cart } from './cart-singleton.js';
 
 const SIN_DATO = 'Consulte alérgenos con una persona';
 
-// Sellos solo a partir de los datos declarados del producto.
+// Sellos solo a partir de los datos declarados del producto (también los usa el panel de menú del admin).
 export function badgesHTML(p) {
   const out = [];
-  if (p.vegetariano) out.push('<span class="badge badge-veg" title="Vegetariano">(V) Vegetariano</span>');
-  if (/picante/i.test(p.nombre)) out.push('<span class="badge badge-hot">Picante</span>');
+  if (p.vegetariano) out.push('<span class="badge badge--veg" title="Vegetariano">(V) Vegetariano</span>');
+  if (/picante/i.test(p.nombre)) out.push('<span class="badge badge--spicy">Picante</span>');
   if (!p.alergenosDeclarados) out.push(`<span class="badge badge-ask">${SIN_DATO}</span>`);
   else if (p.alergenos.length) out.push(...p.alergenos.map((a) => `<span class="badge badge-alg">Contiene ${esc(a)}</span>`));
   else out.push('<span class="badge badge-alg">Sin alérgenos declarados</span>');
   return out.join('');
 }
 
-export function productCardHTML(p, { etiqueta = 'Pedir' } = {}) {
+// Precio con la moneda pequeña y la cifra en Anton.
+export const precioHTML = (n, cls = 'precio') => {
+  const [, cifra] = money(n).split(' ');
+  return `<span class="${cls}"><span class="precio__mon">US$</span>${cifra}</span>`;
+};
+
+function alergenosTexto(p) {
+  if (!p.alergenosDeclarados) return `<p class="dish__alg dish__alg--ask">${SIN_DATO}</p>`;
+  if (!p.alergenos.length) return '<p class="dish__alg">Sin alérgenos declarados</p>';
+  return `<p class="dish__alg">Contiene: ${p.alergenos.map(esc).join(', ')}</p>`;
+}
+
+export function productCardHTML(p, { etiqueta = 'Pedir', clase = '' } = {}) {
+  const sellos = [
+    p.vegetariano ? '<span class="badge badge--veg">(V) Vegetariano</span>' : '',
+    /picante/i.test(p.nombre) ? '<span class="badge badge--spicy">Picante</span>' : '',
+  ].join('');
   return `
-    <article class="dish">
-      <div class="dish-media">${dishArt(p)}${p.vegetariano ? '<span class="dish-v" aria-hidden="true">V</span>' : ''}</div>
-      <div class="dish-body">
-        <div class="dish-head"><h3>${esc(p.nombre)}</h3><span class="dish-precio">${money(p.precio)}</span></div>
-        <div class="badges">${badgesHTML(p)}</div>
-        <button type="button" class="btn btn-primario btn-pedir" data-add="${esc(p.id)}" aria-label="${esc(etiqueta)} ${esc(p.nombre)}">${esc(etiqueta)} <span aria-hidden="true">+</span></button>
+    <article class="dish ${clase}">
+      <div class="dish__media">${dishArt(p)}</div>
+      <div class="dish__body">
+        <div class="dish__head"><h3 class="dish__name">${esc(p.nombre)}</h3>${precioHTML(p.precio, 'dish__price')}</div>
+        ${sellos ? `<div class="dish__sellos">${sellos}</div>` : ''}
+        ${alergenosTexto(p)}
+        <button type="button" class="btn btn--sm dish__add" data-add="${esc(p.id)}" aria-label="${esc(etiqueta)} ${esc(p.nombre)}">${esc(etiqueta)} <span aria-hidden="true">+</span></button>
       </div>
     </article>`;
 }
@@ -57,26 +74,27 @@ function abrirModificadores(p) {
   form.method = 'dialog';
   form.innerHTML = `
     <div class="mod-art">${dishArt(p)}</div>
-    <h2>${esc(p.nombre)}</h2>
-    <p class="mod-precio">${money(p.precio)}</p>
-    ${termino.length ? `<fieldset class="mod-grupo"><legend>Término de la carne</legend>
-      ${termino.map((m, i) => `<label class="opcion"><input type="radio" name="termino" value="${esc(m)}" ${i === 0 ? 'checked' : ''}> ${esc(etiquetaMod(m.replace('término ', '')))}</label>`).join('')}
-    </fieldset>` : ''}
-    ${extras.length ? `<fieldset class="mod-grupo"><legend>Personalice a su gusto</legend>
-      ${extras.map((m) => `<label class="opcion"><input type="checkbox" name="extra" value="${esc(m)}"> ${esc(etiquetaMod(m))}</label>`).join('')}
-      ${extras.includes('agrandar') ? '<p class="nota">Agrandar no tiene cargo adicional en esta demo.</p>' : ''}
-    </fieldset>` : ''}
-    <div class="mod-cant">
-      <label for="mod-cantidad">Cantidad</label>
-      <div class="stepper">
-        <button type="button" data-d="-1" aria-label="Una menos">−</button>
-        <input id="mod-cantidad" name="cantidad" type="number" inputmode="numeric" min="1" max="20" value="1">
-        <button type="button" data-d="1" aria-label="Una más">+</button>
+    <div class="mod-body">
+      <div class="mod-head"><h2>${esc(p.nombre)}</h2>${precioHTML(p.precio, 'mod-precio')}</div>
+      ${termino.length ? `<fieldset class="mod-grupo"><legend class="label">Término de la carne</legend><div class="mod-ops">
+        ${termino.map((m, i) => `<label class="mod-op"><input type="radio" name="termino" value="${esc(m)}" ${i === 0 ? 'checked' : ''}><span>${esc(etiquetaMod(m.replace('término ', '')))}</span></label>`).join('')}
+      </div></fieldset>` : ''}
+      ${extras.length ? `<fieldset class="mod-grupo"><legend class="label">Personalice a su gusto</legend><div class="mod-ops">
+        ${extras.map((m) => `<label class="mod-op"><input type="checkbox" name="extra" value="${esc(m)}"><span>${esc(etiquetaMod(m))}</span></label>`).join('')}
+      </div>${extras.includes('agrandar') ? '<p class="help">Agrandar no tiene cargo adicional en esta demo.</p>' : ''}
+      </fieldset>` : ''}
+      <div class="mod-cant">
+        <label class="label" for="mod-cantidad">Cantidad</label>
+        <div class="stepper">
+          <button type="button" data-d="-1" aria-label="Una menos">−</button>
+          <input id="mod-cantidad" name="cantidad" type="number" inputmode="numeric" min="1" max="20" value="1">
+          <button type="button" data-d="1" aria-label="Una más">+</button>
+        </div>
       </div>
-    </div>
-    <div class="mod-acciones">
-      <button type="button" class="btn btn-sec" data-cerrar>Cancelar</button>
-      <button type="submit" class="btn btn-primario">Agregar al pedido</button>
+      <div class="mod-acciones">
+        <button type="button" class="btn btn--ghost" data-cerrar>Cancelar</button>
+        <button type="submit" class="btn">Agregar al pedido</button>
+      </div>
     </div>`;
   const input = form.querySelector('#mod-cantidad');
   form.querySelectorAll('[data-d]').forEach((b) => b.addEventListener('click', () => {

@@ -3,13 +3,19 @@ import { assignBranch, createOrder, payOrder } from '../core/orders.js';
 import { el, esc, money, irA } from '../ui/dom.js';
 import { branchPicker } from '../ui/branch-picker.js';
 import { cart } from '../ui/cart-singleton.js';
+import { precioHTML } from '../ui/product-card.js';
+import { dishArt } from '../ui/dish-art.js';
 
 const METODOS = [
   ['yappy', 'Yappy', 'Pago desde su celular'],
   ['tarjeta', 'Tarjeta', 'Débito o crédito'],
-  ['efectivo', 'Efectivo contra entrega', 'Pague al recibir o al retirar'],
+  ['efectivo', 'Efectivo', 'Pague al recibir o al retirar'],
 ];
+const TIPOS = [['entrega', 'Entrega a domicilio', 'Lo llevamos a su puerta'], ['retiro', 'Retiro en sucursal', 'Sin costo y sin espera de ruta']];
 const cap = (m) => m.charAt(0).toUpperCase() + m.slice(1);
+const chipZona = (suc, zona, dir) => (suc
+  ? `<span class="ck-chip ck-chip--ok"><span aria-hidden="true">✓</span> Le atiende ${esc(suc.nombre)} · llega en unos ${zona.etaMin} min</span>`
+  : dir ? '<span class="ck-chip ck-chip--warn"><span aria-hidden="true">!</span> No encontramos esa zona en nuestra cobertura</span>' : '');
 
 export function vistaCarrito(main) {
   const nodo = el('<div class="carrito-vista"></div>');
@@ -22,30 +28,30 @@ export function vistaCarrito(main) {
     return cart.items().map((l) => {
       const p = state.productos.find((x) => x.id === l.productoId);
       if (!p) return '';
-      return `<li><span><strong>${l.cantidad} × ${esc(p.nombre)}</strong>${l.modificadores.length ? `<br><small>${l.modificadores.map((m) => esc(cap(m))).join(' · ')}</small>` : ''}</span><span>${money(p.precio * l.cantidad)}</span></li>`;
+      return `<li><span class="ck-linea__art">${dishArt(p)}</span><span class="ck-linea__q">${l.cantidad}×</span><span class="ck-linea__n"><strong>${esc(p.nombre)}</strong>${l.modificadores.length ? `<small>${l.modificadores.map((m) => esc(cap(m))).join(' · ')}</small>` : ''}</span><span class="ck-linea__p">${money(p.precio * l.cantidad)}</span></li>`;
     }).join('');
   }
 
   function avisoHTML() {
     if (!aviso) return '';
     if (aviso.tipo === 'agotado') {
-      return `<div class="aviso aviso-error" role="alert" tabindex="-1" data-aviso>
+      return `<div class="ck-aviso" role="alert" tabindex="-1" data-aviso>
         <strong>Algo se agotó en esa sucursal.</strong>
         ${aviso.agotados.map((a) => `
-          <div class="agotado">
+          <div class="ck-aviso__item">
             <p>“${esc(a.nombre)}” no está disponible ahora.</p>
-            ${a.alternativas.length ? `<p>Puede cambiarlo por:</p><div class="alt-botones">${a.alternativas.map((alt) => `<button type="button" class="btn btn-sec" data-swap="${esc(a.id)}" data-por="${esc(alt.id)}">${esc(alt.nombre)}</button>`).join('')}</div>` : '<p>No hay alternativas similares ahora.</p>'}
+            ${a.alternativas.length ? `<p>Puede cambiarlo por:</p><div class="cluster">${a.alternativas.map((alt) => `<button type="button" class="btn btn--ghost btn--sm" data-swap="${esc(a.id)}" data-por="${esc(alt.id)}">${esc(alt.nombre)}</button>`).join('')}</div>` : '<p>No hay alternativas similares ahora.</p>'}
             <button type="button" class="link-btn" data-quitar="${esc(a.id)}">Quitarlo del pedido</button>
           </div>`).join('')}
       </div>`;
     }
     if (aviso.tipo === 'sin_zona') {
-      return `<div class="aviso aviso-error" role="alert" tabindex="-1" data-aviso>
+      return `<div class="ck-aviso" role="alert" tabindex="-1" data-aviso>
         <strong>Todavía no llegamos a esa dirección.</strong>
         <p>Puede retirar su pedido en la sucursal que elija.</p>
-        <button type="button" class="btn btn-sec" data-a-retiro>Cambiar a retiro</button></div>`;
+        <button type="button" class="btn btn--ghost btn--sm" data-a-retiro>Cambiar a retiro</button></div>`;
     }
-    return `<div class="aviso aviso-error" role="alert" tabindex="-1" data-aviso>${esc(aviso.mensaje)}</div>`;
+    return `<div class="ck-aviso" role="alert" tabindex="-1" data-aviso>${esc(aviso.mensaje)}</div>`;
   }
 
   function pintar() {
@@ -53,74 +59,76 @@ export function vistaCarrito(main) {
     const items = cart.items();
     if (!items.length) {
       nodo.innerHTML = `
-        <div class="vacio-grande">
-          <h1>Su pedido está vacío</h1>
-          <p>Aún no ha elegido nada. El menú tiene mucho que ofrecerle.</p>
-          <a class="btn btn-primario btn-grande" href="#/menu">Ver el menú</a>
-        </div>`;
+        <section class="ck-vacio container--wide">
+          <p class="eyebrow">Su pedido</p>
+          <h1 class="ck-titulo">Aún está vacío</h1>
+          <p class="t-lead">Todavía no ha elegido nada. El menú tiene mucho que ofrecerle.</p>
+          <a class="btn btn--lg" href="#/menu">Ver el menú <span aria-hidden="true">→</span></a>
+        </section>`;
       return;
     }
     const t = cart.totals();
+    const n = cart.count();
     const suc = state.sucursales.find((s) => s.id === state.ui.sucursalCliente) ?? state.sucursales[0];
     const zona = form.tipo === 'entrega' && form.direccion.trim() ? assignBranch(state, form.direccion) : null;
     const sucZona = zona ? state.sucursales.find((s) => s.id === zona.sucursalId) : null;
+    const desde = suc.etaBaseMin - 10 > 0 ? suc.etaBaseMin - 10 : 15;
 
     nodo.innerHTML = `
-      <h1>Su pedido</h1>
-      <div class="carrito-grid">
-        <form class="carrito-form" novalidate data-form>
-          <fieldset class="bloque">
-            <legend>1. ¿Cómo lo quiere?</legend>
-            <div class="opciones-fila">
-              <label class="opcion-tarjeta"><input type="radio" name="tipo" value="entrega" ${form.tipo === 'entrega' ? 'checked' : ''}><span><strong>Entrega a domicilio</strong><small>Lo llevamos a su puerta</small></span></label>
-              <label class="opcion-tarjeta"><input type="radio" name="tipo" value="retiro" ${form.tipo === 'retiro' ? 'checked' : ''}><span><strong>Retiro en sucursal</strong><small>Sin costo y sin espera de ruta</small></span></label>
+      <header class="ck-cab container--wide">
+        <p class="eyebrow">Paso final · ${n} ${n === 1 ? 'producto' : 'productos'}</p>
+        <h1 class="ck-titulo">Su pedido</h1>
+      </header>
+      <div class="ck-grid container--wide">
+        <form class="ck-form" novalidate data-form>
+          <fieldset class="ck-bloque">
+            <legend class="ck-leg"><span class="ck-leg__n" aria-hidden="true">01</span>¿Cómo lo quiere?</legend>
+            <div class="seg">
+              ${TIPOS.map(([v, nom]) => `<label class="seg__op"><input type="radio" name="tipo" value="${v}" ${form.tipo === v ? 'checked' : ''}><span>${nom}</span></label>`).join('')}
             </div>
+            <p class="help">${TIPOS.find(([v]) => v === form.tipo)[2]}.</p>
           </fieldset>
 
           ${form.tipo === 'entrega' ? `
-          <div class="bloque">
-            <h2 class="bloque-t">2. ¿A dónde lo llevamos?</h2>
-            <div class="campo">
-              <label for="direccion">Dirección de entrega</label>
-              <input id="direccion" name="direccion" type="text" autocomplete="street-address" placeholder="Calle, casa o edificio y barrio" value="${esc(form.direccion)}" aria-describedby="dir-ayuda">
-              <p id="dir-ayuda" class="ayuda">Incluya su barrio. Zonas de ejemplo: ${esc([...new Set(state.sucursales.flatMap((s) => s.zonasEntrega))].join(', '))}.</p>
+          <div class="ck-bloque">
+            <h2 class="ck-leg"><span class="ck-leg__n" aria-hidden="true">02</span>¿A dónde lo llevamos?</h2>
+            <div class="field">
+              <label class="label" for="direccion">Dirección de entrega</label>
+              <input class="input" id="direccion" name="direccion" type="text" autocomplete="street-address" placeholder="Calle, casa o edificio y barrio" value="${esc(form.direccion)}" aria-describedby="dir-ayuda">
+              <p id="dir-ayuda" class="help">Incluya su barrio. Zonas de ejemplo: ${esc([...new Set(state.sucursales.flatMap((s) => s.zonasEntrega))].join(', '))}.</p>
             </div>
-            <div class="asignada" aria-live="polite">
-              ${sucZona ? `<span class="chip chip-ok">Le atiende ${esc(sucZona.nombre)} · llega en unos ${zona.etaMin} min</span>`
-                : form.direccion.trim() ? '<span class="chip chip-warn">No encontramos esa zona en nuestra cobertura</span>' : ''}
-            </div>
+            <div class="asignada" aria-live="polite">${chipZona(sucZona, zona, form.direccion.trim())}</div>
           </div>` : `
-          <div class="bloque">
-            <h2 class="bloque-t">2. ¿Dónde lo retira?</h2>
+          <div class="ck-bloque">
+            <h2 class="ck-leg"><span class="ck-leg__n" aria-hidden="true">02</span>¿Dónde lo retira?</h2>
             <div data-picker></div>
-            <p class="ayuda">Listo en unos ${suc.etaBaseMin - 10 > 0 ? suc.etaBaseMin - 10 : 15} a ${suc.etaBaseMin - 5} min aproximadamente. Retira en ${esc(suc.direccion)}.</p>
+            <p class="ck-chip ck-chip--ok"><span aria-hidden="true">✓</span> Listo en unos ${desde} a ${suc.etaBaseMin - 5} min en ${esc(suc.nombre)}</p>
           </div>`}
 
-          <fieldset class="bloque">
-            <legend>3. Forma de pago</legend>
-            <div class="opciones-col">
-              ${METODOS.map(([v, n, d]) => `<label class="opcion-tarjeta"><input type="radio" name="metodo" value="${v}" ${form.metodo === v ? 'checked' : ''}><span><strong>${n}</strong><small>${d}</small></span></label>`).join('')}
+          <fieldset class="ck-bloque">
+            <legend class="ck-leg"><span class="ck-leg__n" aria-hidden="true">03</span>Forma de pago</legend>
+            <div class="pago-ops">
+              ${METODOS.map(([v, nom, d]) => `<label class="pago-op"><input type="radio" name="metodo" value="${v}" ${form.metodo === v ? 'checked' : ''}><span class="pago-op__t">${nom}</span><span class="pago-op__d">${d}</span></label>`).join('')}
             </div>
-            <p class="aviso-sim"><strong>Pago simulado</strong> · Datos ficticios · No ingrese información real</p>
+            <p class="ck-sim"><strong>Pago simulado</strong> · Datos ficticios · No ingrese información real</p>
           </fieldset>
 
           ${avisoHTML()}
-          <button type="submit" class="btn btn-primario btn-grande btn-bloque">Confirmar pedido · ${money(t.total)}</button>
+          <button type="submit" class="btn btn--lg btn--block ck-enviar">Confirmar pedido · ${money(t.total)}</button>
         </form>
 
-        <aside class="resumen" aria-label="Resumen del pedido">
-          <h2>Resumen</h2>
-          <ul class="resumen-lineas">${lineasHTML(state)}</ul>
+        <aside class="ck-resumen" aria-label="Resumen del pedido">
+          <div class="ck-resumen__cab"><h2 class="ck-resumen__t">Resumen</h2><a class="link-btn" href="#/menu">Seguir pidiendo</a></div>
+          <ul class="ck-lineas">${lineasHTML(state)}</ul>
           <dl class="totales">
             <div><dt>Subtotal</dt><dd>${money(t.subtotal)}</dd></div>
             <div><dt>ITBMS 7%</dt><dd>${money(t.itbms)}</dd></div>
-            <div class="total"><dt>Total</dt><dd>${money(t.total)}</dd></div>
+            <div class="totales__total"><dt>Total</dt><dd>${precioHTML(t.total, 'totales__cifra')}</dd></div>
           </dl>
-          <a class="link-btn" href="#/menu">Seguir pidiendo</a>
         </aside>
       </div>`;
     const pk = nodo.querySelector('[data-picker]');
-    if (pk) pk.append(branchPicker(store, (v) => { aviso = null; pintar(); nodo.querySelector(`input[name="sucursal-cliente"][value="${v}"]`)?.focus(); }));
+    if (pk) pk.append(branchPicker(store, (v) => { aviso = null; pintar(); nodo.querySelector(`input[name="sucursal-cliente"][value="${v}"]`)?.focus(); }, { variante: 'tarjetas', leyenda: 'Sucursal de retiro' }));
     if (aviso) nodo.querySelector('[data-aviso]')?.focus();
   }
 
@@ -130,9 +138,7 @@ export function vistaCarrito(main) {
       // Repinta solo el chip de zona, sin perder el foco del campo.
       const zona = form.direccion.trim() ? assignBranch(store.get(), form.direccion) : null;
       const suc = zona && store.get().sucursales.find((s) => s.id === zona.sucursalId);
-      nodo.querySelector('.asignada').innerHTML = suc
-        ? `<span class="chip chip-ok">Le atiende ${esc(suc.nombre)} · llega en unos ${zona.etaMin} min</span>`
-        : form.direccion.trim() ? '<span class="chip chip-warn">No encontramos esa zona en nuestra cobertura</span>' : '';
+      nodo.querySelector('.asignada').innerHTML = chipZona(suc, zona, form.direccion.trim());
     }
   });
   nodo.addEventListener('change', (e) => {

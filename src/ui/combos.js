@@ -1,6 +1,8 @@
 import { esc, money, toast } from './dom.js';
 import { isAvailable } from '../core/menu.js';
+import { menuDelDiaActivo } from '../core/horario.js';
 import { cart } from './cart-singleton.js';
+import { precioHTML } from './product-card.js';
 
 const ROMANOS = ['I', 'II', 'III', 'IV', 'V'];
 
@@ -11,18 +13,18 @@ export function combosHTML(state, sucursalId) {
     const suma = c.items.reduce((n, it, i) => n + prods[i].precio * it.cantidad, 0);
     return `
       <article class="combo">
-        <h3>${esc(c.nombre)}</h3>
-        <ol class="combo-pasos">
-          ${prods.map((p, i) => `<li><span class="paso-n" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}
+        <div class="combo__head"><h3>${esc(c.nombre)}</h3>${precioHTML(c.precio, 'combo__price')}</div>
+        <ol class="combo__pasos">
+          ${prods.map((p, i) => `<li><span class="numeral-pill" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}
         </ol>
-        <div class="combo-pie">
-          <span class="combo-precio">${money(c.precio)}${suma > c.precio ? ` <s class="tachado">${money(suma)}</s>` : ''}</span>
-          <button type="button" class="btn btn-primario" data-combo="${esc(c.id)}" aria-label="Pedir ${esc(c.nombre)}">Pedir <span aria-hidden="true">+</span></button>
+        <div class="combo__pie">
+          ${suma > c.precio ? `<span class="combo__antes">Por separado <s>${money(suma)}</s></span>` : '<span></span>'}
+          <button type="button" class="btn btn--sm" data-combo="${esc(c.id)}" aria-label="Pedir ${esc(c.nombre)}">Pedir <span aria-hidden="true">+</span></button>
         </div>
       </article>`;
   }).join('');
   return `<div class="combos-grid">${tarjetas}</div>
-    <p class="nota">En esta demo cada combo se agrega plato por plato, al precio de lista del menú.</p>`;
+    <p class="help combos-nota">En esta demo cada combo se agrega plato por plato, al precio de lista del menú.</p>`;
 }
 
 export function bindCombos(contenedor, store) {
@@ -36,26 +38,20 @@ export function bindCombos(contenedor, store) {
   });
 }
 
-// Hora de Panamá (UTC-5 todo el año).
-export function ahoraPanama() {
-  const d = new Date(Date.now() - 5 * 3600 * 1000);
-  return { dia: d.getUTCDay(), minutos: d.getUTCHours() * 60 + d.getUTCMinutes() };
-}
-
-export function menuDelDiaHTML(state, sucursalId) {
+// Menú del día (lunes a viernes de 11:00 a 15:00, hora de Panamá). Vacío si faltan platos en la sucursal.
+export function menuDelDiaHTML(state, sucursalId, { id = '' } = {}) {
   const pick = (n) => state.productos.find((p) => p.nombre === n && isAvailable(state, p.id, sucursalId));
   const partes = [pick('Sopa de tomate'), pick('Pollo a la parrilla'), pick('Limonada')].filter(Boolean);
   if (partes.length < 2) return '';
-  const { dia, minutos } = ahoraPanama();
-  const activo = dia >= 1 && dia <= 5 && minutos >= 11 * 60 && minutos < 15 * 60;
+  const activo = menuDelDiaActivo();
   return `
     <div class="mdd">
-      <div class="mdd-izq">
-        <span class="sello ${activo ? 'sello-ok' : ''}">${activo ? 'Disponible ahora' : 'Almuerzo · lun a vie'}</span>
-        <h3>Menú del día</h3>
-        <p class="mdd-horario">De lunes a viernes, de 11:00 a 15:00.</p>
+      <div class="mdd__izq">
+        <span class="badge ${activo ? 'badge--ok' : 'badge--outline'}">${activo ? '● Disponible ahora' : 'Solo almuerzo · lun a vie'}</span>
+        <h2 class="mdd__t"${id ? ` id="${esc(id)}"` : ''}>Menú del día</h2>
+        <p class="mdd__h">De lunes a viernes, de 11:00 a 15:00. Entrada, plato fuerte y bebida.</p>
       </div>
-      <ul class="mdd-lista">${partes.map((p) => `<li>${esc(p.nombre)}</li>`).join('')}</ul>
-      <div class="mdd-precio"><strong>US$ 9.95</strong><span>por persona · solo en sala</span></div>
+      <ol class="mdd__lista">${partes.map((p, i) => `<li><span class="numeral-pill" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}</ol>
+      <div class="mdd__precio">${precioHTML(9.95, 'mdd__cifra')}<span>por persona · solo en sala</span></div>
     </div>`;
 }

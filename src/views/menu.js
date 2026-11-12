@@ -10,24 +10,43 @@ import { cart } from '../ui/cart-singleton.js';
 
 import { buildTabs, resolveActiveTab, nextTabIndex } from '../core/menu-tabs.js';
 
+// Una línea editorial por categoría (texto de la demo, cocina neutra).
+const NOTAS = {
+  Entradas: 'Para abrir la mesa y compartir mientras llega lo demás.',
+  Hamburguesas: 'Pan tostado, carne a la plancha y salsas de la casa. Elija el término.',
+  Pastas: 'Salsas preparadas cada mañana y porciones para quedar bien.',
+  'Platos fuertes': 'Parrilla, pescado y mariscos, con guarnición del día.',
+  'Ensaladas y bowls': 'Frescos, completos y armados al momento.',
+  Postres: 'El final que la mesa siempre pide.',
+  Bebidas: 'Naturales, frías o calientes. Agrandar no tiene cargo en esta demo.',
+};
+
 // Pestaña activa: se recuerda al volver del carrito; #/menu?c=<slug> la fija al entrar.
 let ultimaPestana = null;
 const pestanaDeLaURL = () => new URLSearchParams((location.hash.split('?')[1]) || '').get('c');
 
 export function vistaMenu(main) {
+  const total = store.get().productos.length;
   const nodo = el(`
     <div class="menu-vista">
-      <header class="menu-cab">
-        <h1>Nuestro menú</h1>
-        <p class="seccion-sub">Elija su sucursal, arme su pedido y nosotros lo preparamos al momento.</p>
-        <div data-picker></div>
+      <header class="m-hero band band--dark on-dark grain">
+        <div class="container--wide m-hero__in">
+          <div class="m-hero__txt">
+            <p class="eyebrow">La carta completa · ${total} platos</p>
+            <h1 class="m-hero__t">Nuestro menú</h1>
+          </div>
+          <div class="m-hero__suc">
+            <p class="m-hero__lead">Elija su sucursal, arme su pedido y lo preparamos al momento. Solo verá lo que hay hoy en esa cocina.</p>
+            <div data-picker></div>
+          </div>
+        </div>
       </header>
-      <div class="catbar"><div class="catbar-in" role="tablist" aria-label="Categorías del menú" data-cats></div></div>
-      <div class="menu-layout">
+      <div class="catbar"><div class="catbar-in container--wide" role="tablist" aria-label="Categorías del menú" data-cats></div></div>
+      <div class="menu-layout container--wide">
         <div class="menu-main" data-secciones role="tabpanel" tabindex="-1"></div>
         <aside class="cart-side" aria-label="Su pedido" data-side></aside>
       </div>
-      <div class="cart-bar"><button type="button" class="btn btn-primario btn-bloque" data-abrir-hoja></button></div>
+      <div class="cart-bar on-dark"><button type="button" class="btn btn--lg btn--block" data-abrir-hoja></button></div>
     </div>`);
   main.append(nodo);
   const cats = nodo.querySelector('[data-cats]');
@@ -36,7 +55,7 @@ export function vistaMenu(main) {
   let activa = pestanaDeLaURL() ?? ultimaPestana;
   let firma = '';
 
-  nodo.querySelector('[data-picker]').append(branchPicker(store, () => pintar()));
+  nodo.querySelector('[data-picker]').append(branchPicker(store, () => pintar(), { variante: 'pildoras' }));
 
   function pintar(animar = false) {
     const state = store.get();
@@ -51,7 +70,7 @@ export function vistaMenu(main) {
     if (nueva !== firma) {
       firma = nueva;
       const enfocada = cats.contains(document.activeElement);
-      cats.innerHTML = tabs.map((t, i) => `<button type="button" role="tab" class="cat-btn" id="tab-${esc(t.id)}" data-tab="${esc(t.id)}" aria-controls="panel-menu" aria-selected="${i === idx}" tabindex="${i === idx ? 0 : -1}">${esc(t.nombre)}</button>`).join('');
+      cats.innerHTML = tabs.map((t, i) => `<button type="button" role="tab" class="tab-pill" id="tab-${esc(t.id)}" data-tab="${esc(t.id)}" aria-controls="panel-menu" aria-selected="${i === idx}" tabindex="${i === idx ? 0 : -1}">${esc(t.nombre)}</button>`).join('');
       if (enfocada) cats.querySelector('[aria-selected="true"]')?.focus();
     } else {
       cats.querySelectorAll('[role="tab"]').forEach((b, i) => { b.setAttribute('aria-selected', String(i === idx)); b.tabIndex = i === idx ? 0 : -1; });
@@ -59,19 +78,19 @@ export function vistaMenu(main) {
     cats.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     secciones.id = 'panel-menu';
     const t = tabs[idx];
-    if (!t) { secciones.removeAttribute('aria-labelledby'); secciones.innerHTML = '<p class="nota">Por ahora no hay platos disponibles en esta sucursal.</p>'; return; }
+    if (!t) { secciones.removeAttribute('aria-labelledby'); secciones.innerHTML = '<p class="m-vacio">Por ahora no hay platos disponibles en esta sucursal.</p>'; return; }
     secciones.setAttribute('aria-labelledby', `tab-${t.id}`);
     let cuerpo;
     if (t.tipo === 'categoria') {
       const g = grupos[idx];
-      cuerpo = `<div class="seccion-cab"><h2>${esc(t.nombre)}</h2><span class="cuenta">${g.productos.length} ${g.productos.length === 1 ? 'plato' : 'platos'}</span></div>
-        <div class="dish-grid">${g.productos.map((p) => productCardHTML(p)).join('')}</div>`;
+      cuerpo = `<div class="m-sec__cab"><h2 class="m-sec__t">${esc(t.nombre)}</h2><p class="m-sec__nota"><span class="m-sec__n">${g.productos.length} ${g.productos.length === 1 ? 'plato' : 'platos'}</span>${esc(NOTAS[t.nombre] ?? '')}</p></div>
+        <div class="dish-grid dish-grid--menu">${g.productos.map((p) => productCardHTML(p)).join('')}</div>`;
     } else if (t.tipo === 'combos') {
-      cuerpo = `<div class="seccion-cab"><h2>Combos</h2></div>${combosHTML(state, suc)}`;
+      cuerpo = `<div class="m-sec__cab"><h2 class="m-sec__t">Combos</h2><p class="m-sec__nota">Tres pasos, un precio. Se agregan plato por plato a su pedido.</p></div>${combosHTML(state, suc)}`;
     } else {
       cuerpo = mdd;
     }
-    secciones.innerHTML = `<div class="menu-sec ${animar ? 'menu-sec-entra' : ''}">${cuerpo}<p class="sec-pedir"><a class="btn btn-sec" href="#/carrito">Ver mi pedido y pagar</a></p></div>`;
+    secciones.innerHTML = `<div class="m-sec ${animar ? 'm-sec--entra' : ''}">${cuerpo}<p class="m-sec__pie"><a class="btn btn--ghost" href="#/carrito">Ver mi pedido y pagar <span aria-hidden="true">→</span></a></p></div>`;
   }
 
   function elegir(id, { enfocar = false } = {}) {
@@ -109,7 +128,7 @@ export function vistaMenu(main) {
   function pintarBarra() {
     const n = cart.count();
     nodo.querySelector('.cart-bar').hidden = n === 0;
-    barBtn.textContent = `Ver mi pedido (${n}) · ${money(cart.totals().total)}`;
+    barBtn.innerHTML = `<span>Ver carrito · ${n} ${n === 1 ? 'producto' : 'productos'}</span><span class="cart-bar__total">${money(cart.totals().total)}</span>`;
   }
   pintarBarra();
   const offBarra = store.subscribe(pintarBarra);
@@ -117,7 +136,7 @@ export function vistaMenu(main) {
   barBtn.addEventListener('click', () => {
     const cont = document.createElement('div');
     cont.className = 'hoja';
-    cont.innerHTML = '<button type="button" class="hoja-cerrar" data-cerrar aria-label="Cerrar pedido">×</button><div data-contenido></div>';
+    cont.innerHTML = '<button type="button" class="btn btn--ghost btn--icon hoja-cerrar" data-cerrar aria-label="Cerrar pedido"><span aria-hidden="true">×</span></button><div data-contenido></div>';
     offHoja = montarPanelCarrito(cont.querySelector('[data-contenido]'), store, { onContinuar: () => cerrar() });
     const cerrar = abrirDialogo(cont, { etiqueta: 'Su pedido', clase: 'modal-hoja', onClose: () => { offHoja?.(); offHoja = null; } });
     cont.querySelector('[data-cerrar]').addEventListener('click', cerrar);
