@@ -28,7 +28,8 @@ import { vistaEstilo } from './views/estilo.js';
 import { crearFooter } from './ui/footer.js';
 import { vigilarReveal } from './ui/reveal.js';
 import { getAppBot } from './bot/instance.js';
-import { montarPresentacion } from './ui/presenter.js';
+import { montarPresentacion, startPresentation } from './ui/presenter.js';
+import { crearCabecera, vigilarCabecera } from './ui/cabecera.js';
 
 const TITULOS = {
   inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', estilo: 'Guía de estilo', pedido: 'Seguimiento de pedido',
@@ -56,35 +57,8 @@ app.append(skip);
 const banner = crearBanner();
 app.append(banner);
 
-const ICONO_BOLSA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>';
-const header = document.createElement('header');
-header.className = 'app-header';
-header.innerHTML = `
-  <div class="app-header__inner container--wide">
-    <a class="brand" href="#/">${brand.logoSvg}<span class="brand__name">${brand.nombre.replace('&', '&amp;')}</span></a>
-    <nav class="nav" aria-label="Principal">
-      <a href="#/" data-nav="inicio">Inicio</a>
-      <a href="#/menu" data-nav="menu">Menú</a>
-      <a href="#/chat" data-nav="chat">Asistente</a>
-    </nav>
-    <div class="app-header__cta">
-      <a class="btn btn--ghost btn--sm" href="#/chat">Reservar</a>
-      <a class="btn btn--sm" href="#/menu">Pedir</a>
-      <a class="btn btn--ghost btn--sm nav-carrito" href="#/carrito" data-nav="carrito" aria-label="Carrito, 0 productos">${ICONO_BOLSA}<span class="nav-cuenta" data-cuenta>0</span></a>
-    </div>
-    <div class="app-header__util"></div>
-  </div>`;
-const util = header.querySelector('.app-header__util');
-const reiniciar = document.createElement('button');
-reiniciar.type = 'button';
-reiniciar.className = 'btn btn--text btn--sm btn-reiniciar';
-reiniciar.textContent = 'Reiniciar demo';
-reiniciar.addEventListener('click', reiniciarDemo);
-const admin = document.createElement('a');
-admin.className = 'btn btn--ghost btn--sm btn-admin';
-admin.href = '#/admin/cocina';
-admin.textContent = 'Entrar como administrador';
-util.append(reiniciar, admin);
+// Cabecera (bloque B, src/ui/cabecera.js): utilidades de la demo en el menú «Demo ▾» y hoja móvil.
+const header = crearCabecera({ alReiniciar: reiniciarDemo, alPresentar: () => startPresentation() });
 app.append(header);
 
 const main = document.createElement('main');
@@ -96,21 +70,8 @@ const footer = crearFooter();
 app.append(footer);
 vigilarReveal(main);
 
-// Sombra suave de la cabecera solo cuando hay scroll.
-let rafScroll = 0;
-const marcarScroll = () => { rafScroll = 0; header.classList.toggle('is-scrolled', window.scrollY > 8); };
-window.addEventListener('scroll', () => { if (!rafScroll) rafScroll = requestAnimationFrame(marcarScroll); }, { passive: true });
-
-// Alturas de banner y encabezado para los elementos fijos (barra de categorías, anclas).
-function medir() {
-  const root = document.documentElement.style;
-  root.setProperty('--banner-h', `${banner.offsetHeight}px`);
-  const sticky = window.matchMedia('(min-width: 900px)').matches;
-  root.setProperty('--stick-top', `${banner.offsetHeight + (sticky ? header.offsetHeight : 0)}px`);
-}
-if ('ResizeObserver' in window) { const ro = new ResizeObserver(medir); ro.observe(banner); ro.observe(header); }
-window.addEventListener('resize', medir);
-medir();
+// Transparente sobre el héroe → sólida al pasarlo; fija --stick-top / --banner-h para los elementos pegajosos.
+vigilarCabecera(header);
 
 function pintarCuenta() {
   const n = cart.count();
