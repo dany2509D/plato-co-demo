@@ -401,6 +401,7 @@ dialog.modal-hoja.is-arrastrando { transition: none; }
  * son de A2 (carta.css): aquí solo se agrandan dentro de #/menu, con más especificidad (A2 puede llevarlas a carta.css). */
 .ck-cab .eyebrow, .ck-vacio .eyebrow, .ck-form .label { font-size: .875rem; }
 .ck-form .help { font-size: .9375rem; line-height: 1.45; }
+.ck-aviso .btn--sm { font-size: .875rem; }
 .totales__cifra .precio__mon { font-size: .875rem; }
 .menu-vista .dish__meta { font-size: .9375rem; }
 .menu-vista .dish__v { font-size: .875rem; }
