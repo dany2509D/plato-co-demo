@@ -154,7 +154,9 @@ html.hoja-abierta { overflow: hidden; }
 @media (min-width: 900px) { .hoja-nav:not([open]) { display: none; } }
 
 /* ---------- Pie: carbón, 4 columnas con filetes y logotipo de borde a borde ---------- */
-.site-footer { margin-top: var(--sp-6); padding-block: var(--sp-8) var(--sp-4); }
+/* Abajo deja 96 px (80 en celular) libres: ahí flota el lanzador «Presentación» al llegar al final de la página */
+.site-footer { margin-top: var(--sp-6); padding-block: var(--sp-8) 96px; }
+@media (max-width: 899px) { .site-footer { padding-bottom: 80px; } }
 .vista[data-ruta="inicio"] + .site-footer { margin-top: 0; }
 .site-footer__grid { display: grid; grid-template-columns: minmax(0, 1fr); }
 .site-footer__col { padding-block: var(--sp-3); border-top: var(--rule-w) solid var(--c-line-dark); }

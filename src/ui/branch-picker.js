@@ -55,12 +55,13 @@ export function branchPicker(store, onChange, { variante = 'tarjetas', leyenda =
         <span class="suc-fila__marca"><span class="si">✓ Su sucursal</span><span class="no">Elegir</span></span>
       </label>`;
     }
-    return `<label class="suc-tarjeta">${input}<span class="suc-tarjeta__in">
-        <span class="suc-tarjeta__foto">${fotoSucursal(i)}</span>
-        <strong>${esc(corto(s))}</strong>
-        <span>${esc(s.direccion)}</span>
-        <span>Hoy de ${esc(s.horario.abre)} a ${esc(s.horario.cierra)}</span>
-        ${estado}
+    // 'tarjetas' (retiro en el pago): foto primero, sin caja; nombre DM Sans 600 (nada de Anton bajo 48 px).
+    return `<label class="suc-tarjeta foto-host">${input}<span class="suc-tarjeta__in">
+        <span class="suc-tarjeta__foto">${fotoSucursal(i)}<span class="suc-tarjeta__marca" aria-hidden="true">✓ Su sucursal</span></span>
+        <strong class="suc-tarjeta__nombre">${esc(corto(s))}</strong>
+        <span class="suc-tarjeta__dir">${esc(s.direccion)}</span>
+        <span class="suc-tarjeta__hor">Hoy de ${esc(s.horario.abre)} a ${esc(s.horario.cierra)}</span>
+        <span class="suc-tarjeta__pie"><span class="suc-estado suc-estado--corto${st.abierto ? ' is-abierto' : ''}${st.cierraPronto ? ' is-pronto' : ''}">${esc(estadoCorto(st, s.horario))}</span></span>
       </span></label>`;
   }).join('');
   const nodo = el(`

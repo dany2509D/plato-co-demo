@@ -1,12 +1,19 @@
 /* Modo Presentación: botón flotante, barra del presentador y anillo de resaltado.
    Usa solo tokens del sistema (docs/design/system.md): sin sombras ni degradados, foco visible, 44 px. */
 
+/* Lanzador (bloque B): abajo a la IZQUIERDA en todas las rutas, nunca sobre la columna derecha (carrito lateral,
+   totales del pago, foto del seguimiento). Píldora compacta de 40 px (zona táctil 44 px); por debajo de la cabecera y
+   sus menús (--z-sticky 40) y por encima del contenido y de las barras fijas inferiores (que reservan 72 px a la
+   izquierda). Se oculta mientras hay una hoja o un diálogo abiertos. */
 .pres-lanzar {
-  position: fixed; right: var(--sp-3); bottom: var(--sp-3); z-index: var(--z-float);
+  position: fixed; left: var(--sp-3); right: auto; bottom: var(--sp-3); z-index: calc(var(--z-sticky) - 1);
   --btn-bd: var(--c-gold);
+  min-height: 40px; padding: 0 1.1em; font-size: .875rem;
   outline-offset: 3px;
 }
+.pres-lanzar::after { content: ''; position: absolute; inset: -2px 0; }
 .pres-lanzar[hidden] { display: none; }
+html.hoja-abierta .pres-lanzar, body:has(dialog[open]) .pres-lanzar { visibility: hidden; }
 .pres-lanzar svg { flex: none; }
 body.pres-activa { padding-bottom: var(--pres-h, 160px); }
 
@@ -62,6 +69,7 @@ body.pres-activa { padding-bottom: var(--pres-h, 160px); }
    aria-label); las barras fijas inferiores reservan 72 px a la izquierda (direccion-v2 §3.9, bloque B). */
 @media (max-width: 899px) {
   .pres-lanzar { left: var(--sp-2); right: auto; bottom: calc(var(--sp-2) + env(safe-area-inset-bottom, 0px)); width: var(--tap); height: var(--tap); min-height: var(--tap); padding: 0; border-radius: 50%; }
+  .pres-lanzar::after { content: none; }
   .pres-lanzar span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .pres-lanzar svg { margin-left: 2px; }
 }

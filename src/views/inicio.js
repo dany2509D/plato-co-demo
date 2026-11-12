@@ -90,17 +90,17 @@ export function vistaInicio(main) {
         <div class="c-hero__escena">
           ${fotoEscena('hero', { eager: true, clase: 'c-hero__foto', alt: 'Hamburguesa con papas fritas y tomates cherry sobre una pizarra oscura' })}
           <div class="container--wide c-hero__sobre">
-            <div class="c-hero__txt">
-              <p class="c-hero__lead">Servido con ganas: platos generosos, ingredientes frescos y su mesa lista cuando llegue.</p>
-              <div class="c-hero__cta">
-                <a class="btn c-hero__btn" href="#/menu">Pedir ahora <span aria-hidden="true">→</span></a>
-                <a class="btn btn--ghost c-hero__btn c-hero__btn--ghost" href="#/chat">Reservar mesa</a>
-              </div>
-            </div>
             <div class="c-proof">
               ${estrellasHTML(5)}
               <p class="c-proof__n">4,8</p>
               <p class="c-proof__t">2.140 reseñas · cifras ficticias</p>
+            </div>
+            <div class="c-hero__txt">
+              <p class="c-hero__lead">Servido con ganas: platos generosos y su mesa lista cuando llegue.</p>
+              <div class="c-hero__cta">
+                <a class="btn c-hero__btn" href="#/menu">Pedir ahora <span aria-hidden="true">→</span></a>
+                <a class="btn btn--ghost c-hero__btn c-hero__btn--ghost" href="#/chat">Reservar mesa</a>
+              </div>
             </div>
           </div>
         </div>

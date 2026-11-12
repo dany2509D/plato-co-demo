@@ -35,10 +35,10 @@
 .c-hero__cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .c-hero__btn { min-height: 52px; padding: 0 28px; font-size: 1rem; }
 .c-hero .c-hero__btn--ghost { --btn-fg: var(--c-on-dark); --btn-bd: var(--c-on-dark); --btn-hover-bg: var(--c-on-dark); --btn-hover-fg: var(--c-char); }
-/* Valoración: tarjeta pergamino afilada que sobresale 40 px bajo la foto (Amrit). A la izquierda: la píldora
-   flotante «Presentación» ocupa la esquina inferior derecha y la taparía. */
+/* Valoración: tarjeta pergamino afilada que sobresale 40 px bajo la foto, abajo a la derecha (Amrit). La esquina
+   inferior izquierda queda libre para el lanzador «Presentación». */
 .c-proof {
-  position: absolute; left: 0; bottom: -40px; width: 320px; height: 120px;
+  position: absolute; right: 0; bottom: -40px; width: 320px; height: 120px;
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; gap: 4px 18px;
   padding: 0 24px; color: var(--c-ink); background: var(--c-canvas);
 }
@@ -52,14 +52,16 @@
   .c-hero__cab { padding-block: var(--sp-2) var(--sp-2); }
   .c-hero__eyebrow { font-size: .75rem; margin-bottom: 8px; }
   .c-hero__escena { display: flex; flex-direction: column; }
-  .c-hero .c-hero__foto { position: relative; inset: auto; height: clamp(280px, 77vw, 480px); }
+  /* Celular: foto → valoración → lead → CTA; los CTA terminan antes de y ≈ 735 a 390×844 (y 712 a 360×780), así el
+     círculo «Presentación» (abajo a la izquierda) cae sobre espacio vacío en el primer viewport */
+  .c-hero .c-hero__foto { position: relative; inset: auto; height: clamp(240px, 70vw, 480px); }
   .c-hero__foto img { object-position: 40% 80%; }
-  .c-hero__escena::before { bottom: auto; height: clamp(280px, 77vw, 480px); }
-  .c-hero__sobre { display: block; height: auto; padding-block: 20px var(--sp-4); }
+  .c-hero__escena::before { bottom: auto; height: clamp(240px, 70vw, 480px); }
+  .c-hero__sobre { display: block; height: auto; padding-block: 16px var(--sp-5); }
   .c-hero__lead { font-size: 1.0625rem; margin-bottom: var(--sp-2); max-width: 46ch; }
   .c-hero__cta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .c-hero__btn { padding: 0 12px; }
-  .c-proof { position: static; width: auto; height: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: var(--sp-3); padding: 0; color: var(--c-on-dark); background: none; }
+  .c-proof { position: static; width: auto; height: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 var(--sp-2); padding: 0; color: var(--c-on-dark); background: none; }
   .c-proof__n { font: 700 1rem/1 var(--font-body); }
   .c-proof__t { color: var(--c-on-dark-muted); }
 }
@@ -138,7 +140,7 @@
 .suc-fila:has(input:checked) :is(.suc-fila__datos, .suc-fila__eta small, .suc-estado) { color: var(--c-on-dark-muted); }
 .suc-fila:has(input:checked) .suc-fila__n { color: var(--c-gold); }
 .suc-fila:has(input:checked) .suc-estado.is-abierto { color: var(--c-on-dark); }
-:is(.suc-fila:has(input:checked), .suc-tarjeta input:checked + .suc-tarjeta__in) .suc-estado.is-abierto::before { background: var(--c-gold); border-color: var(--c-gold); }
+.suc-fila:has(input:checked) .suc-estado.is-abierto::before { background: var(--c-gold); border-color: var(--c-gold); }
 .suc-fila:has(input:checked) .suc-fila__marca { background: var(--c-gold); border-color: var(--c-gold); color: var(--c-char); }
 @media (min-width: 900px) {
   .suc-fila { grid-template-columns: 64px minmax(0, 1.15fr) minmax(0, 1.3fr) minmax(0, 1.1fr) 104px 148px; grid-template-areas: "n nom datos est eta marca"; padding: var(--sp-4) var(--sp-2); gap: var(--sp-3); }
@@ -155,15 +157,29 @@
 .suc-pill input:checked + span { background: var(--pl-bg); color: var(--pl-fg); border-color: var(--pl-bg); font-weight: 700; }
 .suc-pill input:focus-visible + span { outline: 2px solid var(--ctx-focus); outline-offset: 2px; }
 
-/* Tarjetas (retiro en el pago): foto 4:3 arriba */
-.branch-picker--tarjetas .suc-grupo { display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
-.suc-tarjeta { position: relative; display: block; }
-.suc-tarjeta__in { display: flex; flex-direction: column; gap: 2px; height: 100%; padding: var(--sp-2); overflow: hidden; font-size: var(--fs-sm); color: var(--c-ink-soft); cursor: pointer; }
-.suc-tarjeta__foto { display: block; margin: calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) var(--sp-2); }
+/* Tarjetas (retiro en el pago): foto 4:3 primero, sin caja ni radio; filete sobre el estado. Seleccionada: anillo de
+   tinta alrededor de la foto + «✓ Su sucursal» en texto (mismo lenguaje que la portada). Anula la caja de papel y el
+   relleno tinta que client.css aplica a .suc-tarjeta__in (este archivo va después en la cascada). */
+.branch-picker--tarjetas .suc-grupo { display: grid; gap: var(--sp-4) var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); padding-top: 6px; }
+.suc-tarjeta { position: relative; display: block; min-width: 0; cursor: pointer; }
+.suc-tarjeta .suc-tarjeta__in, .suc-tarjeta input:checked + .suc-tarjeta__in, .suc-tarjeta .suc-tarjeta__in:hover {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; height: 100%; padding: 0; overflow: visible;
+  font-size: .9375rem; font-weight: 400; line-height: 1.45; color: var(--c-ink-soft);
+  background: none; border: 0; border-radius: 0;
+}
+.suc-tarjeta__foto { position: relative; display: block; width: 100%; margin: 0 0 12px; outline: 2px solid transparent; outline-offset: 4px; transition: outline-color var(--dur-fast) var(--ease-out); }
 .suc-tarjeta__foto .foto { width: 100%; }
-.suc-tarjeta__in strong { font-size: 1.625rem; line-height: 1; color: var(--c-ink); margin-bottom: 4px; }
-.suc-tarjeta input:checked + .suc-tarjeta__in { color: var(--c-on-dark-muted); font-weight: 400; }
-.suc-tarjeta input:checked + .suc-tarjeta__in :is(strong, .suc-estado) { color: var(--c-on-dark); }
+.suc-tarjeta input:checked + .suc-tarjeta__in .suc-tarjeta__foto { outline-color: var(--c-ink); }
+.suc-tarjeta__marca {
+  position: absolute; left: 8px; top: 8px; z-index: 2; display: none; align-items: center; min-height: 28px; padding: 0 12px;
+  font: 700 .75rem/1 var(--font-body); color: var(--c-canvas); background: var(--c-ink); border-radius: var(--r-pill);
+}
+.suc-tarjeta input:checked + .suc-tarjeta__in .suc-tarjeta__marca { display: inline-flex; }
+.suc-tarjeta .suc-tarjeta__nombre { margin: 0; font: 600 1.25rem/1.2 var(--font-body); letter-spacing: -.01em; text-transform: none; white-space: normal; color: var(--c-ink); }
+.suc-tarjeta input:checked + .suc-tarjeta__in .suc-tarjeta__nombre::before { content: none; }
+.suc-tarjeta:hover .suc-tarjeta__nombre { text-decoration: underline; text-underline-offset: .15em; }
+.suc-tarjeta__pie { align-self: stretch; margin-top: 8px; padding-top: 8px; border-top: var(--rule-w) solid var(--c-rule); }
+.suc-tarjeta input:focus-visible + .suc-tarjeta__in { outline: 2px solid var(--c-ink); outline-offset: 10px; border-radius: 0; }
 
 /* ================= Lo que más se pide (4 destacados) ================= */
 .c-dest__grid { row-gap: var(--sp-5); }
