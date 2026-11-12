@@ -1,19 +1,30 @@
 import { construirFeed } from '../core/live-feed.js';
 import { esc } from './dom.js';
+import { circuloIcono, icono } from './icons.js';
 
 // Panel "En vivo": línea de tiempo derivada del estado (así también aparece tras recargar).
 // Se repinta con cada cambio del store; todo texto va escapado.
 export function livePanel(container, store) {
+  const sucActual = () => {
+    const st = store.get();
+    const s = st.sucursales?.find((x) => x.id === st.ui?.sucursalAdmin) ?? st.sucursales?.[0];
+    return (s?.nombre ?? 'Centro').replace(/^Plato & Co\.\s*/, '');
+  };
   container.innerHTML = `
     <section class="vivo" aria-labelledby="vivo-t">
-      <header class="vivo-cab">
-        <h2 id="vivo-t"><span class="vivo-punto" aria-hidden="true"></span>En vivo</h2>
-        <p>Lo que hace la automatización mientras el cliente chatea: pedidos, reservas y avisos al equipo.</p>
-        <p class="vivo-enlaces"><a class="btn btn--sm" href="#/admin/cocina">Ver en cocina</a><a class="btn btn--ghost btn--sm" href="#/admin/reservas">Ver reservas</a></p>
-      </header>
-      <ol class="vivo-lista" data-lista aria-label="Actividad reciente, lo más nuevo primero"></ol>
-      <p class="vivo-vacio" data-vacio>Aún no hay actividad. Haga un pedido o una reserva en el chat y aparecerá aquí al instante.</p>
+      <div class="vivo-barra" aria-hidden="true"><span class="vivo-pts"><i></i><i></i><i></i></span><span class="vivo-url" data-url></span></div>
+      <div class="vivo-win">
+        <header class="vivo-cab">
+          <h2 id="vivo-t"><span class="vivo-punto" aria-hidden="true"></span>En vivo</h2>
+          <p>Lo que hace la automatización mientras el cliente chatea: pedidos, reservas y avisos al equipo.</p>
+          <p class="vivo-enlaces"><a class="btn btn--sm" href="#/admin/cocina">Ver en cocina</a><a class="btn btn--ghost btn--sm" href="#/admin/reservas">Ver reservas</a></p>
+        </header>
+        <ol class="vivo-lista" data-lista aria-label="Actividad reciente, lo más nuevo primero"></ol>
+        <p class="vivo-vacio" data-vacio>${icono('chat', { tam: 20 })}<span>Aún no hay actividad. Haga un pedido o una reserva en el chat y aparecerá aquí al instante.</span></p>
+        <p class="vivo-pie">Se actualiza solo, sin recargar la página.</p>
+      </div>
     </section>`;
+  container.querySelector('[data-url]').textContent = `panel.platoyco.example · ${sucActual()}`;
   const lista = container.querySelector('[data-lista]');
   const vacio = container.querySelector('[data-vacio]');
   const humanoEn = {};
@@ -36,7 +47,7 @@ export function livePanel(container, store) {
     lista.innerHTML = items.map((it) => {
       const nuevo = !primera && !vistos.has(it.id);
       return `<li class="vivo-item vivo-${esc(it.tipo)}${nuevo ? ' vivo-nuevo' : ''}">
-        <span class="vivo-ic" aria-hidden="true">${esc(it.icono)}</span>
+        ${circuloIcono(it.icono, { tam: 18, tono: 'claro' })}
         <div class="vivo-cuerpo">
           <p class="vivo-tit"><strong>${esc(it.titulo)}</strong><time>${esc(it.hora)}</time></p>
           <p class="vivo-det">${esc(it.detalle)}</p>

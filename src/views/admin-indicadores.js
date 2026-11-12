@@ -1,6 +1,9 @@
 import '../styles/indicadores.css';
 import { metrics, compareBranches, bestPerMetric, totalPedidos, dailySummary, usd } from '../core/metrics.js';
 import { kpiBlock, hBars, splitBar, esc } from '../ui/kpi.js';
+import { fotoEscena, fotoProducto } from '../ui/photo.js';
+
+const AMBITOS_ETQ = (state) => [{ id: 'todas', texto: 'Todas' }, ...state.sucursales.map((s) => ({ id: s.id, texto: s.nombre.replace(/^Plato & Co\.\s*/, '') || s.nombre }))];
 
 function vistaHTML(state, sel) {
   const scope = sel === 'todas' || state.sucursales.some((s) => s.id === sel) ? sel : 'todas';
@@ -21,13 +24,15 @@ function vistaHTML(state, sel) {
     <td>${totalPedidos(c)}${mejor('pedidos', c.sucursalId)}</td>
     <td>${usd(c.ticketPromedio)}${mejor('ticketPromedio', c.sucursalId)}</td>
     <td>${c.tiempoPrepMin ? `${c.tiempoPrepMin} min` : 'Sin datos'}${mejor('tiempoPrepMin', c.sucursalId)}</td></tr>`).join('');
-  const grupos = hBars(comp.map((c) => ({ etiqueta: nombreSuc(c.sucursalId), valor: totalPedidos(c), texto: `${totalPedidos(c)} pedidos`, mejor: best.pedidos === c.sucursalId && totalPedidos(c) > 0 })),
-    { titulo: `Pedidos por sucursal: ${comp.map((c) => `${nombreSuc(c.sucursalId)} ${totalPedidos(c)}`).join(', ')}` });
+  const claveFoto = (id) => `sucursal_${state.sucursales.findIndex((s) => s.id === id) + 1}`;
+  const grupos = hBars(comp.map((c) => ({ etiqueta: nombreSuc(c.sucursalId), miniatura: fotoEscena(claveFoto(c.sucursalId), { alt: '', ratio: '4/3', clase: claveFoto(c.sucursalId) === 'sucursal_1' ? 'foto--warm' : '' }), valor: totalPedidos(c), texto: `${totalPedidos(c)} pedidos`, mejor: best.pedidos === c.sucursalId && totalPedidos(c) > 0 })),
+    { tam: 'sucursal', titulo: `Pedidos por sucursal: ${comp.map((c) => `${nombreSuc(c.sucursalId)} ${totalPedidos(c)}`).join(', ')}` });
 
   const topTexto = m.topPlatos.map((p) => `${p.nombre} ${p.unidades}`).join(', ');
   const topMax = Math.max(0, ...m.topPlatos.map((p) => p.unidades));
   return `<div class="ind">
-    <header class="pg-cab"><p class="rol">Vista por rol · Gerente</p><h1 id="ind-titulo">Indicadores</h1><p class="pg-sub">${esc(nombre)} · pedidos del día</p></header>
+    <header class="pg-cab"><p class="rol">Vista por rol · Gerente</p><h1 id="ind-titulo">Indicadores</h1><p class="pg-sub">${esc(nombre)} · pedidos del día</p>
+      <div class="seg ind-ambito" role="group" aria-label="Sucursales incluidas en los indicadores">${AMBITOS_ETQ(state).map((a) => `<button type="button" data-ambito="${esc(a.id)}" aria-pressed="${a.id === scope}">${esc(a.texto)}</button>`).join('')}</div></header>
     <section class="kpis" aria-label="Indicadores principales">
       ${kpiBlock({ valor: total, etiqueta: 'Pedidos del día' })}
       ${kpiBlock({ valor: usd(m.ticketPromedio), etiqueta: 'Ticket promedio', nota: 'ITBMS incluido' })}
@@ -43,7 +48,7 @@ function vistaHTML(state, sel) {
     </section>
     <div class="ind-cols">
       <section class="ind-sec" aria-labelledby="ind-top"><h2 id="ind-top">Platos más vendidos</h2>
-        ${m.topPlatos.length ? hBars(m.topPlatos.map((p) => ({ etiqueta: p.nombre, valor: p.unidades, texto: `${p.unidades} u.`, mejor: p.unidades === topMax })), { titulo: `Platos más vendidos: ${topTexto}` }) : '<p class="vacio">Aún no hay pedidos.</p>'}
+        ${m.topPlatos.length ? hBars(m.topPlatos.map((p) => ({ etiqueta: p.nombre, miniatura: (() => { const pr = state.productos.find((x) => x.nombre === p.nombre); return pr ? fotoProducto(pr, { variante: 'mini' }) : ''; })(), valor: p.unidades, texto: `${p.unidades} u.`, mejor: p.unidades === topMax })), { tam: 'plato', titulo: `Platos más vendidos: ${topTexto}` }) : '<p class="vacio">Aún no hay pedidos.</p>'}
       </section>
       <section class="ind-sec" aria-labelledby="ind-canal"><h2 id="ind-canal">Web y WhatsApp</h2>
         ${splitBar(web, whatsapp, { titulo: `Pedidos por canal: ${web} web, ${whatsapp} WhatsApp` })}
@@ -60,10 +65,25 @@ function vistaHTML(state, sel) {
 }
 
 export function renderIndicadores(container, store) {
+  // Alcance local de esta página: no toca la sucursal global (cocina, reservas, menú). null = seguir a la global.
+  let local = null;
+  let ultimaGlobal = store.get().ui?.sucursalAdmin;
   const pintar = () => {
     const s = store.get();
-    container.innerHTML = vistaHTML(s, s.ui?.sucursalAdmin ?? 'todas');
+    const global = s.ui?.sucursalAdmin ?? 'todas';
+    if (global !== ultimaGlobal) { ultimaGlobal = global; local = null; }
+    const foco = container.contains(document.activeElement) ? document.activeElement.dataset?.ambito : null;
+    container.innerHTML = vistaHTML(s, local ?? global);
+    if (foco) container.querySelector(`[data-ambito="${CSS.escape(foco)}"]`)?.focus({ preventScroll: true });
   };
+  const onClick = (ev) => {
+    const b = ev.target.closest('[data-ambito]');
+    if (!b || !container.contains(b)) return;
+    local = b.dataset.ambito;
+    pintar();
+  };
+  container.addEventListener('click', onClick);
   pintar();
-  return store.subscribe(pintar);
+  const off = store.subscribe(pintar);
+  return () => { off(); container.removeEventListener('click', onClick); };
 }

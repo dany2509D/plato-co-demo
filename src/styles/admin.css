@@ -1,4 +1,5 @@
-/* Panel de administración · estilo Sunday: lienzo blanco, filetes de 1 px, cifras gigantes, píldoras de tinta, un solo acento (oro). */
+/* Panel de administración · estilo Sunday: lienzo blanco, filetes de 1 px, cifras gigantes, píldoras de tinta, un solo acento (oro).
+ * Rediseño 2 (§2.7): barra blanca de 64 px, pestañas de texto con subrayado de tinta, sin sombras ni degradados, radios --r-panel. */
 body.modo-admin { background: var(--c-adm-surface); }
 body.modo-admin:has(.adm--cocina) { background: var(--c-char); }
 body.modo-admin .app-header { display: none; }
@@ -12,38 +13,65 @@ body.modo-admin .app-header { display: none; }
   position: sticky; top: var(--banner-h, 0px); z-index: 50;
   background: var(--c-adm-surface); border-bottom: var(--rule-w) solid var(--c-adm-hair);
 }
-.adm-fila { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); padding: var(--sp-2) var(--adm-pad) var(--sp-1); }
-.adm-marca { display: flex; align-items: center; gap: 12px; margin-right: auto; }
-.adm-marca svg { width: 36px; height: 36px; flex: none; }
+.adm-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--sp-4); min-height: 64px; padding: 0 var(--adm-pad); }
+.adm-marca { display: flex; align-items: center; gap: 12px; margin-right: auto; padding-block: 10px; }
+.adm-marca svg { width: 32px; height: 32px; flex: none; }
 .adm-marca span { display: flex; flex-direction: column; line-height: 1.15; }
 .adm-marca strong { font-size: 1rem; }
 .adm-marca small { font-size: .75rem; text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--c-adm-muted); }
-.adm-suc { display: flex; align-items: center; gap: 12px; }
-.adm-suc__etq { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--c-adm-muted); }
-.adm-suc select { width: auto; min-width: 200px; }
-.adm-seg { display: none; }
-@media (min-width: 760px) { .adm-seg { display: inline-flex; } .adm-suc select { display: none; } }
-.seg { gap: 2px; padding: 3px; border: var(--rule-w) solid var(--c-adm-hair); border-radius: var(--r-pill); }
-.seg button {
-  min-height: 40px; padding: 0 18px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--c-ink);
-  font-size: .875rem; font-weight: 500; cursor: pointer; white-space: nowrap;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.seg button:hover { background: var(--c-adm-soft); }
-.seg button[aria-pressed="true"] { background: var(--c-ink); color: var(--c-adm-surface); font-weight: 700; }
-.seg button[aria-pressed="true"]::before { content: '✓ '; }
-.adm-acciones { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
 
-.adm-nav { display: flex; gap: var(--sp-3); padding: 0 var(--adm-pad) 2px; overflow-x: auto; scrollbar-width: none; }
+/* Pestañas de texto con subrayado de tinta de 2 px */
+.adm-nav { display: flex; gap: var(--sp-4); align-self: stretch; overflow-x: auto; scrollbar-width: none; }
 .adm-nav a {
   position: relative; display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 2px;
-  font-size: 1rem; font-weight: 500; color: var(--c-adm-muted); text-decoration: none; white-space: nowrap;
+  font-size: .9375rem; font-weight: 500; color: var(--c-adm-muted); text-decoration: none; white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-out);
 }
 .adm-nav a:hover { color: var(--c-ink); }
 .adm-nav a[aria-current="page"] { color: var(--c-ink); font-weight: 700; }
-.adm-nav a[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--c-gold); }
+.adm-nav a[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--c-ink); }
 .adm-nav a:focus-visible { outline-offset: -2px; }
 
+/* Selector de sucursal: segmentos inactivos legibles (ink-soft sobre adm-soft: 7:1) */
+.adm-suc { display: flex; align-items: center; gap: 12px; }
+.adm-suc__etq { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--c-adm-muted); }
+.adm-suc select { width: auto; min-width: 180px; }
+.adm-seg { display: none; }
+@media (min-width: 760px) { .adm-seg { display: inline-flex; } .adm-suc select { display: none; } }
+.seg { gap: 2px; padding: 3px; background: var(--c-adm-soft); border: var(--rule-w) solid var(--c-adm-hair); border-radius: var(--r-pill); }
+.seg button {
+  min-height: 36px; padding: 0 16px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--c-ink-soft);
+  font-size: .875rem; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.seg button:hover { background: var(--c-adm-hair); color: var(--c-ink); }
+.seg button[aria-pressed="true"] { background: var(--c-ink); color: var(--c-adm-surface); font-weight: 700; }
+.seg button[aria-pressed="true"]::before { content: '✓ '; }
+
+.adm-acciones { display: flex; align-items: center; gap: var(--sp-1); }
+.adm-acciones .btn--text { --btn-fg: var(--c-ink-soft); font-size: .875rem; font-weight: 600; }
+.adm-acciones .btn--text:hover { --btn-hover-fg: var(--c-ink); }
+
+/* Barra en dos filas por debajo de 1180 px: marca + acciones arriba, pestañas + sucursal debajo */
+@media (max-width: 1179px) {
+  .adm-fila { row-gap: 0; }
+  .adm-marca { order: 1; }
+  .adm-acciones { order: 2; }
+  .adm-nav { order: 3; flex: 1 1 auto; min-height: 48px; margin-right: auto; border-top: 0; }
+  .adm-suc { order: 4; padding-block: 8px; }
+  .adm-fila::after { content: none; }
+}
+@media (max-width: 759px) {
+  .adm-fila { gap: 0 var(--sp-2); }
+  .adm-nav { order: 3; flex: 0 0 100%; margin-right: 0; border-top: var(--rule-w) solid var(--c-adm-hair); gap: var(--sp-3); margin-inline: calc(-1 * var(--adm-pad)); padding-inline: var(--adm-pad); }
+  .adm-suc { order: 4; flex: 0 0 100%; padding-block: 8px 12px; }
+  .adm-suc select { flex: 1; width: 100%; }
+  .adm-acciones .btn--text { padding-inline: 4px; }
+  .adm-suc { padding-bottom: 8px; }
+  .adm-acciones { order: 5; flex: 0 0 100%; justify-content: space-between; padding-bottom: 12px; border-top: var(--rule-w) solid var(--c-adm-hair); padding-top: 8px; }
+  .adm--cocina .adm-acciones { border-top-color: var(--c-line-dark); }
+  .adm-marca { margin-right: auto; }
+}
 .adm-contenido { padding: var(--sp-5) var(--adm-pad) var(--sp-7); max-width: 1600px; margin: 0 auto; }
 @media (max-width: 600px) { .adm-contenido { padding-top: var(--sp-4); } .adm-marca small { display: none; } }
 
@@ -51,31 +79,35 @@ body.modo-admin .app-header { display: none; }
 .adm--cocina .adm-barra { background: var(--c-char); border-bottom-color: var(--c-line-dark); }
 .adm--cocina .adm-suc__etq, .adm--cocina .adm-marca small { color: var(--c-on-dark-muted); }
 .adm--cocina .adm-marca { color: var(--c-on-dark); }
-.adm--cocina .seg { border-color: var(--c-line-dark); }
-.adm--cocina .seg button { color: var(--c-on-dark); }
-.adm--cocina .seg button:hover { background: var(--c-card); }
+.adm--cocina .seg { background: var(--c-card); border-color: var(--c-line-dark); }
+.adm--cocina .seg button { color: var(--c-on-dark-muted); }   /* 8,5:1 sobre --c-card */
+.adm--cocina .seg button:hover { background: var(--c-line-dark); color: var(--c-on-dark); }
 .adm--cocina .seg button[aria-pressed="true"] { background: var(--c-gold); color: var(--c-char); }
 .adm--cocina .adm-nav a { color: var(--c-on-dark-muted); }
 .adm--cocina .adm-nav a:hover, .adm--cocina .adm-nav a[aria-current="page"] { color: var(--c-on-dark); }
+.adm--cocina .adm-nav a[aria-current="page"]::after { background: var(--c-gold); }
+.adm--cocina .adm-nav { border-top-color: var(--c-line-dark); }
+.adm--cocina .adm-acciones .btn--text { --btn-fg: var(--c-on-dark-muted); --btn-hover-fg: var(--c-gold); }
+.adm--cocina .adm-acciones .btn--ghost { --btn-fg: var(--c-gold); --btn-bd: var(--c-gold); --btn-hover-bg: var(--c-gold); --btn-hover-fg: var(--c-char); }
+/* El select hereda de `.on-dark .select` un shorthand `background` que reinicia el repeat: se fija aquí (defecto del chevron teselado) */
+.adm .select, .adm--cocina .select {
+  background-repeat: no-repeat; background-position: right 1.25em center; background-size: 12px 8px;
+}
 .adm--cocina .select { background-color: var(--c-card); color: var(--c-on-dark); border-color: var(--c-line-dark);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23faae33' stroke-width='1.6'/></svg>"); }
 
-/* ---------- Encabezado de página (rol + título Anton) ---------- */
+/* ---------- Encabezado de página (rol + título) ---------- */
 .pg-cab { display: grid; gap: var(--sp-1); margin-bottom: var(--sp-4); }
 .pg-cab h1 { margin: 0; font-size: clamp(2.75rem, 1.5rem + 5vw, 5.5rem); letter-spacing: var(--tr-display); }
 .pg-sub { margin: 0; max-width: 62ch; font-size: 1rem; color: var(--c-adm-muted); }
-.rol {
-  display: inline-flex; align-items: center; gap: 8px; width: fit-content; min-height: 28px; padding: 2px 14px 2px 10px; margin: 0 0 var(--sp-1);
-  font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label);
-  color: var(--c-ink); border: var(--rule-w) solid var(--c-ink); border-radius: var(--r-pill);
-}
-.rol::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--c-gold); }
-.adm--cocina .rol { color: var(--c-on-dark); border-color: var(--c-gold); }
+/* El rol es un eyebrow de 12 px (antes píldora) */
+.rol { margin: 0 0 var(--sp-1); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--c-adm-muted); }
+.adm--cocina .rol { color: var(--c-on-dark-muted); }
 .adm--cocina .pg-sub { color: var(--c-on-dark-muted); }
 .adm--cocina .pg-cab h1 { color: var(--c-on-dark); }
 
 /* ---------- Avisos en línea ---------- */
-.gs-msg { min-height: 0; margin: 0 0 var(--sp-2); font-weight: 700; font-size: .9375rem; border-radius: var(--r-card); }
+.gs-msg { min-height: 0; margin: 0 0 var(--sp-2); font-weight: 700; font-size: .9375rem; border-radius: var(--r-panel); }
 .gs-msg:empty { margin: 0; }
 .gs-ok, .gs-error { padding: 12px 16px; border: var(--rule-w) solid; }
 .gs-ok { background: var(--c-success-bg); color: var(--c-success); border-color: var(--c-success); }
@@ -83,10 +115,9 @@ body.modo-admin .app-header { display: none; }
 .gs-msg.gs-ok::before { content: '✓ '; }
 .gs-msg.gs-error::before { content: '▲ '; }
 
-
-/* Campos del panel: blancos con borde de tinta (los de la base son pergamino, para el cliente) */
-.adm .input, .adm .select { background-color: var(--c-adm-surface); border-color: var(--c-ink); }
-.adm .input:hover, .adm .select:hover { background-color: var(--c-adm-soft); }
+/* Campos del panel: blancos con filete (los de la base son pergamino, para el cliente) */
+.adm .input, .adm .select { background-color: var(--c-adm-surface); border-color: var(--c-adm-placeholder); }
+.adm .input:hover, .adm .select:hover { background-color: var(--c-adm-soft); border-color: var(--c-ink); }
 .adm--cocina .select, .adm--cocina .select:hover { background-color: var(--c-card); }
 .adm .chip { border-color: var(--c-adm-hair); }
 .adm .chip:hover { background: var(--c-adm-soft); border-color: var(--c-ink); }

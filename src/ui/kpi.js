@@ -17,11 +17,14 @@ function barraSvg(pct, mejor) {
     (w > 0 ? `<rect class="bar-relleno${mejor ? ' bar-mejor' : ''}" x="0" y="0" width="${w}" height="10"/>` : '') + `</svg>`;
 }
 
-// Barras horizontales. items: [{etiqueta, valor, texto?, mejor?}]. El valor se escribe junto a cada barra
+// Barras horizontales. items: [{etiqueta, valor, texto?, mejor?, miniatura?}]. El valor se escribe junto a cada barra
 // (nunca solo color: la mejor lleva "★"). El conjunto tiene alternativa de texto en aria-label.
-export function hBars(items, { titulo }) {
+// `miniatura` es HTML de confianza (fotoEscena/fotoProducto); `tam` ('sucursal' 96×72 | 'plato' 48×36) elige su caja.
+export function hBars(items, { titulo, tam = '' }) {
   const w = barWidths(items.map((i) => i.valor), 100);
-  const rows = items.map((it, i) => `<li class="bar-fila${it.mejor ? ' es-mejor' : ''}"><span class="bar-etq">${it.mejor ? '★ ' : ''}${esc(it.etiqueta)}</span>` +
+  const rows = items.map((it, i) => `<li class="bar-fila${it.mejor ? ' es-mejor' : ''}${it.miniatura ? ' bar-fila--foto' : ''}">` +
+    (it.miniatura ? `<span class="bar-foto bar-foto--${tam}">${it.miniatura}</span>` : '') +
+    `<span class="bar-etq">${it.mejor ? '★ ' : ''}${esc(it.etiqueta)}</span>` +
     barraSvg(w[i], it.mejor) + `<span class="bar-val">${esc(it.texto ?? it.valor)}</span></li>`).join('');
   return `<ul class="bars" role="img" aria-label="${esc(titulo)}">${rows}</ul>`;
 }

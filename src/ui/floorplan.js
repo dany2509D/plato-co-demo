@@ -1,6 +1,7 @@
 import { layoutMesas } from '../core/floor.js';
 import { estadoMesas } from '../core/reservas-admin.js';
 import { esc } from './dom.js';
+import { icono } from './icons.js';
 
 // Plano de mesas de una sucursal para una franja horaria.
 // floorplan(container, {mesas, reservas, franja, onAssign(reservaId, mesaId)})
@@ -32,14 +33,14 @@ export function floorplan(container, { mesas, reservas = [], franja, onAssign, r
     const r = ocup[m.id];
     const elegida = mesaSel === m.id;
     const estado = r ? 'ocupada' : 'libre';
-    const icono = elegida ? '✓' : r ? '■' : '○';
+    const marca = elegida ? icono('check', { tam: 14 }) : r ? '<span class="fp-m fp-m--oc"></span>' : '<span class="fp-m"></span>';
     const texto = r ? `Ocupada: ${r.nombre || r.id} · ${r.personas} pers.` : 'Libre';
     const noCabe = sel && !r && m.capacidad < sel.personas;
     const label = `Mesa ${m.id}, ${m.capacidad} puestos, ${r ? `ocupada por ${r.nombre || r.id}, ${r.personas} personas` : 'libre'}${elegida ? ', seleccionada' : ''}${noCabe ? ', no tiene capacidad para la reserva elegida' : ''}`;
     const pos = `left:${(m.x / lay.ancho) * 100}%;top:${(m.y / lay.alto) * 100}%;width:${(m.w / lay.ancho) * 100}%;height:${(m.h / lay.alto) * 100}%`;
     return `<button type="button" class="fp-mesa fp-${m.forma} fp-${estado}${elegida ? ' fp-sel' : ''}${noCabe ? ' fp-nocabe' : ''}" style="${pos}"
       data-mesa="${esc(m.id)}" aria-pressed="${elegida}" aria-label="${esc(label)}">
-      <span class="fp-id"><span aria-hidden="true">${icono}</span> ${esc(m.id)}</span>
+      <span class="fp-id"><span class="fp-marca" aria-hidden="true">${marca}</span>${esc(m.id)}</span>
       <span class="fp-cap">${m.capacidad} puestos</span>
       <span class="fp-est">${esc(elegida && !r ? 'Seleccionada' : texto)}</span>
       ${noCabe ? '<span class="fp-aviso">No cabe</span>' : ''}
@@ -50,9 +51,9 @@ export function floorplan(container, { mesas, reservas = [], franja, onAssign, r
   container.innerHTML = `
     <div class="fp" style="${aspecto}" role="group" aria-label="Plano de mesas, franja de ${esc(franja)}">${botones}</div>
     <ul class="fp-leyenda" aria-label="Leyenda">
-      <li><span class="fp-chip fp-libre" aria-hidden="true">○</span> Libre</li>
-      <li><span class="fp-chip fp-ocupada" aria-hidden="true">■</span> Ocupada</li>
-      <li><span class="fp-chip fp-sel" aria-hidden="true">✓</span> Seleccionada</li>
+      <li><span class="fp-chip fp-libre" aria-hidden="true"></span> Libre</li>
+      <li><span class="fp-chip fp-ocupada" aria-hidden="true"></span> Ocupada</li>
+      <li><span class="fp-chip fp-sel" aria-hidden="true">${icono('check', { tam: 14 })}</span> Seleccionada</li>
     </ul>`;
 
   handlers.set(container, { onAssign, onSelectMesa, reservaSel });

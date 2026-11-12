@@ -4,12 +4,13 @@ import {
   COLUMNAS, activeOrders, deliveredOrders, groupByEstado, elapsedMinutes, urgency, formatElapsed, nextLabel,
 } from '../core/kitchen.js';
 import { esc } from '../ui/dom.js';
+import { icono } from '../ui/icons.js';
 
 const REFRESCO_MS = 30000;
 const SEMAFORO = {
-  verde: { icono: '●', texto: 'A tiempo' },
-  amarillo: { icono: '▲', texto: 'Atención' },
-  rojo: { icono: '■', texto: 'Retrasado' },
+  verde: { icono: 'check', texto: 'A tiempo' },
+  amarillo: { icono: 'alerta', texto: 'Atención' },
+  rojo: { icono: 'alerta', texto: 'Retrasado' },
 };
 
 function lineasHtml(state, p) {
@@ -31,10 +32,10 @@ function tarjeta(state, p, now) {
     <article class="kc-card kc-${u}" aria-label="Pedido ${esc(p.id)}">
       <header class="kc-card-top">
         <h3>${esc(p.id)}</h3>
-        <span class="kc-canal kc-canal-${wa ? 'wa' : 'web'}">${wa ? 'WhatsApp' : 'Web'}</span>
+        <span class="kc-canal kc-canal-${wa ? 'wa' : 'web'}">${icono(wa ? 'chat' : 'web', { tam: 18 })}${wa ? 'WhatsApp' : 'Web'}</span>
       </header>
-      <p class="kc-tiempo"><span class="kc-sem"><span aria-hidden="true">${sem.icono}</span> ${sem.texto}</span> <strong>${formatElapsed(min)}</strong></p>
-      <p class="kc-tipo"><span aria-hidden="true">${p.tipo === 'retiro' ? '🛍' : '🛵'}</span> ${tipo}</p>
+      <p class="kc-tiempo"><span class="kc-sem">${icono(sem.icono, { tam: 22 })} ${sem.texto}</span> <strong>${formatElapsed(min)}</strong></p>
+      <p class="kc-tipo">${icono(p.tipo === 'retiro' ? 'retiro' : 'en-camino', { tam: 24 })}<span>${tipo}</span></p>
       <ul class="kc-lineas">${lineasHtml(state, p)}</ul>
       ${sig ? `<button type="button" class="btn btn--lg btn--block kc-avanzar" data-avanzar="${esc(p.id)}">Avanzar a ${esc(sig)}</button>` : ''}
     </article>`;
@@ -68,7 +69,7 @@ export function adminCocina(cont) {
     q('[data-cols]').innerHTML = COLUMNAS.map((e) => `
       <section class="kc-col" aria-label="${e}">
         <h2><span class="kc-col-t">${e}</span> <span class="kc-col-n">${grupos[e].length}</span></h2>
-        ${grupos[e].length ? grupos[e].map((p) => tarjeta(state, p, now)).join('') : '<p class="kc-vacio"><span aria-hidden="true">○</span> Sin pedidos</p>'}
+        ${grupos[e].length ? grupos[e].map((p) => tarjeta(state, p, now)).join('') : '<p class="kc-vacio">Sin pedidos</p>'}
       </section>`).join('');
     const ent = deliveredOrders(state, suc.id, 8);
     q('[data-hist-t]').textContent = `Últimos entregados (${ent.length})`;

@@ -3,6 +3,7 @@ import { assignTable, occupancyByHour } from '../core/reservations.js';
 import { reservasDelDia, fechasConReservas, franjaDeHora, enFranja, resumenReserva } from '../core/reservas-admin.js';
 import { floorplan } from '../ui/floorplan.js';
 import { esc } from '../ui/dom.js';
+import { icono } from '../ui/icons.js';
 
 const MENSAJES = {
   mesa_ocupada: 'Esa mesa ya está ocupada en ese horario',
@@ -105,8 +106,8 @@ export function adminReservas(cont) {
         <span class="rv-datos"><strong>${esc(r.nombre || r.id)} · ${r.personas} ${r.personas === 1 ? 'persona' : 'personas'}</strong>
           <span>${esc(r.ocasion && r.ocasion !== 'ninguna' ? r.ocasion : 'Sin ocasión especial')}</span></span>
         <span class="rv-tags">
-          <span class="rv-tag ${s.pendiente ? 'rv-tag-pend' : 'rv-tag-ok'}">${s.pendiente ? '▲ Pendiente' : '✓ Confirmada'}</span>
-          <span class="rv-tag ${s.sinMesa ? 'rv-tag-sin' : ''}">${s.sinMesa ? '■ ' : ''}${mesa}</span>
+          <span class="rv-tag ${s.pendiente ? 'rv-tag-pend' : 'rv-tag-ok'}">${icono(s.pendiente ? 'alerta' : 'check', { tam: 14 })}${s.pendiente ? 'Pendiente' : 'Confirmada'}</span>
+          <span class="rv-tag ${s.sinMesa ? 'rv-tag-sin' : ''}">${s.sinMesa ? icono('alerta', { tam: 14 }) : ''}${mesa}</span>
         </span>
       </button></li>`;
     }).join('') : '<li class="gs-vacio">No hay reservas para esta fecha. Cuando alguien reserve por el chat, aparecerá aquí.</li>';

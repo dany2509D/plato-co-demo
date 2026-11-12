@@ -73,7 +73,7 @@ describe('construirFeed', () => {
     s.pedidos = [pedido(s, { estado: 'Entregado', historial: est.map((e, i) => ({ estado: e, en: `2026-11-11T20:0${i}:00Z` })) })];
     const iconos = construirFeed(s).filter((x) => x.tipo === 'estado').map((x) => x.icono);
     expect(new Set(iconos).size).toBe(4);
-    expect(construirFeed(s).find((x) => x.titulo.includes('Entregado')).icono).toBe('🎉');
+    expect(construirFeed(s).find((x) => x.titulo.includes('Entregado')).icono).toBe('entregado');
   });
   it('respeta el límite', () => {
     const s = base();

@@ -6,6 +6,8 @@ import { horaPanama } from '../bot/datetime.js';
 import { SALUDO, mensajesNuevos, retardoEscribiendo } from '../core/chat-view.js';
 import { phone } from '../ui/phone.js';
 import { livePanel } from '../ui/live-panel.js';
+import { icono } from '../ui/icons.js';
+import { fotoEscena } from '../ui/photo.js';
 
 const CONV = 'c-web';
 const HUMANO = 'Pasar a una persona';
@@ -44,16 +46,16 @@ export function vistaChat(main) {
   asegurarConversacion();
   main.innerHTML = `
     <div class="chat-pag band band--dark on-dark">
+      <div class="chat-fondo" aria-hidden="true">${fotoEscena('ambiente_salon', { alt: '', eager: true, ratio: '16/9' })}</div>
       <div class="chat-in">
         <header class="chat-intro">
           <p class="eyebrow">Demo en vivo · WhatsApp</p>
-          <h1>Lo que usted ve, lo que el restaurante ve</h1>
+          <h1 class="chat-frase">Lo que escribe su cliente. <span>Lo que ve su equipo, al instante.</span></h1>
           <p class="chat-pista">Para quien presenta: escriba “Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio” y siga con las respuestas rápidas; a la derecha aparece, al instante, lo que ve el equipo.</p>
         </header>
-        <div class="rule-dotted-gold" aria-hidden="true"></div>
         <div class="chat-cols">
           <div class="chat-col-tel">
-            <p class="chat-etq"><span aria-hidden="true">📱</span> Cliente · lo que ve quien escribe</p>
+            <p class="chat-etq">${icono('movil', { tam: 18 })} Cliente · lo que ve quien escribe</p>
             <div data-tel></div>
             <p class="tel-nota">Chat simulado · No se conecta a WhatsApp real</p>
             <div class="ia-caja">
@@ -62,7 +64,7 @@ export function vistaChat(main) {
             </div>
           </div>
           <div class="chat-col-vivo">
-            <p class="chat-etq"><span aria-hidden="true">🖥️</span> Panel · lo que ve el restaurante</p>
+            <p class="chat-etq">${icono('panel', { tam: 18 })} Panel · lo que ve el restaurante</p>
             <div data-vivo></div>
           </div>
         </div>

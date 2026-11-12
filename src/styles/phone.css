@@ -1,17 +1,27 @@
-/* Escenario de demo: banda carbón (la pantalla clara del teléfono "brilla" sobre oscuro), teléfono como objeto y panel En vivo estilo Tiger. */
+/* Escenario de demo (rediseño 2, §2.6): foto de salón a sangre con velo sólido, teléfono sin sombra y panel «En vivo» como ventana clara del restaurante. */
 .vista[data-ruta="chat"] { max-width: none; padding: 0; margin: 0; }
 body:has(.chat-pag) .site-footer { margin-top: 0; }
-.chat-pag { padding-block: var(--sp-5) var(--sp-7); }
-.chat-in { width: min(100% - 2 * var(--gutter), 1160px); margin-inline: auto; }
-.chat-intro h1 { margin: 0 0 var(--sp-2); max-width: 20ch; font-size: clamp(2.25rem, 1rem + 3.6vw, 4.25rem); letter-spacing: var(--tr-display); color: var(--c-on-dark); }
-.chat-pista { max-width: 76ch; margin: 0; font-size: 1.0625rem; color: var(--c-on-dark-muted); }
-.chat-cols { display: grid; gap: var(--sp-5); align-items: start; margin-top: var(--sp-3); }
-@media (min-width: 900px) { .chat-cols { grid-template-columns: minmax(340px, 400px) minmax(0, 1fr); gap: var(--sp-6); } }
-.chat-etq { margin: 0 0 var(--sp-2); font-size: .8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--c-on-dark-muted); }
+.chat-pag { position: relative; isolation: isolate; padding-block: var(--sp-6) var(--sp-7); background: var(--c-char); }
+.chat-fondo { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.chat-fondo::after { content: ''; position: absolute; inset: 0; background: var(--veil); }
+.chat-fondo .foto { position: absolute; inset: 0; aspect-ratio: auto; height: 100%; }
+.chat-fondo .foto img { transition: none; transform: none; }
+.chat-in { width: min(100% - 2 * var(--gutter), 1376px); margin-inline: auto; }
+.chat-intro { max-width: 980px; }
+.chat-intro .eyebrow { margin: 0 0 var(--sp-2); }
+.chat-frase { margin: 0 0 var(--sp-3); font-family: var(--font-body); font-weight: 400; font-size: var(--fs-statement); line-height: 1.08; letter-spacing: -.03em; text-transform: none; color: var(--c-on-dark); }
+.chat-frase span { color: var(--c-on-dark-muted); }
+.chat-pista { max-width: 76ch; margin: 0; font-size: .9375rem; color: var(--c-on-dark-muted); }
+.chat-cols { display: grid; gap: var(--sp-5); align-items: stretch; margin-top: var(--sp-5); }
+@media (min-width: 900px) { .chat-cols { grid-template-columns: minmax(340px, 5fr) minmax(0, 7fr); gap: var(--sp-6); } }
+.chat-col-tel, .chat-col-vivo { display: flex; flex-direction: column; min-width: 0; }
+.chat-col-vivo > [data-vivo] { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.chat-etq { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--sp-2); font-size: .8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--c-on-dark-muted); }
+.chat-etq .ico { color: var(--c-gold); }
 
 /* ---------- Marco del dispositivo ---------- */
-.tel { --ctx-focus: var(--c-ink); --verde: #0F5C4D; --burbuja-propia: #F4E3B5; --fondo-chat: #ECE2D0; max-width: 392px; margin: 0 auto; }
-.tel-marco { position: relative; padding: 10px; border-radius: 48px; background: #120a06; border: 1px solid #6b2e12; box-shadow: 0 32px 48px -12px rgba(0, 0, 0, .55); }
+.tel { --ctx-focus: var(--c-ink); --verde: #0F5C4D; --burbuja-propia: #F4E3B5; --fondo-chat: #ECE2D0; width: 100%; max-width: 400px; margin: 0; }
+.tel-marco { position: relative; padding: 10px; border-radius: 48px; background: #120a06; border: 1px solid var(--c-line-dark); }
 .tel-marco::after { content: ''; position: absolute; inset: 4px; border-radius: 44px; border: 1px solid rgba(236, 226, 208, .12); pointer-events: none; }
 .tel-notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 3; width: 104px; height: 22px; background: #120a06; border-radius: 0 0 14px 14px; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .tel-bocina { width: 40px; height: 4px; border-radius: 3px; background: #3a2a22; }
@@ -35,7 +45,7 @@ body:has(.chat-pag) .site-footer { margin-top: 0; }
 /* ---------- Conversación ---------- */
 .tel-log {
   flex: 1; overflow-y: auto; padding: 12px 12px 8px; display: flex; flex-direction: column; gap: 6px; scroll-behavior: smooth;
-  background-color: var(--fondo-chat); background-image: radial-gradient(rgba(130, 53, 19, .10) 1.2px, transparent 1.2px); background-size: 20px 20px;
+  background-color: var(--fondo-chat);
 }
 .tel-log:focus-visible { outline-offset: -3px; }
 .tel-dia { align-self: center; margin: 6px 0; }
@@ -82,44 +92,65 @@ body:has(.chat-pag) .site-footer { margin-top: 0; }
 .tel-enviar:hover:not(:disabled) { background: #0b4a3e; }
 .tel-ic:focus-visible, .tel-enviar:focus-visible { outline-offset: 2px; }
 .tel-ic:disabled, .tel-enviar:disabled { opacity: .5; cursor: not-allowed; }
-.tel-nota { margin: var(--sp-3) 0 0; text-align: center; font-weight: 700; font-size: .875rem; color: var(--c-on-dark-muted); }
+.tel-nota { margin: var(--sp-3) 0 0; max-width: 400px; text-align: center; font-weight: 700; font-size: .875rem; color: var(--c-on-dark-muted); }
 
-.ia-caja { margin: var(--sp-2) auto 0; max-width: 392px; padding: var(--sp-2); background: var(--c-card); border: var(--rule-w) solid var(--c-line-dark); border-radius: var(--r-card); color: var(--c-on-dark); }
-.ia-sw { display: flex; align-items: center; gap: 12px; min-height: var(--tap); font-weight: 700; cursor: pointer; }
+/* Modo IA: una línea bajo el teléfono, sin caja */
+.ia-caja { margin: var(--sp-1) 0 0; width: 100%; max-width: 400px; color: var(--c-on-dark); }
+.ia-sw { display: flex; align-items: center; gap: 12px; min-height: var(--tap); font-weight: 700; font-size: .9375rem; cursor: pointer; }
 .ia-sw input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .ia-pista { flex: none; position: relative; width: 48px; height: 28px; border-radius: var(--r-pill); border: 1.5px solid var(--c-gold); transition: background-color .15s ease; }
 .ia-pista::after { content: ''; position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: var(--c-gold); transition: transform .15s ease; }
 .ia-sw input:checked + .ia-pista { background: var(--c-gold); }
 .ia-sw input:checked + .ia-pista::after { transform: translateX(20px); background: var(--c-char); }
 .ia-sw input:focus-visible + .ia-pista { outline: 2px solid var(--c-gold); outline-offset: 3px; }
-.ia-ayuda { margin: 4px 0 0; font-size: .875rem; color: var(--c-on-dark-muted); }
+.ia-ayuda { margin: 0; padding-left: 60px; font-size: .8125rem; color: var(--c-on-dark-muted); }
 
-/* ---------- Panel En vivo (Tiger: tarjeta carbón-marrón, oro, filetes punteados) ---------- */
-.vivo { padding: var(--sp-3); background: var(--c-card); border: var(--rule-w) solid var(--c-line-dark); border-radius: var(--r-card); color: var(--c-on-dark); }
-.vivo-cab h2 { display: flex; align-items: center; gap: 12px; margin: 0 0 var(--sp-1); font-size: clamp(2.25rem, 1.5rem + 3vw, 4rem); color: var(--c-gold); }
-.vivo-cab p { margin: 0 0 var(--sp-2); color: var(--c-on-dark-muted); max-width: 58ch; }
-.vivo-punto { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--c-gold); animation: vivo-pulso 1.8s infinite; }
-.vivo-enlaces { display: flex; flex-wrap: wrap; gap: var(--sp-1); padding-bottom: var(--sp-2); border-bottom: 1px dotted var(--c-gold); margin-bottom: 0 !important; }
-.vivo-lista { list-style: none; margin: 0; padding: 0 2px 0 0; display: flex; flex-direction: column; max-height: 600px; overflow-y: auto; overflow-x: hidden; }
-.vivo-item { display: flex; gap: var(--sp-2); padding: var(--sp-2) var(--sp-1); border-bottom: 1px dotted var(--c-gold); }
+/* ---------- Panel En vivo: ventana clara del restaurante (Sunday) ---------- */
+.vivo { --ctx-fg: var(--c-ink); --ctx-muted: var(--c-adm-muted); --ctx-link: var(--c-ink); --ctx-focus: var(--c-ink);
+  flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--c-adm-surface); color: var(--c-ink); border-radius: var(--r-panel); overflow: hidden; }
+.chat-pag .vivo .btn { --btn-bg: var(--c-ink); --btn-fg: #fff; --btn-bd: var(--c-ink); --btn-hover-bg: var(--c-ember); --btn-hover-fg: #fff; }
+.chat-pag .vivo .btn--ghost { --btn-bg: transparent; --btn-fg: var(--c-ink); --btn-bd: var(--c-adm-hair); --btn-hover-bg: var(--c-adm-soft); --btn-hover-fg: var(--c-ink); }
+.chat-pag .vivo .btn--ghost:hover { border-color: var(--c-ink); }
+.chat-pag .vivo a:focus-visible, .chat-pag .vivo button:focus-visible { outline: 2px solid var(--c-ink); outline-offset: 2px; }
+.vivo-barra { flex: none; display: flex; align-items: center; gap: 16px; height: 40px; padding: 0 16px; background: var(--c-adm-soft); border-bottom: var(--rule-w) solid var(--c-adm-hair); }
+.vivo-pts { display: inline-flex; gap: 6px; }
+.vivo-pts i { width: 10px; height: 10px; border-radius: 50%; background: var(--c-adm-hair); }
+.vivo-url { font-size: .75rem; color: var(--c-adm-muted); letter-spacing: .02em; }
+.vivo-win { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: var(--sp-3) var(--sp-3) var(--sp-2); }
+.vivo-cab h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-family: var(--font-body); font-weight: 600; font-size: 1.25rem; line-height: 1.2; letter-spacing: 0; text-transform: none; color: var(--c-ink); }
+.vivo-cab p { margin: 0 0 var(--sp-2); font-size: .9375rem; color: var(--c-adm-muted); max-width: 58ch; }
+.vivo-punto { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c-gold); animation: vivo-pulso 1.8s infinite; }
+.vivo-enlaces { display: flex; flex-wrap: wrap; gap: var(--sp-1); padding-bottom: var(--sp-2); border-bottom: var(--rule-w) solid var(--c-adm-hair); margin-bottom: 0 !important; }
+.vivo-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; flex: 1; min-height: 0; max-height: 560px; overflow-y: auto; overflow-x: hidden; }
+.vivo-lista[hidden] { display: none; }
+.vivo-item { position: relative; display: flex; gap: var(--sp-2); padding: var(--sp-2) 0; border-bottom: var(--rule-w) solid var(--c-adm-hair); }
 .vivo-item:last-child { border-bottom: 0; }
-.vivo-humano { border-left: 4px solid var(--c-gold); padding-left: var(--sp-2); }
-.vivo-ic { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--c-gold); font-size: 1.25rem; }
-.vivo-cuerpo { min-width: 0; }
+.vivo .ico-aro { width: 36px; height: 36px; border-color: var(--c-adm-hair); color: var(--c-ink); }
+.vivo-humano .ico-aro { border-color: var(--c-ink); }
+.vivo-cuerpo { flex: 1; min-width: 0; }
 .vivo-cuerpo p { margin: 0; }
-.vivo-tit { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px var(--sp-2); font-size: 1.0625rem; color: var(--c-on-dark); }
-.vivo-tit time { font-size: .875rem; font-weight: 700; color: var(--c-gold); }
-.vivo-det { font-size: .9375rem; color: var(--c-on-dark-muted); margin-top: 2px !important; }
-.vivo-link { margin-top: var(--sp-1); }
-.vivo-vacio { margin: var(--sp-2) 0 0; padding: var(--sp-3); border: 1px dotted var(--c-gold); border-radius: var(--r-card); color: var(--c-on-dark-muted); text-align: center; }
-.vivo-nuevo { animation: vivo-nuevo .9s ease-out; }
+.vivo-tit { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px var(--sp-2); font-size: 1rem; color: var(--c-ink); }
+.vivo-tit strong { font-weight: 600; }
+.vivo-tit time { font-size: .8125rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--c-adm-muted); }
+.vivo-det { font-size: .875rem; color: var(--c-adm-muted); margin-top: 2px !important; }
+.vivo-link.btn { min-height: 0; padding: 0; margin-top: 6px; border: 0; background: transparent; color: var(--c-ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600; }
+.chat-pag .vivo .vivo-link.btn:hover { background: transparent; color: var(--c-ember); }
+.vivo-link.btn::after { inset: -10px 0; }
+.vivo-vacio { display: flex; align-items: center; gap: 12px; margin: var(--sp-2) 0 0; color: var(--c-adm-muted); font-size: .9375rem; }
+.vivo-vacio[hidden] { display: none; }
+.vivo-pie { margin: auto 0 0; padding-top: var(--sp-2); border-top: var(--rule-w) solid var(--c-adm-hair); font-size: .8125rem; color: var(--c-adm-muted); }
+.vivo-nuevo { animation: vivo-nuevo .3s var(--ease-out) both; }
+.vivo-nuevo::before { content: ''; position: absolute; left: -12px; top: 8px; bottom: 8px; width: 2px; background: var(--c-gold); animation: vivo-regla 1.2s linear forwards; }
 
 @keyframes tel-entra { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes tel-salta { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
-@keyframes vivo-pulso { 0% { box-shadow: 0 0 0 0 rgba(250, 174, 51, .55); } 70% { box-shadow: 0 0 0 10px rgba(250, 174, 51, 0); } 100% { box-shadow: 0 0 0 0 rgba(250, 174, 51, 0); } }
-@keyframes vivo-nuevo { from { background: var(--c-ember-deep); transform: translateX(10px); opacity: .4; } to { background: transparent; transform: none; opacity: 1; } }
+@keyframes vivo-pulso { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.8); } }
+@keyframes vivo-nuevo { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes vivo-regla { 0%, 25% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes vivo-regla-fija { 0%, 99% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .tel-burbuja, .vivo-nuevo, .vivo-punto, .tel-punto { animation: none; }
+  .vivo-nuevo::before { animation: vivo-regla-fija 1.2s linear forwards; }
   .tel-log { scroll-behavior: auto; }
   .ia-pista, .ia-pista::after, .tel-rapido { transition: none; }
 }
@@ -127,12 +158,16 @@ body:has(.chat-pag) .site-footer { margin-top: 0; }
 /* ---------- Móvil: sin bisel, pantalla completa; el panel va debajo ---------- */
 @media (max-width: 479px) {
   .chat-pag { padding-block: var(--sp-5) var(--sp-6); }
+  .chat-cols { margin-top: var(--sp-4); gap: var(--sp-4); }
   .chat-col-tel { margin-inline: calc(-1 * var(--gutter)); }
-  .chat-col-tel .chat-etq, .chat-col-tel .tel-nota, .chat-col-tel .ia-caja { margin-inline: var(--gutter); }
+  .chat-col-tel .chat-etq, .chat-col-tel .tel-nota, .chat-col-tel .ia-caja { margin-inline: var(--gutter); width: auto; }
+  .chat-col-vivo { }
   .tel { max-width: none; }
-  .tel-marco { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  .tel-marco { padding: 0; border: 0; border-radius: 0; background: transparent; }
   .tel-marco::after, .tel-notch { display: none; }
-  .tel-pantalla { border-radius: 0; height: min(640px, calc(100vh - 180px)); min-height: 480px; }
+  .tel-pantalla { border-radius: 0; height: 640px; min-height: 480px; }
   .tel-estado { padding-inline: 14px; }
-  .vivo { padding: var(--sp-2); }
+  .vivo-win { padding: var(--sp-2); }
+  .vivo-nuevo::before { left: -4px; }
+  .vivo-lista { max-height: none; }
 }

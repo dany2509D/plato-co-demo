@@ -27,19 +27,19 @@ export function adminShell(content, route) {
       <header class="adm-barra">
         <div class="adm-fila">
           <div class="adm-marca">${brand.logoSvg}<span><strong>${esc(brand.nombre)}</strong><small>Administración</small></span></div>
+          <nav class="adm-nav" aria-label="Administración">
+            ${NAV.map((n) => `<a href="${n.href}" ${n.ruta === route ? 'aria-current="page"' : ''}>${n.texto}</a>`).join('')}
+          </nav>
           <div class="adm-suc" role="group" aria-label="Sucursal">
             <span class="adm-suc__etq" aria-hidden="true">Sucursal</span>
             <div class="adm-seg seg" data-seg>${sucursales.map((s) => `<button type="button" data-suc-btn="${esc(s.id)}" aria-pressed="false" aria-label="${esc(s.nombre)}">${esc(corto(s.nombre))}</button>`).join('')}</div>
             <select class="select" data-suc aria-label="Sucursal">${sucursales.map((s) => `<option value="${esc(s.id)}">${esc(s.nombre)}</option>`).join('')}</select>
           </div>
           <div class="adm-acciones">
-            <button type="button" class="btn btn--ghost btn--sm adm-reiniciar" data-reiniciar>Reiniciar demo</button>
-            <a class="btn btn--sm adm-volver" href="#/">Volver a la vista de cliente</a>
+            <button type="button" class="btn btn--text btn--sm adm-reiniciar" data-reiniciar>Reiniciar demo</button>
+            <a class="btn btn--ghost btn--sm adm-volver" href="#/">Volver a la vista de cliente</a>
           </div>
         </div>
-        <nav class="adm-nav" aria-label="Administración">
-          ${NAV.map((n) => `<a href="${n.href}" ${n.ruta === route ? 'aria-current="page"' : ''}>${n.texto}</a>`).join('')}
-        </nav>
       </header>
       <div class="adm-contenido" data-contenido></div>
     </div>`);

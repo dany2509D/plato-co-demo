@@ -1,10 +1,10 @@
 import { store } from '../core/app-store.js';
 import { setAvailable, setPrice } from '../core/menu.js';
-import { adminMenuGroups, countAgotados, categoriasDe, parsePrecio } from '../core/menu-admin.js';
+import { adminMenuGroups, countAgotados, categoriasDe, parsePrecio, mensajePrecio, PRECIO_MAX } from '../core/menu-admin.js';
 import { badgesHTML } from '../ui/product-card.js';
 import { esc } from '../ui/dom.js';
-
-const MSG_PRECIO = 'Escriba un precio mayor que 0, por ejemplo 8.95';
+import { icono } from '../ui/icons.js';
+import { fotoProducto } from '../ui/photo.js';
 
 export function adminMenu(cont) {
   cont.innerHTML = `
@@ -29,7 +29,7 @@ export function adminMenu(cont) {
     const suc = state.sucursales.find((s) => s.id === state.ui.sucursalAdmin) || state.sucursales[0];
     if (ui.sucursalId !== suc.id) { ui.sucursalId = suc.id; ui.errores = {}; }
     const act = document.activeElement;
-    const foco = cont.contains(act) ? (act.dataset.precio ? `[data-precio="${CSS.escape(act.dataset.precio)}"]` : act.dataset.agotado ? `[data-agotado="${CSS.escape(act.dataset.agotado)}"]` : null) : null;
+    const foco = cont.contains(act) ? (act.dataset.precio ? `[data-precio="${CSS.escape(act.dataset.precio)}"]` : act.dataset.agotado ? `[data-agotado="${CSS.escape(act.dataset.agotado)}"]` : act.dataset.cat !== undefined ? `[data-cat="${CSS.escape(act.dataset.cat)}"]` : act.dataset.solo !== undefined ? '[data-solo]' : null) : null;
     const y = window.scrollY;
 
     const n = countAgotados(state, suc.id);
@@ -48,17 +48,18 @@ export function adminMenu(cont) {
     const valor = err ? err.valor : Number(p.precio).toFixed(2);
     return `<li class="mn-item${p.agotado ? ' mn-agotado' : ''}">
             <div class="mn-info">
-              <h3>${esc(p.nombre)}</h3>
-              <div class="mn-badges">${badgesHTML(p)}</div>
+              <span class="mn-foto">${fotoProducto(p, { variante: 'mini' })}</span>
+              <div class="mn-txt"><h3>${esc(p.nombre)}</h3>
+              <div class="mn-badges">${badgesHTML(p)}</div></div>
             </div>
             <div class="mn-precio">
               <label for="pr-${esc(p.id)}">Precio (US$)<span class="sr-only"> de ${esc(p.nombre)}</span></label>
-              <input class="input" id="pr-${esc(p.id)}" type="number" step="0.01" min="0.01" inputmode="decimal" data-precio="${esc(p.id)}" value="${esc(valor)}"
+              <input class="input" id="pr-${esc(p.id)}" type="number" step="0.01" min="0.01" max="${PRECIO_MAX.toFixed(2)}" inputmode="decimal" data-precio="${esc(p.id)}" value="${esc(valor)}"
                 ${err ? `aria-invalid="true" aria-describedby="pe-${esc(p.id)}"` : ''}>
-              ${err ? `<p class="gs-error mn-err" id="pe-${esc(p.id)}" role="alert">${MSG_PRECIO}</p>` : ''}
+              ${err ? `<p class="gs-error mn-err" id="pe-${esc(p.id)}" role="alert">${esc(mensajePrecio(err.valor))}</p>` : ''}
             </div>
             <button type="button" class="mn-switch" data-agotado="${esc(p.id)}" aria-pressed="${p.agotado}" aria-label="Marcar agotado: ${esc(p.nombre)}">
-              <span class="mn-knob" aria-hidden="true">${p.agotado ? '✕' : '✓'}</span>
+              <span class="mn-knob" aria-hidden="true">${icono(p.agotado ? 'cerrar' : 'check', { tam: 16 })}</span>
               <span>${p.agotado ? 'Agotado' : 'Disponible'}</span>
             </button>
           </li>`;
