@@ -1,59 +1,120 @@
-/* Carta (dueño: bloque A2): tarjeta de plato, menú del día y combos.
+/* Carta (dueño: bloque A2): tarjeta de plato, diálogo de modificadores, menú del día y combos.
  * Se carga después de client.css; sobrescriba aquí, no en client.css. */
-/* ================= Tarjeta de plato ================= */
-.dish-grid, .combos-grid { display: grid; gap: var(--sp-3); } /* base compartida (antes en «Portada: secciones») */
+
+/* ================= Tarjeta de plato (rediseño 2, §3.3) ================= */
+.dish-grid, .combos-grid { display: grid; gap: var(--sp-3); } /* base compartida */
 .dish-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
-.dish-grid--menu { grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); } /* movida desde «Menú» (client.css): debe ir después de .dish-grid */
-.dish { display: flex; flex-direction: column; overflow: hidden; }
-.dish__media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; }
-.dish__media::after, .mod-art::after { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: var(--cli-noise); opacity: .16; }
-.dish__media .dish-art { transition: transform .6s var(--ease); }
-.dish:hover .dish__media .dish-art { transform: scale(1.04); }
-.dish__body { display: flex; flex-direction: column; gap: 10px; flex: 1; padding: var(--sp-2) 18px 18px; }
-.dish__head, .combo__head, .mod-head { align-items: flex-start; }
-.dish__name { font-size: 1.5rem; letter-spacing: 0; }
-.dish__price { font-size: 1.75rem; text-align: right; }
-.dish__sellos { display: flex; flex-wrap: wrap; gap: 6px; }
-.dish__alg { margin: 0; line-height: 1.4; }
-.dish__alg--ask::before { content: '✱ '; color: var(--c-ember); }
-.dish__add { margin-top: auto; align-self: flex-start; }
-/* Móvil: destacados y combos de la portada en fila deslizable (scroll-snap); menú en tarjetas horizontales */
+.dish-grid--menu { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); column-gap: 24px; row-gap: 56px; }
+
+/* Sin caja: ni borde, ni fondo, ni sombra, ni radio. Toda la tarjeta es pulsable. */
+.dish { position: relative; display: flex; flex-direction: column; overflow: visible; background: none; border: 0; border-radius: 0; box-shadow: none; cursor: pointer; transition: none; }
+.dish:hover { border-color: transparent; }
+.dish__media { position: relative; }
+.dish__media .foto { width: 100%; }
+.dish__body { display: flex; flex-direction: column; gap: 6px; padding: 16px 0 0; }
+.dish__head { align-items: flex-start; gap: 16px; }
+/* DM Sans dentro de la tarjeta (nada de Anton) */
+.dish__name { flex: 1; min-width: 0; margin: 0; font: 600 1.125rem/1.25 var(--font-body); letter-spacing: 0; text-transform: none; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dish__v { font-size: .8125rem; font-weight: 500; color: var(--c-ink-muted); white-space: nowrap; }
+.dish__price { flex: none; font: 600 1.125rem/1.25 var(--font-body); text-transform: none; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dish__price .precio__mon { margin-right: .3em; font-size: .75rem; line-height: 1.7; }
+.dish__meta { margin: 0; display: flex; align-items: center; gap: 6px; min-width: 0; font-size: .8125rem; line-height: 1.4; color: var(--c-ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dish__meta--ask .ico { color: var(--c-ember); }
+.dish__meta--ask span { overflow: hidden; text-overflow: ellipsis; }
+.dish__picante { position: absolute; left: 12px; top: 12px; z-index: 2; }
+
+/* Botón «+» redondo sobre la foto */
+.dish__add { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0; color: var(--c-ink); background: var(--c-paper); border: 1px solid var(--c-ink); border-radius: 50%; cursor: pointer; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+.dish__add:hover, .dish:hover .dish__add:not(:disabled) { background: var(--c-gold); border-color: var(--c-ink); }
+.dish__add:active { transform: scale(.94); }
+.dish__add:disabled { cursor: not-allowed; opacity: .55; background: var(--c-linen); }
+
+/* Agotado: foto en gris (photo.css) + etiqueta con fondo sólido (contraste AA garantizado) */
+.dish--agotado { cursor: default; }
+.dish__agotado { position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%); padding: 6px 14px; font-size: .8125rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap; color: var(--c-canvas); background: var(--c-ink); border-radius: var(--r-pill); }
+.dish--agotado .dish__name, .dish--agotado .dish__price { color: var(--c-ink-muted); }
+
+/* Móvil: destacados de la portada en fila deslizable; menú en filas con filete */
 @media (max-width: 699px) {
-  :is(.dish-grid--fila, .c-combos .combos-grid) { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 82%; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: calc(-1 * var(--gutter)); padding: 0 var(--gutter) var(--sp-2); scroll-padding-inline: var(--gutter); }
-  :is(.dish-grid--fila, .c-combos .combos-grid) > * { scroll-snap-align: start; }
+  .dish-grid--fila { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 82%; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: calc(-1 * var(--gutter)); padding: 0 var(--gutter) var(--sp-2); scroll-padding-inline: var(--gutter); }
+  .dish-grid--fila > * { scroll-snap-align: start; }
 }
 @media (max-width: 599px) {
-  .dish-grid--menu { gap: var(--sp-1); }
-  .dish-grid--menu .dish { display: grid; grid-template-columns: 132px minmax(0, 1fr); }
-  .dish-grid--menu .dish__media { aspect-ratio: auto; min-height: 140px; }
-  .dish-grid--menu .dish__media .dish-art { position: absolute; inset: 0; }
-  .dish-grid--menu .dish__body { padding: 12px 14px 14px; gap: 6px; }
-  .dish-grid--menu .dish__name { font-size: 1.25rem; }
-  .dish-grid--menu .dish__price { font-size: 1.375rem; }
+  .dish-grid--menu { gap: 0; }
+  .dish-grid--menu .dish, .dish--fila { display: grid; grid-template-columns: 120px minmax(0, 1fr); column-gap: 14px; align-items: start; padding-block: 14px; border-bottom: 1px solid var(--c-rule); }
+  .dish-grid--menu .dish:last-child { border-bottom: 0; }
+  .dish-grid--menu .dish__media, .dish--fila .dish__media { display: contents; }
+  .dish-grid--menu .dish .foto, .dish--fila .foto { grid-column: 1; grid-row: 1; }
+  .dish-grid--menu .dish__body, .dish--fila .dish__body { grid-column: 2; grid-row: 1; min-height: 90px; padding: 0; gap: 4px; }
+  .dish-grid--menu .dish__meta, .dish--fila .dish__meta { padding-right: 52px; }
+  .dish-grid--menu .dish__head, .dish--fila .dish__head { flex-direction: column; gap: 2px; }
+  .dish-grid--menu .dish__price, .dish--fila .dish__price { text-align: left; font-size: 1rem; }
+  .dish-grid--menu .dish__add, .dish--fila .dish__add { right: 0; bottom: 14px; }
+  .dish-grid--menu .dish__picante, .dish--fila .dish__picante { left: 6px; top: 20px; }
+  .dish-grid--menu .dish__agotado, .dish--fila .dish__agotado { left: 60px; top: 59px; }
 }
 
-/* ================= Menú del día y combos ================= */
-.mdd { display: grid; gap: var(--sp-4); padding: clamp(24px, 4vw, 56px); }
-.mdd__t { margin: var(--sp-4) 0 var(--sp-2); }
-.mdd__h { margin: 0; max-width: 34ch; color: var(--c-ink-soft); }
-.mdd__lista { border-top: 1px dotted var(--c-ink); }
-.mdd__lista li { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px dotted var(--c-ink); font-size: 1.0625rem; font-weight: 500; }
-.mdd__precio { display: flex; flex-direction: column; }
-.mdd__cifra { font-size: clamp(3.5rem, 2rem + 5vw, 7.5rem); letter-spacing: -.02em; }
-.mdd__precio > span:last-child { font-size: var(--fs-sm); color: var(--c-ink-soft); }
-@media (min-width: 900px) { .mdd { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto; align-items: end; } .mdd__precio { align-items: flex-end; text-align: right; } }
+/* ================= Diálogo de modificadores: foto 16:9 a sangre ================= */
+dialog.modal-mod { border-radius: 0; border-width: 0; }
+.mod-cab .mod-art { height: auto; }
+.mod-cab .foto { aspect-ratio: 16 / 9; }
+.mod-cab .mod-art::after { content: none; }
+.mod-cab .mod-head { align-items: baseline; margin: 0; padding: 20px var(--sp-3) 0; gap: 16px; }
+.mod-cab .mod-head h2 { flex: 1; min-width: 0; font: 600 1.75rem/1.15 var(--font-body); letter-spacing: -.01em; text-transform: none; }
+.mod-cab .mod-precio { flex: none; font: 600 1.5rem/1.15 var(--font-body); text-transform: none; font-variant-numeric: tabular-nums; }
+.mod-cab .mod-precio .precio__mon { font-size: .75rem; }
+.modal-mod .mod-body { padding-top: var(--sp-2); }
 
-.combos-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
-.combo { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); }
-.combo__head { padding-bottom: var(--sp-2); border-bottom: 1px solid var(--c-rule); }
-.combo__head h3 { font-size: 1.75rem; }
-.combo__pasos { display: grid; gap: 10px; }
-.combo__pasos li { display: flex; align-items: center; gap: 12px; font-weight: 500; }
-.combo__pie { margin-top: auto; padding-top: var(--sp-1); align-items: center; }
-.combos-nota { margin-top: var(--sp-2); }
+/* ================= Menú del día y combos (sin cajas, §3.7) ================= */
+.mdd { display: grid; gap: var(--sp-4) var(--sp-6); padding: var(--sp-4) 0; background: none; border: 0; border-radius: 0; }
+.mdd__izq { display: flex; flex-direction: column; align-items: flex-start; }
+.mdd__t { margin: var(--sp-3) 0 var(--sp-2); font-size: var(--fs-h2); }
+.mdd__h { margin: 0; max-width: 34ch; font-size: 1.0625rem; line-height: 1.5; color: var(--c-ink-soft); }
+.mdd__precio { display: flex; flex-direction: column; gap: 4px; margin-top: var(--sp-4); }
+.mdd__cifra { font: 600 2.5rem/1 var(--font-body); text-transform: none; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.mdd__cifra .precio__mon { font-size: .875rem; margin-right: .4em; }
+.mdd__precio > span:last-child { font-size: .8125rem; color: var(--c-ink-muted); }
+.mdd__lista { border-top: 1px solid var(--c-rule); }
+.mdd__lista li { display: flex; align-items: center; gap: 20px; min-height: 104px; padding: 16px 0; border-bottom: 1px solid var(--c-rule); font: 500 1.25rem/1.25 var(--font-body); }
+.mdd__lista .foto { width: 96px; }
+.numeral-pill { font: 600 .9375rem/1 var(--font-body); }
+@media (min-width: 900px) { .mdd { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); align-items: start; } .mdd__lista { margin-top: var(--sp-2); } }
+@media (max-width: 599px) { .mdd__lista li { gap: 12px; min-height: 88px; font-size: 1.0625rem; } .mdd__lista .foto { width: 80px; } }
 
-/* Movimiento reducido (estaba al final de client.css; debe ir después de las reglas de zoom) */
+.combos-grid { grid-template-columns: 1fr; gap: 0; }
+.combo { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-4) 0; background: none; border: 0; border-top: 1px solid var(--c-rule); border-radius: 0; }
+.combo:first-child { border-top: 0; padding-top: 0; }
+.combo:hover { border-color: var(--c-rule); }
+.combo:first-child:hover { border-color: transparent; }
+.combo__head { align-items: baseline; gap: 16px; padding: 0; border: 0; }
+.combo__head h3 { flex: 1; min-width: 0; font: 600 1.375rem/1.2 var(--font-body); letter-spacing: 0; text-transform: none; }
+.combo__price { flex: none; font: 600 1.375rem/1.2 var(--font-body); text-transform: none; font-variant-numeric: tabular-nums; }
+.combo__price .precio__mon { font-size: .75rem; margin-right: .3em; }
+.combo__pasos { display: grid; gap: 12px; margin: 0; }
+.combo__pasos li { display: flex; align-items: center; gap: 12px; font-weight: 500; line-height: 1.3; }
+.combo__pasos .foto { width: 64px; }
+.combo__pasos .numeral-pill { min-width: 28px; height: 28px; padding: 0 4px; font-size: .75rem; }
+.combo__pie { margin-top: auto; padding-top: var(--sp-1); align-items: center; flex-wrap: wrap; }
+.combo__antes { font-size: .8125rem; color: var(--c-ink-muted); }
+.combos-nota { margin-top: var(--sp-3); font-size: .8125rem; color: var(--c-ink-muted); }
+.combos-wrap { container-type: inline-size; }
+@container (min-width: 560px) {
+  .combos-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .combo { padding-inline: var(--sp-4); }
+  .combo:nth-child(2) { border-top: 0; padding-top: 0; }
+  .combo:nth-child(2n+1) { padding-left: 0; }
+  .combo:nth-child(2n) { padding-right: 0; border-left: 1px solid var(--c-rule); }
+}
+@container (min-width: 1000px) {
+  .combos-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .combo:nth-child(3) { border-top: 0; padding-top: 0; }
+  .combo:nth-child(n) { padding-inline: var(--sp-4); border-left: 1px solid var(--c-rule); }
+  .combo:nth-child(3n+1) { padding-left: 0; border-left: 0; }
+  .combo:nth-child(3n) { padding-right: 0; }
+}
+
+/* Movimiento reducido: el zoom de la foto lo gestiona photo.css */
 @media (prefers-reduced-motion: reduce) {
-  .dish__media .dish-art { transition: none; }
-  .dish:hover .dish__media .dish-art { transform: none; }
+  .dish__add { transition: background-color var(--dur-fast); }
+  .dish__add:active { transform: none; }
 }

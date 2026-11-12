@@ -3,6 +3,7 @@ import { isAvailable } from '../core/menu.js';
 import { menuDelDiaActivo } from '../core/horario.js';
 import { cart } from './cart-singleton.js';
 import { precioHTML } from './product-card.js';
+import { fotoProducto } from './photo.js';
 
 const ROMANOS = ['I', 'II', 'III', 'IV', 'V'];
 
@@ -15,15 +16,15 @@ export function combosHTML(state, sucursalId) {
       <article class="combo">
         <div class="combo__head"><h3>${esc(c.nombre)}</h3>${precioHTML(c.precio, 'combo__price')}</div>
         <ol class="combo__pasos">
-          ${prods.map((p, i) => `<li><span class="numeral-pill" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}
+          ${prods.map((p, i) => `<li>${fotoProducto(p, { variante: 'mini' })}<span class="numeral-pill" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}
         </ol>
         <div class="combo__pie">
           ${suma > c.precio ? `<span class="combo__antes">Por separado <s>${money(suma)}</s></span>` : '<span></span>'}
-          <button type="button" class="btn btn--sm" data-combo="${esc(c.id)}" aria-label="Pedir ${esc(c.nombre)}">Pedir <span aria-hidden="true">+</span></button>
+          <button type="button" class="btn btn--ghost btn--sm" data-combo="${esc(c.id)}" aria-label="Pedir ${esc(c.nombre)}">Pedir combo</button>
         </div>
       </article>`;
   }).join('');
-  return `<div class="combos-grid" role="region" aria-label="Combos" tabindex="0">${tarjetas}</div>
+  return `<div class="combos-wrap"><div class="combos-grid" role="region" aria-label="Combos" tabindex="0">${tarjetas}</div></div>
     <p class="help combos-nota">En esta demo cada combo se agrega plato por plato, al precio de lista del menú.</p>`;
 }
 
@@ -50,8 +51,8 @@ export function menuDelDiaHTML(state, sucursalId, { id = '' } = {}) {
         <span class="badge ${activo ? 'badge--ok' : 'badge--outline'}">${activo ? '● Disponible ahora' : 'Solo almuerzo · lun a vie'}</span>
         <h2 class="mdd__t"${id ? ` id="${esc(id)}"` : ''}>Menú del día</h2>
         <p class="mdd__h">De lunes a viernes, de 11:00 a 15:00. Entrada, plato fuerte y bebida.</p>
+        <div class="mdd__precio">${precioHTML(9.95, 'mdd__cifra')}<span>por persona · solo en sala</span></div>
       </div>
-      <ol class="mdd__lista">${partes.map((p, i) => `<li><span class="numeral-pill" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}</ol>
-      <div class="mdd__precio">${precioHTML(9.95, 'mdd__cifra')}<span>por persona · solo en sala</span></div>
+      <ol class="mdd__lista">${partes.map((p, i) => `<li>${fotoProducto(p, { variante: 'fila', clase: 'foto--mdd' })}<span class="numeral-pill" aria-hidden="true">${ROMANOS[i]}</span><span>${esc(p.nombre)}</span></li>`).join('')}</ol>
     </div>`;
 }

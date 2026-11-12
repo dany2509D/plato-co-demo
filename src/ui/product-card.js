@@ -1,5 +1,6 @@
 import { esc, money, toast } from './dom.js';
-import { dishArt } from './dish-art.js';
+import { fotoProducto } from './photo.js';
+import { icono } from './icons.js';
 import { abrirDialogo } from './dialog.js';
 import { cart } from './cart-singleton.js';
 
@@ -22,25 +23,41 @@ export const precioHTML = (n, cls = 'precio') => {
   return `<span class="${cls}"><span class="precio__mon">US$</span>${cifra}</span>`;
 };
 
-function alergenosTexto(p) {
-  if (!p.alergenosDeclarados) return `<p class="dish__alg dish__alg--ask">${SIN_DATO}</p>`;
-  if (!p.alergenos.length) return '<p class="dish__alg">Sin alérgenos declarados</p>';
-  return `<p class="dish__alg">Contiene: ${p.alergenos.map(esc).join(', ')}</p>`;
+// Línea meta: solo datos declarados; nunca afirma «libre de».
+function metaTexto(p) {
+  if (!p.alergenosDeclarados) return `<p class="dish__meta dish__meta--ask">${icono('alerta', { tam: 14 })}<span>Consulte alérgenos</span></p>`;
+  if (!p.alergenos.length) return '<p class="dish__meta">Sin alérgenos declarados</p>';
+  return `<p class="dish__meta">Contiene: ${p.alergenos.map(esc).join(', ')}</p>`;
 }
 
-export function productCardHTML(p, { etiqueta = 'Pedir', clase = '' } = {}) {
-  const sellos = [
-    p.vegetariano ? '<span class="badge badge--veg">(V) Vegetariano</span>' : '',
-    /picante/i.test(p.nombre) ? '<span class="badge badge--spicy">Picante</span>' : '',
-  ].join('');
+// Miniatura 64×48 para carrito, pedido y admin (la usan C1/C2).
+export const miniProducto = (p) => fotoProducto(p, { variante: 'mini' });
+
+// Cabecera del diálogo de modificadores: foto 16:9 a sangre, nombre y precio tabular.
+export function dialogoCabecera(p) {
+  return `<div class="mod-cab"><div class="mod-art">${fotoProducto(p, { variante: 'modal', eager: true })}</div>
+    <div class="mod-head"><h2>${esc(p.nombre)}</h2>${precioHTML(p.precio, 'mod-precio')}</div></div>`;
+}
+
+/**
+ * Tarjeta de plato con foto. Opciones: etiqueta (texto accesible del botón, por defecto «Agregar»),
+ * clase, variante ('grid' | 'fila'), eager (primera foto visible), agotado (fuerza el estado agotado).
+ */
+export function productCardHTML(p, { etiqueta = 'Agregar', clase = '', variante = 'grid', eager = false, agotado = Boolean(p.agotado) } = {}) {
+  const v = variante === 'fila' ? 'fila' : 'grid';
+  const pp = agotado && !p.agotado ? { ...p, agotado: true } : p;
+  const picante = /picante/i.test(p.nombre);
   return `
-    <article class="dish ${clase}">
-      <div class="dish__media">${dishArt(p)}</div>
+    <article class="dish foto-host dish--${v}${agotado ? ' dish--agotado' : ''} ${esc(clase)}">
+      <div class="dish__media">
+        ${fotoProducto(pp, { variante: 'grid', eager })}
+        ${picante ? '<span class="dish__picante badge badge--spicy">Picante</span>' : ''}
+        ${agotado ? '<span class="dish__agotado">Agotado hoy</span>' : ''}
+        <button type="button" class="dish__add" data-add="${esc(p.id)}" aria-label="${esc(etiqueta)} ${esc(p.nombre)}"${agotado ? ' disabled' : ''}>${icono('mas', { tam: 20 })}</button>
+      </div>
       <div class="dish__body">
-        <div class="dish__head"><h3 class="dish__name">${esc(p.nombre)}</h3>${precioHTML(p.precio, 'dish__price')}</div>
-        ${sellos ? `<div class="dish__sellos">${sellos}</div>` : ''}
-        ${alergenosTexto(p)}
-        <button type="button" class="btn btn--sm dish__add" data-add="${esc(p.id)}" aria-label="${esc(etiqueta)} ${esc(p.nombre)}">${esc(etiqueta)} <span aria-hidden="true">+</span></button>
+        <div class="dish__head"><h3 class="dish__name">${esc(p.nombre)}${p.vegetariano ? ' <span class="dish__v" role="img" aria-label="vegetariano">(V)</span>' : ''}</h3>${precioHTML(p.precio, 'dish__price')}</div>
+        ${metaTexto(p)}
       </div>
     </article>`;
 }
@@ -48,8 +65,8 @@ export function productCardHTML(p, { etiqueta = 'Pedir', clase = '' } = {}) {
 // Delegación: cualquier [data-add] dentro del contenedor agrega al carrito.
 export function bindAdd(contenedor, store) {
   contenedor.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-add]');
-    if (!b || !contenedor.contains(b)) return;
+    const b = e.target.closest('[data-add]') || e.target.closest('.dish')?.querySelector('[data-add]:not([disabled])');
+    if (!b || !contenedor.contains(b) || b.disabled) return;
     const p = store.get().productos.find((x) => x.id === b.dataset.add);
     if (p) agregarFlujo(p);
   });
@@ -73,9 +90,8 @@ function abrirModificadores(p) {
   form.className = 'mod-form';
   form.method = 'dialog';
   form.innerHTML = `
-    <div class="mod-art">${dishArt(p)}</div>
+    ${dialogoCabecera(p)}
     <div class="mod-body">
-      <div class="mod-head"><h2>${esc(p.nombre)}</h2>${precioHTML(p.precio, 'mod-precio')}</div>
       ${termino.length ? `<fieldset class="mod-grupo"><legend class="label">Término de la carne</legend><div class="mod-ops">
         ${termino.map((m, i) => `<label class="mod-op"><input type="radio" name="termino" value="${esc(m)}" ${i === 0 ? 'checked' : ''}><span>${esc(etiquetaMod(m.replace('término ', '')))}</span></label>`).join('')}
       </div></fieldset>` : ''}
