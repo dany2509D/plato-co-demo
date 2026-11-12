@@ -140,9 +140,17 @@ for (const [nombre, width, height] of VISTAS) {
       await expect(page.locator('.mn-agotado')).toHaveCount(0);
     });
 
+    // Sin botón flotante: la única entrada es «Demo ▾» → «Presentación guiada» (en celular, «Menú» → grupo «Demo»).
     test('Presentación guiada de punta a punta', async ({ page }) => {
       await page.goto(BASE + '/');
-      await page.getByRole('button', { name: /modo Presentación/ }).click();
+      await expect(page.locator('.pres-lanzar')).toBeHidden();
+      const demo = page.locator('.demo-menu__btn');
+      const abridor = (await demo.isVisible()) ? demo : page.locator('.hdr-hoja-btn');
+      await abridor.click();
+      const entrada = page.locator('[data-accion="presentar"]:visible');
+      await expect(entrada).toHaveCount(1);
+      await expect(entrada).toHaveAccessibleName(/Presentación guiada/);
+      await entrada.click();
       for (let i = 1; i <= 6; i++) {
         await expect(page.locator('[data-paso]')).toContainText(`Paso ${i} de 6`);
         const hacer = page.locator('[data-hacer]');
@@ -158,6 +166,10 @@ for (const [nombre, width, height] of VISTAS) {
       if (!(await page.locator('[data-salir]').isVisible())) await page.locator('[data-min]').click();
       await page.locator('[data-salir]').click();
       await expect(page.locator('.pres-barra')).toHaveCount(0);
+      // El foco no se pierde: vuelve a «Demo» (o «Menú» en celular) si se ven; el último paso es del panel de
+      // administración (sin cabecera del cliente), así que ahí va al contenido principal.
+      await expect.poll(() => page.evaluate(() => document.activeElement?.id || String(document.activeElement?.className)))
+        .toMatch(/contenido|demo-menu__btn|hdr-hoja-btn/);
     });
   });
 }

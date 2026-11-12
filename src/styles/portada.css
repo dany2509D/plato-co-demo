@@ -38,8 +38,7 @@
 .c-hero__cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .c-hero__btn { min-height: 52px; padding: 0 28px; font-size: 1rem; }
 .c-hero .c-hero__btn--ghost { --btn-fg: var(--c-on-dark); --btn-bd: var(--c-on-dark); --btn-hover-bg: var(--c-on-dark); --btn-hover-fg: var(--c-char); }
-/* Valoración: tarjeta pergamino afilada que sobresale 40 px bajo la foto, abajo a la derecha (Amrit). La esquina
-   inferior izquierda queda libre para el lanzador «Presentación». */
+/* Valoración: tarjeta pergamino afilada que sobresale 40 px bajo la foto, abajo a la derecha (Amrit). */
 .c-proof {
   position: absolute; right: 0; bottom: -40px; width: 320px; height: 120px;
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; gap: 4px 18px;
@@ -55,8 +54,7 @@
   .c-hero__cab { padding-block: var(--sp-2) var(--sp-2); }
   .c-hero__eyebrow { font-size: .75rem; margin-bottom: 8px; }
   .c-hero__escena { display: flex; flex-direction: column; }
-  /* Celular: foto → valoración → lead → CTA; los CTA terminan antes de y ≈ 730 a 390×844, así el
-     círculo «Presentación» (abajo a la izquierda) cae sobre espacio vacío en el primer viewport */
+  /* Celular: foto → valoración → lead → CTA (los CTA terminan antes de y ≈ 730 a 390×844) */
   .c-hero .c-hero__foto { position: relative; inset: auto; height: clamp(240px, 70vw, 360px); }
   .c-hero__foto img { object-position: 40% 80%; }
   .c-hero__escena::before { bottom: auto; height: clamp(240px, 70vw, 360px); }

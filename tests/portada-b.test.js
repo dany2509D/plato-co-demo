@@ -1,6 +1,6 @@
 // Lógica pura del bloque B (cabecera, contadores de cifras, estado corto de sucursal).
 import { describe, it, expect } from 'vitest';
-import { estadoCabecera, indiceMenu } from '../src/ui/cabecera.js';
+import { estadoCabecera, indiceMenu, destinoFocoFinal } from '../src/ui/cabecera.js';
 import { formatearCifra, cifraEn, easeOutCubic } from '../src/ui/reveal.js';
 import { estadoCorto } from '../src/ui/branch-picker.js';
 import { estadoSucursal } from '../src/core/horario.js';
@@ -39,6 +39,17 @@ describe('indiceMenu (teclado del menú «Demo»)', () => {
     expect(indiceMenu(1, 3, 'a')).toBeNull();
     expect(indiceMenu(1, 3, 'Enter')).toBeNull();
     expect(indiceMenu(0, 0, 'ArrowDown')).toBeNull();
+  });
+});
+
+describe('destinoFocoFinal (fin del modo Presentación)', () => {
+  it('no toca el foco si presenter.js ya lo devolvió a un control', () => {
+    expect(destinoFocoFinal({ focoEnBody: false, demoVisible: true, hojaVisible: false })).toBeNull();
+  });
+  it('prefiere «Demo», luego «Menú» (celular) y, en el admin, el contenido', () => {
+    expect(destinoFocoFinal({ focoEnBody: true, demoVisible: true, hojaVisible: false })).toBe('demo');
+    expect(destinoFocoFinal({ focoEnBody: true, demoVisible: false, hojaVisible: true })).toBe('hoja');
+    expect(destinoFocoFinal({ focoEnBody: true, demoVisible: false, hojaVisible: false })).toBe('contenido');
   });
 });
 

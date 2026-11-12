@@ -48,7 +48,7 @@ La demo es un sitio **estático**: no necesita servidor.
 
 ### Opción A: modo Presentación (recomendado)
 
-Pulse el botón flotante **«Presentación»**. Aparece una barra con una nota por paso y estos botones: **Anterior**, **Siguiente**, **Hacer por mí**, **Pausar** y **Salir** (al final, «Terminar»). También funcionan las flechas ← → del teclado y **Esc** para salir.
+En la cabecera abra **«Demo ▾» → «Presentación guiada»** (en celular: **«Menú»** → grupo «Demo»). No hay botón flotante. Aparece una barra con una nota por paso y estos botones: **Anterior**, **Siguiente**, **Hacer por mí**, **Pausar** y **Salir** (al final, «Terminar»). También funcionan las flechas ← → del teclado y **Esc** para salir.
 
 | Paso | Qué ve la audiencia | «Hacer por mí» |
 |------|---------------------|----------------|

@@ -10,8 +10,10 @@
  *     fija --stick-top (alto de la cabecera pegajosa) y --banner-h (0: el banner ya no es pegajoso).
  *
  * Lógica pura exportada (con pruebas en tests/cabecera.test.js): estadoCabecera, indiceMenu.
- * Contrato: .app-header__inner, [data-nav], [data-cuenta], .nav-carrito, .btn-reiniciar. El único control cuyo
- * nombre contiene «modo Presentación» es .pres-lanzar (presenter.js): aquí el ítem se llama «Presentación guiada».
+ * Contrato: .app-header__inner, [data-nav], [data-cuenta], .nav-carrito, .btn-reiniciar, [data-accion="presentar"].
+ * «Presentación guiada» ([data-accion="presentar"], en el menú «Demo» y en la hoja móvil) es la ÚNICA entrada al modo
+ * Presentación: no hay botón flotante (.pres-lanzar sigue en el DOM porque lo monta presenter.js, pero está oculto).
+ * Al salir del recorrido, presenter.js devuelve el foco al control que lo abrió («Demo» o «Menú»).
  */
 import { brand } from '../config/brand.js';
 import { esc } from './dom.js';
@@ -206,5 +208,38 @@ export function vigilarCabecera(header) {
   if ('ResizeObserver' in window) new ResizeObserver(medir).observe(header);
   window.addEventListener('resize', medir);
   medir();
+  vigilarFinPresentacion(header);
   return pedir;
+}
+
+/**
+ * Destino del foco al terminar el modo Presentación. Pura.
+ * Si el foco quedó en <body> (el recorrido termina en una vista de admin, donde la cabecera del cliente está oculta y
+ * presenter.js no puede devolverlo a «Demo»), va a «Demo» si se ve, si no a «Menú» (celular), si no al contenido.
+ * → 'demo' | 'hoja' | 'contenido' | null (no tocar: el foco ya está en un control).
+ */
+export function destinoFocoFinal({ focoEnBody, demoVisible, hojaVisible }) {
+  if (!focoEnBody) return null;
+  if (demoVisible) return 'demo';
+  if (hojaVisible) return 'hoja';
+  return 'contenido';
+}
+
+function vigilarFinPresentacion(header) {
+  if (!('MutationObserver' in window)) return;
+  const visible = (el) => Boolean(el && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+  let activa = document.body.classList.contains('pres-activa');
+  new MutationObserver(() => {
+    const ahora = document.body.classList.contains('pres-activa');
+    if (activa && !ahora) {
+      setTimeout(() => { // después del foco que intenta presenter.js
+        const demo = header.querySelector('.demo-menu__btn');
+        const hoja = header.querySelector('.hdr-hoja-btn');
+        const d = destinoFocoFinal({ focoEnBody: document.activeElement === document.body || !document.activeElement, demoVisible: visible(demo), hojaVisible: visible(hoja) });
+        const el = { demo, hoja, contenido: document.getElementById('contenido') }[d];
+        el?.focus({ preventScroll: true });
+      }, 0);
+    }
+    activa = ahora;
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
