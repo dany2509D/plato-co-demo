@@ -1,0 +1,59 @@
+/* Carta (dueño: bloque A2): tarjeta de plato, menú del día y combos.
+ * Se carga después de client.css; sobrescriba aquí, no en client.css. */
+/* ================= Tarjeta de plato ================= */
+.dish-grid, .combos-grid { display: grid; gap: var(--sp-3); } /* base compartida (antes en «Portada: secciones») */
+.dish-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.dish-grid--menu { grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); } /* movida desde «Menú» (client.css): debe ir después de .dish-grid */
+.dish { display: flex; flex-direction: column; overflow: hidden; }
+.dish__media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; }
+.dish__media::after, .mod-art::after { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: var(--cli-noise); opacity: .16; }
+.dish__media .dish-art { transition: transform .6s var(--ease); }
+.dish:hover .dish__media .dish-art { transform: scale(1.04); }
+.dish__body { display: flex; flex-direction: column; gap: 10px; flex: 1; padding: var(--sp-2) 18px 18px; }
+.dish__head, .combo__head, .mod-head { align-items: flex-start; }
+.dish__name { font-size: 1.5rem; letter-spacing: 0; }
+.dish__price { font-size: 1.75rem; text-align: right; }
+.dish__sellos { display: flex; flex-wrap: wrap; gap: 6px; }
+.dish__alg { margin: 0; line-height: 1.4; }
+.dish__alg--ask::before { content: '✱ '; color: var(--c-ember); }
+.dish__add { margin-top: auto; align-self: flex-start; }
+/* Móvil: destacados y combos de la portada en fila deslizable (scroll-snap); menú en tarjetas horizontales */
+@media (max-width: 699px) {
+  :is(.dish-grid--fila, .c-combos .combos-grid) { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 82%; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: calc(-1 * var(--gutter)); padding: 0 var(--gutter) var(--sp-2); scroll-padding-inline: var(--gutter); }
+  :is(.dish-grid--fila, .c-combos .combos-grid) > * { scroll-snap-align: start; }
+}
+@media (max-width: 599px) {
+  .dish-grid--menu { gap: var(--sp-1); }
+  .dish-grid--menu .dish { display: grid; grid-template-columns: 132px minmax(0, 1fr); }
+  .dish-grid--menu .dish__media { aspect-ratio: auto; min-height: 140px; }
+  .dish-grid--menu .dish__media .dish-art { position: absolute; inset: 0; }
+  .dish-grid--menu .dish__body { padding: 12px 14px 14px; gap: 6px; }
+  .dish-grid--menu .dish__name { font-size: 1.25rem; }
+  .dish-grid--menu .dish__price { font-size: 1.375rem; }
+}
+
+/* ================= Menú del día y combos ================= */
+.mdd { display: grid; gap: var(--sp-4); padding: clamp(24px, 4vw, 56px); }
+.mdd__t { margin: var(--sp-4) 0 var(--sp-2); }
+.mdd__h { margin: 0; max-width: 34ch; color: var(--c-ink-soft); }
+.mdd__lista { border-top: 1px dotted var(--c-ink); }
+.mdd__lista li { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px dotted var(--c-ink); font-size: 1.0625rem; font-weight: 500; }
+.mdd__precio { display: flex; flex-direction: column; }
+.mdd__cifra { font-size: clamp(3.5rem, 2rem + 5vw, 7.5rem); letter-spacing: -.02em; }
+.mdd__precio > span:last-child { font-size: var(--fs-sm); color: var(--c-ink-soft); }
+@media (min-width: 900px) { .mdd { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto; align-items: end; } .mdd__precio { align-items: flex-end; text-align: right; } }
+
+.combos-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.combo { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); }
+.combo__head { padding-bottom: var(--sp-2); border-bottom: 1px solid var(--c-rule); }
+.combo__head h3 { font-size: 1.75rem; }
+.combo__pasos { display: grid; gap: 10px; }
+.combo__pasos li { display: flex; align-items: center; gap: 12px; font-weight: 500; }
+.combo__pie { margin-top: auto; padding-top: var(--sp-1); align-items: center; }
+.combos-nota { margin-top: var(--sp-2); }
+
+/* Movimiento reducido (estaba al final de client.css; debe ir después de las reglas de zoom) */
+@media (prefers-reduced-motion: reduce) {
+  .dish__media .dish-art { transition: none; }
+  .dish:hover .dish__media .dish-art { transform: none; }
+}

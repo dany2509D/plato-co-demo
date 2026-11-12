@@ -3,6 +3,8 @@ import './styles/base.css';
 import './styles/components.css';
 import './styles/layout.css';
 import './styles/client.css';
+import './styles/carta.css';
+import './styles/portada.css';
 import './styles/admin.css';
 import './styles/kitchen.css';
 import './styles/gestion.css';
