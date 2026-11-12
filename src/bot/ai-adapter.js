@@ -1,4 +1,6 @@
 import { normalize } from '../core/text.js';
+import { usd } from '../core/metrics.js';
+import { ALERGENO_CUE } from './allergens.js';
 import { isAvailable } from '../core/menu.js';
 import { assignBranch, priceOrder } from '../core/orders.js';
 import { createReservation } from '../core/reservations.js';
@@ -18,6 +20,14 @@ import { t } from './texts.js';
 export const ALLOWED_ACTIONS = ['proponer_pedido', 'proponer_reserva', 'pasar_a_persona'];
 const MAX_PERSONAS = 8;
 const MAX_HISTORIAL = 12;
+const MAX_CONTENIDO = 1000; // el servidor rechaza mensajes más largos: se recortan antes de enviar
+const recortar = (t) => String(t ?? '').slice(0, MAX_CONTENIDO);
+
+// Preguntas sobre alérgenos/dietas: NUNCA van al modelo; responde el guion con los datos declarados del menú.
+const DIETA = /alerg|allerg|gluten|celiac|lacteo|lactosa|lactose|dairy|nuez|nueces|\bnuts?\b|peanut|\bmani\b|marisco|shellfish|sesam|\bsoya\b|\bsoy\b|huevo|\begg|vegan|\bapt[oa]s?\b|libre de|\bsin (gluten|lactosa|nueces|mani|huevo|soya)\b/;
+export const esPreguntaAlergenos = (n) => ALERGENO_CUE(n) || DIETA.test(n);
+// Frases con las que el modelo "garantizaría" algo sobre alérgenos o dietas.
+const AFIRMA_ALERGENOS = /libres? de|\bsin (gluten|lactosa|nueces|mani|huevo|soya|lacteos)\b|(gluten|dairy|lactose|nut|allergen)[- ]?free|no contien[ea]|does(n.t| not) contain|aptos? para|aptas? para|suitable for|safe for|hipoalerg/;
 
 const SI = /^(si|yes|yeah|yep|ok|okay|dale|confirmo|confirmar|confirm|claro|correcto|listo)\b/;
 const NO = /^(no|nop|nope|cancelar|cancela|cancel)\b/;
@@ -58,6 +68,17 @@ export async function askAI(payload, { fetchImpl, timeoutMs = 8000, endpoint = '
 }
 
 // ---------- contexto para el modelo ----------
+// El servidor arma el menú, los precios y los alérgenos desde sus propios datos; del navegador solo se
+// aceptan la sucursal elegida y banderas de disponibilidad por producto.
+
+export function buildClientHints(state) {
+  const sucursalId = state.sucursales.some((x) => x.id === state.ui?.sucursalCliente) ? state.ui.sucursalCliente : state.sucursales[0].id;
+  const disponibilidad = {};
+  for (const p of state.productos) disponibilidad[p.id] = isAvailable(state, p.id, sucursalId);
+  return { sucursalId, disponibilidad };
+}
+
+// (Heredado: ya no se envía al servidor.)
 
 export function buildContext(state) {
   const menu = state.productos.map((p) => ({
@@ -168,8 +189,6 @@ export function applyActions(store, convId, actions) {
 // El texto de confirmación sale de la propuesta YA validada y del store, nunca del texto libre
 // del modelo: lo que se muestra es exactamente lo que se creará.
 
-const usd = (n) => `$${Number(n).toFixed(2)}`;
-
 function resumenPropuesta(state, propuesta, idioma) {
   const en = idioma === 'en';
   const p = propuesta.payload;
@@ -191,6 +210,8 @@ function resumenPropuesta(state, propuesta, idioma) {
   partes.push(en ? 'Confirm the order? (yes / cancel)' : '¿Confirma el pedido? (sí / cancelar)');
   return partes.join('\n');
 }
+
+const botonesResumen = (idioma) => (idioma === 'en' ? ['Yes, confirm', 'Cancel'] : ['Sí, confirmar', 'Cancelar']);
 
 // ---------- respuesta con respaldo ----------
 
@@ -260,15 +281,20 @@ export async function replyWithFallback(bot, store, convId, texto, { iaReal = fa
       return [guardado];
     }
 
+    // Alérgenos y dietas: solo con datos declarados del menú (guion), nunca con el modelo.
+    if (esPreguntaAlergenos(n)) return guion();
+
     const historial = (conv?.mensajes ?? []).slice(-MAX_HISTORIAL)
-      .map((m) => ({ role: m.de === 'cliente' ? 'user' : 'assistant', content: String(m.texto ?? '') }))
+      .map((m) => ({ role: m.de === 'cliente' ? 'user' : 'assistant', content: recortar(m.texto) }))
       .filter((m) => m.content);
     const res = await askAI({
       demo: 'restaurante', sessionId: convId,
-      messages: [...historial, { role: 'user', content: raw }],
-      context: buildContext(store.get()),
+      messages: [...historial, { role: 'user', content: recortar(raw) }],
+      ...buildClientHints(store.get()),
     }, { fetchImpl, timeoutMs, endpoint });
     if (!res) return guion();
+    // El modelo no puede afirmar nada sobre alérgenos por su cuenta.
+    if (AFIRMA_ALERGENOS.test(normalize(res.reply))) return guion();
 
     if (!getConv()) store.update((s) => { s.conversaciones.push({ id: convId, idioma: 'es', mensajes: [], requiereHumano: false, paso: null, slots: {} }); });
     if (!foto) foto = { propuesta: undefined, paso: null, slots: {}, requiereHumano: false, n: 0 };
@@ -280,7 +306,7 @@ export async function replyWithFallback(bot, store, convId, texto, { iaReal = fa
     // Si hay propuesta, el resumen determinista REEMPLAZA el texto libre del modelo.
     const textoBot = actual.propuesta ? resumenPropuesta(store.get(), actual.propuesta, actual.idioma) : res.reply;
     const cliente = mensaje({ de: 'cliente', texto: raw }, ahora);
-    const bota = mensaje({ de: 'bot', texto: textoBot }, ahora);
+    const bota = mensaje({ de: 'bot', texto: textoBot, ...(actual.propuesta ? { botones: botonesResumen(actual.idioma) } : {}) }, ahora);
     store.update((s) => { s.conversaciones.find((c) => c.id === convId).mensajes.push(cliente, bota); });
     return [bota];
   } catch {
