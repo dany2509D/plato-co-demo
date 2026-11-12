@@ -24,7 +24,7 @@ BLOQUEAR_LS=1 npx playwright test recorrido.spec.js   # con localStorage bloquea
 | # | Prueba | Pasos | Resultado esperado |
 |---|--------|-------|--------------------|
 | 1 | Rutas | Visitar `#/`, `#/menu`, `#/carrito`, `#/chat`, `#/estilo`, `#/pedido/no-existe` y las cuatro de `#/admin/*` | Banner de demo visible en todas; todo `target=_blank` lleva `rel=noopener`; sin scroll horizontal fuera del admin; solo se piden recursos externos a Google Fonts |
-| 2 | Portada | Abrir `#/`; pulsar «Pausar cinta de platos» | El botón pasa a «Reanudar cinta de platos» (`aria-pressed=true`) y la animación queda en pausa; a 1440 px el borde izquierdo del pie coincide con el del encabezado |
+| 2 | Portada | Abrir `#/` | El titular dice «Hecho al momento.»; a 1440 px el borde izquierdo del pie coincide con el del encabezado. (La cinta de platos en movimiento se quitó a pedido del cliente: ya no hay `.c-hero__marquee` ni `[data-marquee-toggle]`.) |
 | 3 | Menú → pago | En `#/menu` abrir una pestaña, agregar un plato (con o sin modificadores), ir a `#/carrito`, elegir **Retiro**, **Yappy**, confirmar | Se lee «Pago simulado»; se llega a `#/pedido/ped-NNN` con la línea de pasos y «Yappy» en los detalles |
 | 4 | Chat | En `#/chat` escribir `Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio` | Resumen con 2 × Hamburguesa clásica (sin cebolla), 1 × Limonada, Total US$ 22.10, «Lo prepara Plato & Co. Centro» |
 | 5 | Confirmar y pagar | «Sí, confirmar» → dirección `Calle 50, Obarrio` → «Yappy» | «Pedido ped-NNN registrado … Pago con Yappy simulado: recibido» |

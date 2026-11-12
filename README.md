@@ -103,7 +103,7 @@ Todo lo propio de Plato & Co. está en pocos archivos:
 1. Cambie nombre, logo, teléfono y colores en `brand.js` y los tokens en `tokens.css`.
 2. Cargue las sucursales reales (o ficticias) con horarios, zonas y mesas.
 3. Reemplace el menú en `seed.js`: categorías, precios en US$, modificadores, alérgenos declarados (un plato sin dato no se afirma libre de un alérgeno) y disponibilidad por sucursal.
-4. Ajuste los titulares de la portada y la marquesina en `inicio.js`, y los ejemplos del guion (frases de `src/core/tour.js`) a platos y barrios del nuevo menú.
+4. Ajuste los titulares de la portada y los platos destacados en `inicio.js`, y los ejemplos del guion (frases de `src/core/tour.js`) a platos y barrios del nuevo menú.
 5. Revise `npm test` (las pruebas de la semilla validan el menú), `npm run build` y recorra el guion completo.
 6. Conserve el aviso de demo (banner superior) y los datos ficticios mientras no haya acuerdo comercial.
 
@@ -148,7 +148,7 @@ docs/                 especificación y sistema de diseño
   | `#/menu` | 100 | 96 | 100 |
   | `#/chat` | 100 | 98 | 100 |
 
-- **Accesibilidad:** navegación por teclado, foco visible, enlace «saltar al contenido», regiones con nombre, avisos con `aria-live`, contraste AA y cinta de platos con botón de pausa y respeto a «reducir movimiento».
+- **Accesibilidad:** navegación por teclado, foco visible, enlace «saltar al contenido», regiones con nombre, avisos con `aria-live`, contraste AA y respeto a «reducir movimiento» (sin máscaras, zoom ni contadores animados).
 - **Navegadores:** probado en Chromium. No se ha probado en Safari ni Firefox, ni con lector de pantalla ni en dispositivos reales.
 
 ## 9. Limitaciones y avisos

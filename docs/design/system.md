@@ -24,7 +24,7 @@ Orden de carga en `main.js`: tokens, base, components, layout, client, carta, po
 - Formularios: `.field` > `.label` + `.input|.select|.textarea` + `.help` / `.error` (con `aria-invalid="true"` y `aria-describedby`).
 - `.badge` + `--veg|spicy|gold|outline|status|ok|warn|danger`; `.chip` / `.tab-pill` (+`aria-pressed`/`aria-selected`; el seleccionado lleva ✓, relleno y peso 700); `.tabs-pill`.
 - `.card` (+`--linen`, `--flat`, `a.card` con hover por tono), `.stat` (`.stat__num`, `.stat__label`), `.stat-row`, `.surface-adm`.
-- Efectos: `.grain`, `.reveal` (+`--rv-delay`), `.marquee` > `.marquee__track` > dos `.marquee__group` (el segundo `aria-hidden="true"`).
+- Efectos: `.grain`, `.reveal` (+`--rv-delay`), `.reveal--foto` (máscara de foto), `[data-count]` (contador de cifras). La marquesina (`.marquee`) se quitó del producto a pedido del cliente (11 nov 2026): no la vuelva a usar.
 - Layout cliente: `.app-header`, `.brand`, `.nav`, `.site-footer`, `.skip-link`, `.sr-only`.
 
 ## Las 11 reglas
@@ -66,7 +66,7 @@ Todas las fotos salen de `src/ui/photo.js` (estilos en `photo.css`); 40 de menú
 **Archivos y dueños** (en la cascada, `carta.css` y `portada.css` van después de `client.css`: sobrescriba en su archivo, no edite el de otro):
 `client.css` → C (menú, carrito, pago, seguimiento, diálogos) · `carta.css` → A2 (tarjeta de plato, menú del día, combos) · `portada.css` → B (héroe, selector de sucursal, secciones de portada) · `photo.css` + `photo.js` → A1 (hechos) · `icons.css` + `icons.js` → C.
 **API de fotos:** ver «Fotografía» (programar contra ella desde ya).
-**Selectores que nunca se renombran.** Modo Presentación: `.tel-texto`, `.tel-enviar`, `.tel-compositor`, `.tel-rapido`, `.vivo`, `.vivo-item`, `main.vista[data-ruta]`, `[data-avanzar]`, `[data-agotado]`, `[data-fecha]`, `[data-franja]`, `[data-mesa]`. E2E (`tests/e2e/recorrido.spec.js`): `.app-header__inner`, `.banner-demo`, `.site-footer .container--wide`, `.c-hero__marquee .marquee__track` y su `[data-marquee-toggle]` (la marquesina puede salir del héroe pero conserva la clase), `.pago-op`, `.seg__op`, `.ck-sim`, `.pd-datos`, `.pd-pasos`, `.mn-agotado`, `.adm-reiniciar`, `.pres-barra`, `[data-add]`, `[data-cta]`, `[data-paso]`, `[data-reserva]`, `[data-humano]`, `[data-min]`, `role="tab"` en las categorías, y **un solo** botón visible cuyo nombre accesible contenga «modo Presentación» (en el menú «Demo» use «Presentación guiada»).
+**Selectores que nunca se renombran.** Modo Presentación: `.tel-texto`, `.tel-enviar`, `.tel-compositor`, `.tel-rapido`, `.vivo`, `.vivo-item`, `main.vista[data-ruta]`, `[data-avanzar]`, `[data-agotado]`, `[data-fecha]`, `[data-franja]`, `[data-mesa]`. E2E (`tests/e2e/recorrido.spec.js`): `.app-header__inner`, `.banner-demo`, `.site-footer .container--wide`, `.pago-op`, `.seg__op`, `.ck-sim`, `.pd-datos`, `.pd-pasos`, `.mn-agotado`, `.adm-reiniciar`, `.pres-barra`, `[data-add]`, `[data-cta]`, `[data-paso]`, `[data-reserva]`, `[data-humano]`, `[data-min]`, `role="tab"` en las categorías, y **un solo** botón visible cuyo nombre accesible contenga «modo Presentación» (en el menú «Demo» use «Presentación guiada»).
 **No tocar:** `src/bot/*`, `src/core/*` (salvo valores de `icono` en `live-feed.js`), `src/ui/presenter.js`, `api/*`.
 
 ## Iconos SVG y tarjeta de plato (A2)

@@ -1,4 +1,3 @@
-import { bindMarquee } from '../ui/marquee.js';
 import '../styles/estilo.css';
 import { brand } from '../config/brand.js';
 import { icono, circuloIcono, ICONOS } from '../ui/icons.js';
@@ -56,8 +55,6 @@ function tablaContraste() {
   return `<div class="eg-scroll"><table class="eg-tabla"><thead><tr><th>Muestra</th><th>Par</th><th>Razón</th><th>Criterio</th><th>AA</th></tr></thead><tbody>${filas}</tbody></table></div>`;
 }
 
-const dishes = ['Hamburguesa clásica', 'Fettuccine Alfredo', 'Churrasco', 'Brownie con helado', 'Bowl de pollo', 'Camarones al ajillo'];
-const marquee = (aria) => `<ul class="marquee__group"${aria ? ' aria-hidden="true"' : ''}>${dishes.map((d) => `<li>${d}</li>`).join('')}</ul>`;
 const BOLSA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>';
 
 function botones(oscuro) {
@@ -203,10 +200,7 @@ export function vistaEstilo(main) {
       <div class="surface-adm"><div class="stat"><div class="stat__num">US$ 1.240</div><p class="stat__label">ventas de hoy</p></div></div>
     </section>
 
-    <section id="eg-movimiento"><h2>Movimiento, marquesina y grano</h2>
-      <h3>Marquesina (27 s lineal, pausa al pasar el cursor, estática con movimiento reducido)</h3>
-      <div class="marquee"><div class="marquee__track">${marquee(false)}${marquee(true)}</div></div>
-      <div class="band band--dark marquee eg-banda" style="padding-block:16px"><div class="marquee__track">${marquee(false)}${marquee(true)}</div></div>
+    <section id="eg-movimiento"><h2>Movimiento y grano</h2>
       <h3>Grano de papel (.grain)</h3>
       <div class="band band--linen grain eg-banda"><p>Textura sutil al 7 % de opacidad, SVG feTurbulence en data-URI.</p></div>
       <h3>Aparecer al scroll (.reveal)</h3>
@@ -225,7 +219,6 @@ export function vistaEstilo(main) {
     </section>
   </div>`;
 
-  bindMarquee(main);
   main.querySelectorAll('[data-ir]').forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();
     main.querySelector('#' + a.dataset.ir)?.scrollIntoView({ behavior: 'smooth', block: 'start' });

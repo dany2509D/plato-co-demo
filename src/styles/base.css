@@ -96,27 +96,6 @@ a:hover { text-decoration-thickness: 2px; }
 .rv-ready .reveal.is-in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .rv-ready .reveal { opacity: 1; transform: none; transition: none; } }
 
-/* Marquesina solo CSS: duplicar el grupo (el segundo con aria-hidden="true"). 36 s lineal (direccion-v2 §6.3);
- * pausa con cursor, foco, toque y botón [data-marquee-toggle] (src/ui/marquee.js). */
-.marquee { overflow: hidden; border-block: var(--rule-w) solid var(--ctx-rule); padding-block: var(--sp-2); }
-.marquee__track { display: flex; width: max-content; animation: marquee 36s linear infinite; }
-.marquee__group { display: flex; flex: none; align-items: center; gap: var(--sp-4); padding-right: var(--sp-4); margin: 0; list-style: none; }
-.marquee__group li { display: flex; align-items: center; gap: var(--sp-4); font-family: var(--font-display); font-size: var(--fs-d4); text-transform: uppercase; line-height: 1; white-space: nowrap; }
-.marquee__group li::after { content: '✦'; font-size: .5em; color: var(--ctx-accent); }
-.marquee { position: relative; }
-.marquee:is(:hover, :focus-within, .is-paused, .is-touching) .marquee__track { animation-play-state: paused; }
-.marquee__toggle { position: absolute; right: var(--sp-2); top: 50%; transform: translateY(-50%); z-index: 1; min-height: 32px; padding: 0 14px; font: 700 .75rem/1 var(--font-body); letter-spacing: .04em; text-transform: uppercase; color: var(--c-ink); background: var(--c-paper); border: 1px solid var(--c-ink); border-radius: var(--r-pill); cursor: pointer; transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
-.marquee__toggle:hover { background: var(--c-ink); color: var(--c-canvas); }
-.marquee__toggle::after { content: ''; position: absolute; inset: -6px -4px; }
-.marquee__toggle:focus-visible { outline: 2px solid var(--c-gold); outline-offset: 2px; }
-@keyframes marquee { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) {
-  .marquee__track { animation: none; width: auto; flex-wrap: wrap; }
-  .marquee__toggle { display: none; }
-  .marquee__group[aria-hidden="true"] { display: none; }
-  .marquee__group { flex-wrap: wrap; }
-}
-
 /* Barra de desplazamiento discreta */
 html { scrollbar-color: var(--c-line-strong) var(--c-canvas); }
 

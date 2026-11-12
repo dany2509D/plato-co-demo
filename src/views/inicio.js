@@ -1,20 +1,19 @@
 // Portada #/ (rediseño 2, bloque B · direccion-v2 §2.1): héroe con foto a sangre y titular de una línea →
-// marquesina → sucursales con foto → lo que más se pide (4) → cómo funciona (banda carbón) → cifras →
+// sucursales con foto → lo que más se pide (4) → cómo funciona (banda carbón) → cifras →
 // menú del día + combos → reseñas → banda CTA con foto. El pie lo monta main.js.
+// (La cinta de platos en movimiento se quitó a pedido del cliente, 11 nov 2026.)
 // Honestidad: cifras, reseñas y nombres son ficticios y así se rotulan.
 import { store } from '../core/app-store.js';
 import { visibleMenu } from '../core/menu.js';
 import { el, esc } from '../ui/dom.js';
 import { branchPicker } from '../ui/branch-picker.js';
 import { productCardHTML, bindAdd } from '../ui/product-card.js';
-import { bindMarquee } from '../ui/marquee.js';
 import { combosHTML, bindCombos, menuDelDiaHTML } from '../ui/combos.js';
 import { fotoEscena } from '../ui/photo.js';
 import { icono, circuloIcono } from '../ui/icons.js';
 import { formatearCifra } from '../ui/reveal.js';
 
 const DESTACADOS = ['Hamburguesa doble', 'Fettuccine Alfredo', 'Churrasco', 'Bowl de pollo y arroz'];
-const MARQUESINA = ['Hamburguesa doble', 'Fettuccine Alfredo', 'Churrasco', 'Bowl de pollo y arroz', 'Costillas BBQ', 'Brownie con helado', 'Camarones al ajillo', 'Limonada'];
 
 // Reseñas ficticias de la demo.
 const RESENAS = [
@@ -38,8 +37,6 @@ const ROLES = [
 const ESTRELLA = 'M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z';
 export const estrellasHTML = (n, clase = '') => `<span class="estrellas ${esc(clase)}" role="img" aria-label="${Number(n)} de 5 estrellas">${
   Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${ESTRELLA}" class="${i < n ? 'on' : ''}"/></svg>`).join('')}</span>`;
-
-const marquesina = (aria) => `<ul class="marquee__group"${aria ? ' aria-hidden="true"' : ''}>${MARQUESINA.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>`;
 
 // Cifra con contador: el valor real en .sr-only; el número animado (aria-hidden) lo maneja reveal.js.
 function cifra(valor, { dec = 0, unidad = '', etiqueta, animar }) {
@@ -108,8 +105,6 @@ export function vistaInicio(main) {
           </div>
         </div>
       </section>
-
-      <div class="marquee c-hero__marquee" role="region" aria-label="Platos de la casa"><div class="marquee__track">${marquesina(false)}${marquesina(true)}</div></div>
 
       <section class="c-sec c-sucs" aria-labelledby="suc-t">
         <div class="container--wide">
@@ -205,7 +200,6 @@ export function vistaInicio(main) {
     pintarSucursal({ rv });
     bindAdd(nodo.querySelector('[data-destacados]'), store);
     bindCombos(nodo.querySelector('[data-combos]'), store);
-    bindMarquee(nodo);
   }
   pintar();
   const off = store.on('menu:cambio', () => pintarSucursal());

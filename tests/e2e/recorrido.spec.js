@@ -54,16 +54,10 @@ for (const [nombre, width, height] of VISTAS) {
       for (const o of externas) expect(['https://fonts.googleapis.com', 'https://fonts.gstatic.com']).toContain(o);
     });
 
-    test('portada: cinta con pausa y pie alineado', async ({ page }) => {
+    // La cinta de platos en movimiento se quitó a pedido del cliente (11 nov 2026): ya no hay marquesina que probar.
+    test('portada: titular y pie alineado', async ({ page }) => {
       await page.goto(BASE + '/');
       await expect(page.locator('h1')).toContainText('Hecho al');
-      const t = page.locator('.c-hero__marquee [data-marquee-toggle]');
-      await expect(t).toHaveAttribute('aria-pressed', 'false');
-      await expect(t).toHaveAccessibleName('Pausar cinta de platos');
-      await t.click();
-      await expect(t).toHaveAttribute('aria-pressed', 'true');
-      await expect(t).toHaveAccessibleName('Reanudar cinta de platos');
-      await expect(page.locator('.c-hero__marquee .marquee__track')).toHaveCSS('animation-play-state', 'paused');
       const izq = async (sel) => (await page.locator(sel).first().boundingBox()).x;
       if (width >= 1440) expect(Math.abs((await izq('.app-header__inner')) - (await izq('.site-footer .container--wide')))).toBeLessThan(2);
     });
