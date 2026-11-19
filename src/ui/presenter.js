@@ -1,6 +1,7 @@
 import '../styles/presentation.css';
 import { store } from '../core/app-store.js';
 import { advanceStatus } from '../core/orders.js';
+import { TEXTS } from '../bot/texts.js';
 import { parseRoute } from './router.js';
 import {
   CONV, FRASE_PEDIDO, FRASE_AGOTADO, FRASE_RESERVA, DIRECCION, URL_DIAGNOSTICO,
@@ -259,6 +260,7 @@ function crearSesion() {
       else if (accion === 'confirmar') await tocarRapido('Sí, confirmar');
       else if (accion === 'direccion') await enviarTexto(DIRECCION);
       else if (accion === 'yappy') await tocarRapido('Yappy');
+      else if (accion === 'comprobante') await tocarRapido(TEXTS.es.botonComprobante);
     }
     const p = pedidoDelTour(store.get(), ctx);
     if (p) fijarSucursal(p.sucursalId);

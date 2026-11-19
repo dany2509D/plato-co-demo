@@ -7,8 +7,8 @@ const mem = () => ({ read: () => null, write() {} });
 
 function pedidoPorChat(store, bot) {
   bot.reply('c-web', 'Quiero 2 hamburguesas clásicas para retiro');
-  bot.reply('c-web', 'sí');
   bot.reply('c-web', 'Yappy');
+  bot.reply('c-web', 'sí');
   return store.get().pedidos.find((p) => p.conversacionId === 'c-web');
 }
 

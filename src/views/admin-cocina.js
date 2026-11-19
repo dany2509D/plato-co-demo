@@ -1,5 +1,5 @@
 import { store } from '../core/app-store.js';
-import { advanceStatus } from '../core/orders.js';
+import { advanceStatus, etiquetaPago } from '../core/orders.js';
 import {
   COLUMNAS, activeOrders, deliveredOrders, groupByEstado, elapsedMinutes, urgency, formatElapsed, nextLabel,
 } from '../core/kitchen.js';
@@ -36,6 +36,7 @@ function tarjeta(state, p, now) {
       </header>
       <p class="kc-tiempo"><span class="kc-sem">${icono(sem.icono, { tam: 22 })} ${sem.texto}</span> <strong>${formatElapsed(min)}</strong></p>
       <p class="kc-tipo">${icono(p.tipo === 'retiro' ? 'retiro' : 'en-camino', { tam: 24 })}<span>${tipo}</span></p>
+      ${p.pago?.metodo === 'yappy' && p.pago.historial ? `<p class="kc-pago${p.pago.estado === 'pagado' ? '' : ' kc-pago--pend'}">${icono(p.pago.estado === 'pagado' ? 'check' : 'reloj', { tam: 18 })}<span>Pago: ${esc(etiquetaPago(p.pago))}</span></p>` : ''}
       <ul class="kc-lineas">${lineasHtml(state, p)}</ul>
       ${sig ? `<button type="button" class="btn btn--lg btn--block kc-avanzar" data-avanzar="${esc(p.id)}">Avanzar a ${esc(sig)}</button>` : ''}
     </article>`;

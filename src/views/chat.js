@@ -11,6 +11,7 @@ import { fotoEscena } from '../ui/photo.js';
 
 const CONV = 'c-web';
 const HUMANO = 'Pasar a una persona';
+const EJEMPLO = 'Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio';
 
 const getBot = () => getAppBot(store);
 
@@ -51,7 +52,8 @@ export function vistaChat(main) {
         <header class="chat-intro">
           <p class="eyebrow">Demo en vivo · WhatsApp</p>
           <h1 class="chat-frase">Lo que escribe su cliente. <span>Lo que ve su equipo, al instante.</span></h1>
-          <p class="chat-pista">Para quien presenta: escriba “Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio” y siga con las respuestas rápidas; a la derecha aparece, al instante, lo que ve el equipo.</p>
+          <p class="chat-pista">Pida como lo haría por WhatsApp, por ejemplo: “${EJEMPLO}”. En el panel «En vivo» verá, en ese mismo instante, lo que recibe el restaurante.</p>
+          <p class="chat-pista chat-pista--pres">Para quien presenta: escriba la frase de ejemplo y siga con las respuestas rápidas (dirección, Yappy, confirmar y comprobante). Muestre el panel «En vivo» al lado del chat en pantalla ancha, o debajo en el celular.</p>
         </header>
         <div class="chat-cols">
           <div class="chat-col-tel">
@@ -84,7 +86,12 @@ export function vistaChat(main) {
   const pantalla = phone(q('[data-tel]'), {
     onSend: (t) => enviar(t),
     onHandoff: () => enviar(HUMANO),
-    onAttach: (a) => { if (!ocupado && !corriendo) adjuntar(a); },
+    onAttach: (a) => {
+      if (ocupado || corriendo) return;
+      // con un pedido esperando el Yappy, el archivo adjunto es el comprobante
+      if (conv()?.paso === 'comprobante') enviar(`Comprobante adjunto: ${a.nombre}`);
+      else adjuntar(a);
+    },
   });
 
   function estado() {

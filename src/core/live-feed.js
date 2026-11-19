@@ -1,4 +1,4 @@
-import { priceOrder } from './orders.js';
+import { priceOrder, etiquetaPago } from './orders.js';
 import { formatHora } from './chat-view.js';
 
 // Convierte el estado en la línea de tiempo del panel "En vivo" (más nuevo primero).
@@ -8,6 +8,11 @@ const usd = (n) => `US$ ${Number(n).toFixed(2)}`;
 const nombreSuc = (state, id) => state.sucursales.find((s) => s.id === id)?.nombre ?? id;
 const ICONO_ESTADO = { Recibido: 'pedido', 'En cocina': 'cocina', Listo: 'listo', 'En camino': 'en-camino', Entregado: 'entregado' };
 const ms = (iso) => Date.parse(iso) || 0;
+const PASO_YAPPY = {
+  'esperando comprobante': { icono: 'reloj', titulo: 'esperando comprobante de Yappy', detalle: 'El asistente le pidió el comprobante al cliente por el chat.' },
+  'comprobante recibido': { icono: 'chat', titulo: 'comprobante de Yappy recibido', detalle: 'Verificando el pago (simulado). Nadie tiene que revisar capturas a mano.' },
+  pagado: { icono: 'check', titulo: 'pago con Yappy confirmado', detalle: 'La factura simulada le llegó al cliente por el chat.' },
+};
 
 export function construirFeed(state, { limite = 12, humanoEn = {} } = {}) {
   const items = [];
@@ -17,9 +22,21 @@ export function construirFeed(state, { limite = 12, humanoEn = {} } = {}) {
     items.push({
       id: `pedido-${p.id}`, tipo: 'pedido', icono: 'pedido', en: p.creadoEn, hora: formatHora(p.creadoEn),
       titulo: `Pedido ${p.id} creado`,
-      detalle: `Canal WhatsApp · ${nombreSuc(state, p.sucursalId)} · Total ${usd(total)} · Estado: ${p.estado}`,
+      detalle: `Canal WhatsApp · ${nombreSuc(state, p.sucursalId)} · Total ${usd(total)} · Estado: ${p.estado}${p.pago?.metodo ? ` · Pago: ${etiquetaPago(p.pago)}` : ''}`,
       enlace: { href: '#/admin/cocina', texto: 'Ver en cocina' },
     });
+    // Yappy por chat: esperando comprobante → comprobante recibido → pago confirmado (nadie lo revisa a mano)
+    if (p.pago?.metodo === 'yappy') {
+      (p.pago.historial ?? []).forEach((h, i) => {
+        const txt = PASO_YAPPY[h.estado];
+        if (!txt) return;
+        items.push({
+          id: `pago-${p.id}-${i}`, tipo: 'pago', icono: txt.icono, en: h.en, hora: formatHora(h.en),
+          titulo: `Pedido ${p.id}: ${txt.titulo}`, detalle: txt.detalle,
+          enlace: { href: '#/admin/cocina', texto: 'Ver en cocina' },
+        });
+      });
+    }
     (p.historial ?? []).slice(1).forEach((h, i) => items.push({
       id: `estado-${p.id}-${i}`, tipo: 'estado', icono: ICONO_ESTADO[h.estado] ?? 'reloj', en: h.en, hora: formatHora(h.en),
       titulo: `Pedido ${p.id} pasó a ${h.estado}`,

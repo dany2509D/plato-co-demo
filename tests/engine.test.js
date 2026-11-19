@@ -39,27 +39,39 @@ describe('flujo del guion de 2 minutos', () => {
     expect(store.get().pedidos.some((p) => p.conversacionId === 'c1')).toBe(false);
   });
 
-  it('"sí" pide el pago y al elegir Yappy crea el pedido idéntico a lo confirmado', () => {
-    say(PEDIDO);
-    const t = txt(say('sí'));
+  it('pide dirección y pago ANTES de confirmar; al confirmar crea el pedido idéntico al resumen', () => {
+    const t0 = txt(say(PEDIDO));
+    expect(t0).not.toMatch(/confirmar el pedido/i);
+    expect(t0).toMatch(/direcci[oó]n exacta en Obarrio/i);
+    expect(conv().paso).toBe('direccion');
+    const t = txt(say('Calle 50, edificio Global Bank piso 3'));
     expect(t).toMatch(/yappy/i);
     expect(t).toMatch(/tarjeta/i);
     expect(t).toMatch(/efectivo/i);
-    const out = txt(say('Yappy'));
+    expect(t).not.toMatch(/confirmar el pedido/i);
+    expect(conv().paso).toBe('pago');
+    const res = txt(say('Yappy'));
+    expect(res).toMatch(/2 x Hamburguesa cl[aá]sica/);
+    expect(res).toContain('Total: US$ 22.10');
+    expect(res).toContain('Entrega en: Calle 50, edificio Global Bank piso 3, Obarrio.');
+    expect(res).toMatch(/Pago: Yappy/);
+    expect(res).toMatch(/¿Desea confirmar el pedido\?$/);
+    expect(store.get().pedidos.some((x) => x.conversacionId === 'c1')).toBe(false);
+    const out = txt(say('sí'));
     const p = store.get().pedidos.find((x) => x.conversacionId === 'c1');
     expect(p.canal).toBe('whatsapp');
     expect(p.sucursalId).toBe(store.get().sucursales[0].id);
     expect(p.lineas).toEqual(lineasEsperadas());
+    expect(p.direccion).toBe('Calle 50, edificio Global Bank piso 3, Obarrio');
     expect(p.pago.metodo).toBe('yappy');
-    expect(p.pago.estado).toBe('pagado');
+    expect(p.pago.estado).toBe('esperando comprobante');
     expect(out).toContain(p.id);
-    expect(out).toMatch(/simulad/i);
-    expect(conv().paso ?? null).toBeNull();
+    expect(out).toMatch(/comprobante/i);
+    expect(conv().paso).toBe('comprobante');
   });
 
   it('sin zona ni tipo pregunta entrega/retiro y luego dirección', () => {
-    say('Quiero 1 limonada');
-    let t = txt(say('sí'));
+    let t = txt(say('Quiero 1 limonada'));
     expect(t).toMatch(/entrega/i);
     expect(t).toMatch(/retiro/i);
     t = txt(say('entrega'));
@@ -68,6 +80,7 @@ describe('flujo del guion de 2 minutos', () => {
     expect(t).toMatch(/Costa/);
     expect(t).toMatch(/yappy/i);
     say('efectivo');
+    say('sí');
     const p = store.get().pedidos.find((x) => x.conversacionId === 'c1');
     expect(p.sucursalId).toBe(store.get().sucursales[1].id);
     expect(p.pago.estado).toBe('contra entrega');
@@ -75,10 +88,11 @@ describe('flujo del guion de 2 minutos', () => {
 
   it('retiro: no pide dirección', () => {
     say('Quiero 1 limonada');
-    say('sí');
     const t = txt(say('retiro'));
     expect(t).toMatch(/yappy/i);
+    expect(t).not.toMatch(/direcci[oó]n/i);
     say('tarjeta');
+    say('sí');
     const p = store.get().pedidos.find((x) => x.conversacionId === 'c1');
     expect(p.tipo).toBe('retiro');
   });
@@ -94,7 +108,7 @@ describe('flujo del guion de 2 minutos', () => {
 
   it('cancelar reinicia el paso', () => {
     say(PEDIDO);
-    expect(conv().paso).toBe('confirmar');
+    expect(conv().paso).toBe('direccion');
     say('cancelar');
     expect(conv().paso ?? null).toBeNull();
     expect(store.get().pedidos.some((p) => p.conversacionId === 'c1')).toBe(false);
@@ -125,10 +139,11 @@ describe('agotados', () => {
   it('si se agota entre la confirmación y la creación, createOrder lo rechaza y no se crea', () => {
     const suc = store.get().sucursales[0].id;
     say('Quiero 1 hamburguesa clásica para Obarrio');
-    say('sí');
+    say('Calle 50');
+    say('yappy');
     setAvailable(store, prod('Hamburguesa clásica').id, suc, false);
     const antes = store.get().pedidos.length;
-    const t = txt(say('yappy'));
+    const t = txt(say('sí'));
     expect(t).toMatch(/agotad/i);
     expect(store.get().pedidos.length).toBe(antes);
   });
@@ -280,10 +295,11 @@ describe('horario, ubicación, menú del día', () => {
 });
 
 describe('estado del pedido y avisos', () => {
-  const crear = () => {
+  const crear = (metodo = 'tarjeta') => {
     say('Quiero 1 limonada para Obarrio');
+    say('Calle 50, edificio Sol');
+    say(metodo);
     say('sí');
-    say('tarjeta');
     return store.get().pedidos.find((p) => p.conversacionId === 'c1');
   };
 
@@ -312,8 +328,8 @@ describe('estado del pedido y avisos', () => {
     expect(vistos[0].mensaje.texto).toContain('En cocina');
   });
 
-  it('en Entregado incluye la factura simulada con CUFE', () => {
-    const p = crear();
+  it('en Entregado incluye la factura simulada con CUFE (pago en efectivo)', () => {
+    const p = crear('efectivo');
     for (let i = 0; i < 4; i++) advanceStatus(store, p.id);
     const t = conv().mensajes.at(-1).texto;
     const f = store.get().pedidos.find((x) => x.id === p.id).factura;
@@ -358,7 +374,9 @@ describe('texto vacío, humano, idioma', () => {
     expect(t).toMatch(/confirm/i);
     expect(t).not.toMatch(/Desea/i);
     expect(conv().idioma).toBe('en');
-    expect(txt(say('yes'))).toMatch(/pay/i);
+    expect(t).toMatch(/exact address/i);
+    expect(txt(say('Calle 50'))).toMatch(/pay/i);
+    expect(txt(say('card'))).toMatch(/confirm the order/i);
   });
 
   it('saludo y gracias', () => {
@@ -377,7 +395,8 @@ describe('ronda 1: editar el pedido en la confirmación', () => {
   const PEDIDO = 'Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio';
   const lineas = () => conv().slots.lineas;
   const cant = (n) => lineas().filter((l) => l.productoId === prod(n).id).reduce((a, l) => a + l.cantidad, 0);
-  beforeEach(() => { say(PEDIDO); });
+  // se llega al resumen final (dirección y pago ya dados) y ahí se corrige
+  beforeEach(() => { say(PEDIDO); say('Calle 50, edificio Sol'); say('yappy'); });
 
   it.each(['agrega una limonada', 'añade una limonada', 'y una limonada', 'add a lemonade', 'also a lemonade'])('"%s" suma a la línea existente', (t) => {
     const out = txt(say(t));
@@ -455,7 +474,6 @@ describe('ronda 1: editar el pedido en la confirmación', () => {
   it('el pedido creado refleja la edición', () => {
     say('agrega una limonada');
     say('sí');
-    say('yappy');
     const p = store.get().pedidos.find((x) => x.conversacionId === 'c1');
     expect(p.lineas.find((l) => l.productoId === prod('Limonada').id).cantidad).toBe(2);
   });
@@ -463,13 +481,12 @@ describe('ronda 1: editar el pedido en la confirmación', () => {
 
 describe('ronda 1: dirección exacta', () => {
   it('con zona pero sin calle pregunta por la dirección exacta y la guarda', () => {
-    say('Quiero 1 limonada para Obarrio');
-    const out = txt(say('sí'));
+    const out = txt(say('Quiero 1 limonada para Obarrio'));
     expect(out).toMatch(/direcci[oó]n exacta|punto de referencia/i);
-    expect(out).toMatch(/yappy/i);
     const r = txt(say('Calle 50, edificio Sol, apto 4'));
     expect(r).toMatch(/yappy/i);
     say('yappy');
+    say('sí');
     const p = store.get().pedidos.find((x) => x.conversacionId === 'c1');
     expect(p.direccion).toContain('edificio Sol');
     expect(p.direccion).toContain('Obarrio');
@@ -478,17 +495,18 @@ describe('ronda 1: dirección exacta', () => {
 
   it('en el paso de pago acepta "retiro" y cambia el tipo', () => {
     say('Quiero 1 limonada para Obarrio');
-    say('sí');
+    say('Calle 50');
     say('mejor retiro');
     say('tarjeta');
+    say('sí');
     expect(store.get().pedidos.find((x) => x.conversacionId === 'c1').tipo).toBe('retiro');
   });
 
   it('limita el largo de la dirección guardada', () => {
     say('Quiero 1 limonada para Obarrio');
-    say('sí');
     say(`Calle ${'x'.repeat(500)}`);
     say('yappy');
+    say('sí');
     expect(store.get().pedidos.find((x) => x.conversacionId === 'c1').direccion.length).toBeLessThanOrEqual(220);
   });
 });
@@ -506,7 +524,7 @@ describe('ronda 1: basura con signo de pregunta e inglés', () => {
     "I'd like a burger and a lemonade",
   ])('"%s" se entiende en inglés', (x) => {
     const out = txt(say(x));
-    expect(conv().paso).toBe('confirmar');
+    expect(['tipo', 'direccion']).toContain(conv().paso);
     expect(out).toMatch(/total/i);
     expect(out).not.toMatch(/Desea|Su pedido/);
   });
@@ -532,6 +550,8 @@ describe('ronda 1: basura con signo de pregunta e inglés', () => {
 describe('ronda 2: conector "y" y dirección', () => {
   it('"y una pepsi" no cambia el pedido en la confirmación', () => {
     say('Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio');
+    say('Calle 50');
+    say('yappy');
     const antes = JSON.stringify(conv().slots.lineas);
     const out = txt(say('y una pepsi'));
     expect(JSON.stringify(conv().slots.lineas)).toBe(antes);
@@ -559,9 +579,9 @@ describe('ronda 2: conector "y" y dirección', () => {
 
   it('la dirección final guardada no pasa de 200 caracteres', () => {
     say('Quiero 1 limonada para Obarrio');
-    say('sí');
     say(`Calle ${'x'.repeat(250)}`);
     say('yappy');
+    say('sí');
     const d = store.get().pedidos.find((p) => p.conversacionId === 'c1').direccion;
     expect(d.length).toBeLessThanOrEqual(200);
     expect(d).toContain('Obarrio');

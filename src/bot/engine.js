@@ -1,6 +1,6 @@
 import { normalize } from '../core/text.js';
 import { alternativesFor, isAvailable } from '../core/menu.js';
-import { assignBranch, createOrder, payOrder, priceOrder } from '../core/orders.js';
+import { assignBranch, createOrder, payOrder, priceOrder, issueInvoice, PAGO_YAPPY, esperarComprobanteYappy, registrarComprobanteYappy, confirmarPagoYappy } from '../core/orders.js';
 import { createReservation } from '../core/reservations.js';
 import { detectLang, parseOrder } from './parser.js';
 import { horaPanama, parseFecha, parseHora, sinHora } from './datetime.js';
@@ -50,8 +50,12 @@ const MAX_DIR = 200;
 const RETIRO = /\b(retiro|retirar|recoger|recojo|pickup|pick up|sucursal)\b/;
 const ENTREGA = /\b(entrega|delivery|deliver|domicilio)\b/;
 const MAX_PERSONAS = 8;
+const PASOS_PEDIDO = ['confirmar', 'tipo', 'direccion', 'pago'];
 
 export function createBot(store, opts = {}) {
+  // Verificación simulada del comprobante de Yappy: tras unos segundos el pago queda confirmado.
+  const programar = typeof opts.programar === 'function' ? opts.programar : (fn, ms) => setTimeout(fn, ms);
+  const verificacionMs = opts.verificacionMs ?? 3000;
   const ahora = () => (typeof opts.ahora === 'function' ? opts.ahora() : opts.ahora instanceof Date ? opts.ahora : new Date());
   const state = () => store.get();
   const getConv = (id) => state().conversaciones.find((c) => c.id === id);
@@ -140,18 +144,78 @@ export function createBot(store, opts = {}) {
     return { ...z, zona: nombre };
   }
 
+  // Resumen con todo lo que ya se sabe: platos y total; dirección exacta y forma de pago cuando ya se dieron.
   function resumen(T, sl) {
     const tot = priceOrder(state(), sl.lineas);
     const lineas = sl.lineas.map((l) => `- ${T.linea(l.cantidad, nombreProd(l.productoId), l.modificadores)}`);
     const partes = [T.resumenTitulo, ...lineas, T.totales(tot.subtotal, tot.itbms, tot.total)];
     const suc = state().sucursales.find((x) => x.id === sl.sucursalId);
     if (sl.tipo === 'retiro') partes.push(T.retiraEn(suc.nombre, suc.direccion));
-    if ((sl.tipo === 'entrega' && sl.direccion) || sl.tipo === 'retiro') {
-      partes.push(T.sucursalEta(suc.nombre, sl.eta ?? suc.etaBaseMin));
-      const cerrada = avisoCerrada(T, sl.sucursalId, 'cerradaResumen');
-      if (cerrada) partes.push(cerrada);
-    }
+    if (sl.tipo === 'entrega' && sl.exacta && sl.direccion) partes.push(T.entregaEn(sl.direccion));
+    const conSucursal = (sl.tipo === 'entrega' && sl.direccion) || sl.tipo === 'retiro';
+    if (conSucursal) partes.push(T.sucursalEta(suc.nombre, sl.eta ?? suc.etaBaseMin));
+    if (sl.metodo) partes.push(T.pagoLinea(sl.metodo));
+    const cerrada = conSucursal ? avisoCerrada(T, sl.sucursalId, 'cerradaResumen') : '';
+    if (cerrada) partes.push(cerrada);
     return partes.join('\n');
+  }
+
+  // Siguiente dato que falta del pedido, en este orden: entrega o retiro → dirección exacta → forma de pago.
+  // Con todo completo muestra el resumen final (platos, total, dirección, pago) y RECIÉN AHÍ pide confirmar.
+  // `conResumen`: antepone el resumen parcial (al iniciar o tras una corrección).
+  function avanzar(id, sl, previo = [], conResumen = false) {
+    const T = lang(id);
+    const out = [...previo];
+    const pedir = (paso, texto, botones) => {
+      setStep(id, paso, sl);
+      return [m([...out, ...(conResumen ? [resumen(T, sl)] : []), texto].join('\n'), botones)];
+    };
+    if (!sl.tipo) return pedir('tipo', T.pedirTipo, T.botonesTipo);
+    if (sl.tipo === 'entrega' && !(sl.exacta && sl.direccion)) {
+      return pedir('direccion', sl.zona ? T.pedirDetalle(sl.zona) : T.pedirDireccion);
+    }
+    if (!sl.metodo) return pedir('pago', T.pedirPago, T.botonesPago);
+    setStep(id, 'confirmar', sl);
+    return [m([...out, resumen(T, sl), T.confirmarPreg].join('\n'), [T.si, T.cancelar])];
+  }
+
+  const metodoDe = (n) => (/yappy/.test(n) ? 'yappy' : /tarjeta|\bcard\b|credit|debit|debito/.test(n) ? 'tarjeta' : /efectivo|\bcash\b/.test(n) ? 'efectivo' : null);
+  const CLAUSULA_PAGO = /^(?:(?:y|and)\s+)?(?:(?:el\s+)?pag\w*|pay\w*|con|en|with|by|in|via|por)?\b.*\b(?:yappy|tarjeta|efectivo|cash|card|credito|debito|credit|debit)\b/;
+  // «Calle 50, edificio Global Bank piso 3. Pago con Yappy»: separa la forma de pago de la dirección
+  // para que ninguna de las dos se pierda. Devuelve { metodo, resto } (resto = el texto sin la parte del pago).
+  function extraerPago(texto) {
+    const metodo = metodoDe(normalize(texto));
+    if (!metodo) return { metodo: null, resto: texto };
+    const partes = texto.split(/([.;,\n]+)/);
+    let resto = '';
+    for (let i = 0; i < partes.length; i += 2) {
+      let cl = partes[i];
+      const n = normalize(cl);
+      if (metodoDe(n)) {
+        // «piso 3 y pago con Yappy»: se corta desde la conjunción que introduce el pago
+        const corte = /\s+(?:y|and)\s+(?:pag|pay|con |with |en efectivo)/i.exec(cl);
+        if (!corte && CLAUSULA_PAGO.test(n)) continue;
+        if (corte) cl = cl.slice(0, corte.index);
+        else continue;
+      }
+      resto += cl + (partes[i + 1] ?? '');
+    }
+    return { metodo, resto: resto.replace(/[\s.;,]+$/, '').trim() };
+  }
+
+  // ¿El texto corrige el pedido (agregar, quitar, cantidad, «sin …»), aunque se esté pidiendo otro dato?
+  function esEdicion(texto, n, sl) {
+    if (!sl?.lineas?.length) return false;
+    if (QUITAR.test(n)) return true;
+    // nombra platos («otra hamburguesa clásica a domicilio», la frase del pedido repetida): es el pedido, no la dirección
+    const r = parseOrder(texto, state(), sl.sucursalId);
+    if (r.lineas.length || r.agotados.length) return true;
+    // «mejor retiro», «mejor con tarjeta», «Calle 50, Obarrio» responden al paso, no corrigen el pedido
+    if (metodoDe(n) || RETIRO.test(n) || ENTREGA.test(n) || zonaDe(texto)) return false;
+    // «agrega un sándwich» / «agrega un helado»: aunque el plato no se reconozca, es una corrección del pedido
+    if (AGREGAR.test(n)) return true;
+    if (CANT.test(n) || CANT_PROD.test(n) || MAS_N.test(n) || OTRA.test(n)) return true;
+    return MOD.test(n) && !AGREGAR.test(n);
   }
 
   function textoAgotados(T, ids, sucId) {
@@ -183,9 +247,7 @@ export function createBot(store, opts = {}) {
     out.push(...avisos(T, texto, res));
     out.push(resumen(T, sl));
     if (res.agotados.length) out.push(T.agotadoSigue);
-    out.push(T.confirmarPreg);
-    setStep(id, 'confirmar', sl);
-    return [m(out.join('\n'), [T.si, T.cancelar])];
+    return avanzar(id, sl, out);
   }
 
   const clave = (l) => `${l.productoId}|${[...l.modificadores].sort().join('|')}`;
@@ -209,14 +271,16 @@ export function createBot(store, opts = {}) {
 
   function mostrarEdicion(id, T, sl, previo = []) {
     if (!sl.lineas.length) { reset(id); return [m(T.pedidoVacio)]; }
-    setStep(id, 'confirmar', sl);
-    return [m([...previo, resumen(T, sl), T.confirmarPreg].join('\n'), [T.si, T.cancelar])];
+    return avanzar(id, sl, previo, true);
   }
 
   function editarPedido(id, texto, n) {
     const T = lang(id);
     const sl = JSON.parse(JSON.stringify(getConv(id).slots));
-    const hint = (extra) => [m([extra, T.hintEdicion].filter(Boolean).join('\n'), [T.si, T.cancelar])];
+    const hint = (extra) => {
+      const rep = repetirPaso(id);
+      return [m([extra, T.hintEdicion, getConv(id).paso === 'confirmar' ? '' : rep?.texto].filter(Boolean).join('\n'), rep?.botones ?? [T.si, T.cancelar])];
+    };
     const objetivo = lineasMencionadas(texto, sl.lineas);
     const mmas = MAS_N.exec(n);
     const qmas = OTRA.test(n) ? 1 : mmas ? (/^\d+$/.test(mmas[1]) ? Number(mmas[1]) : own(NUMS, mmas[1])) : undefined;
@@ -266,7 +330,7 @@ export function createBot(store, opts = {}) {
     // la misma frase otra vez, sin señal de sumar, no duplica lo que ya está en el pedido
     if (res.lineas.length && !res.agotados.length && !res.ambiguos.length && !res.invalidas.length && !CUE_SUMAR.test(n) && mismasLineas(res.lineas, sl.lineas)) {
       const lista = res.lineas.map((l) => T.linea(l.cantidad, nombreProd(l.productoId), l.modificadores)).join(', ');
-      return [m(`${T.yaLoTengo(lista)}\n${resumen(T, sl)}\n${T.confirmarPreg}`, [T.si, T.cancelar])];
+      return avanzar(id, sl, [T.yaLoTengo(lista)], true);
     }
     const previo = [];
     if (res.agotados.length) previo.push(textoAgotados(T, res.agotados, sl.sucursalId));
@@ -289,41 +353,34 @@ export function createBot(store, opts = {}) {
     return m2 ? resto.slice(m2[0].length) : resto;
   }
 
+  const faltaDato = (sl) => !sl.tipo || (sl.tipo === 'entrega' && !(sl.exacta && sl.direccion)) || !sl.metodo;
+
   function pasoConfirmar(id, texto, n) {
     const T = lang(id);
     const sl = getConv(id).slots;
     if (NO.test(n)) { reset(id); return [m(T.cancelado, T.botonesInicio)]; }
-    if (SI.test(n)) return despuesDeConfirmar(id, sl, true);
+    // Un «sí» con datos pendientes (p. ej. una propuesta del modo IA) sigue pidiendo lo que falta.
+    if (SI.test(n)) return faltaDato(sl) ? avanzar(id, sl) : crearPedido(id, sl);
     if (NO_SE.test(n)) return [m(T.dudaConfirmar, [T.si, T.cancelar])];
+    // «Mejor con tarjeta» / «pago en efectivo»: cambia la forma de pago y vuelve a mostrar el resumen
+    const metodo = metodoDe(n);
+    if (metodo && !esEdicion(texto, n, sl)) return avanzar(id, { ...sl, metodo });
+    if (RETIRO.test(n) && RETIRO_VERBO.test(n)) return aplicarRetiro(id, sl, n);
     // «Sí, pero sin cebolla» / «ok, y agrégale una limonada»: se aplica la corrección y se vuelve a confirmar
     const resto = sinAfirmacion(texto);
     if (resto !== texto && normalize(resto)) return editarPedido(id, resto, normalize(resto));
     return editarPedido(id, texto, n);
   }
 
-  function pedirPago(id, sl, previo = []) {
-    const T = lang(id);
-    setStep(id, 'pago', sl);
-    return [m([...previo, T.pedirPago].join('\n'), T.botonesPago)];
-  }
-
-  // `resumenMostrado`: el resumen que acaba de confirmar el cliente ya decía dónde retira.
-  function despuesDeConfirmar(id, sl, resumenMostrado = false) {
-    const T = lang(id);
-    if (!sl.tipo) { setStep(id, 'tipo', sl); return [m(T.pedirTipo, T.botonesTipo)]; }
-    if (sl.tipo === 'entrega' && !sl.direccion) { setStep(id, 'direccion', sl); return [m(T.pedirDireccion)]; }
-    const s = state().sucursales.find((x) => x.id === sl.sucursalId);
-    const previo = sl.tipo === 'retiro' && !resumenMostrado ? [T.retiraEn(s.nombre, s.direccion), T.sucursalEta(s.nombre, s.etaBaseMin)] : [];
-    if (sl.tipo === 'entrega' && sl.zona && !sl.exacta) previo.push(T.pedirDetalle(sl.zona));
-    return pedirPago(id, sl, previo);
-  }
-
   function pasoTipo(id, texto, n) {
     const T = lang(id);
     const sl = getConv(id).slots;
-    if (RETIRO.test(n)) return aplicarRetiro(id, sl, n);
-    if (zonaDe(texto)) return pasoDireccion(id, texto, n);
-    if (ENTREGA.test(n)) return despuesDeConfirmar(id, { ...sl, tipo: 'entrega' });
+    const { metodo, resto } = extraerPago(texto);
+    const conPago = metodo ? { ...sl, metodo } : sl;
+    const nr = normalize(resto);
+    if (RETIRO.test(nr)) return aplicarRetiro(id, conPago, nr);
+    if (zonaDe(resto)) return pasoDireccion(id, texto);
+    if (ENTREGA.test(nr)) return avanzar(id, { ...conPago, tipo: 'entrega' });
     return [m(T.pedirTipo, T.botonesTipo)];
   }
 
@@ -333,6 +390,7 @@ export function createBot(store, opts = {}) {
     const nuevo = sucursalNombrada(n);
     const base = { ...sl, tipo: 'retiro', eta: null, direccion: null, zona: null, exacta: false };
     delete base.fallosDir;
+    const s = () => state().sucursales.find((x) => x.id === base.sucursalId);
     if (nuevo && nuevo !== sl.sucursalId) {
       base.sucursalId = nuevo;
       const faltan = sl.lineas.filter((l) => !isAvailable(state(), l.productoId, nuevo));
@@ -340,64 +398,88 @@ export function createBot(store, opts = {}) {
         base.lineas = sl.lineas.filter((l) => isAvailable(state(), l.productoId, nuevo));
         const out = textoAgotados(T, faltan.map((l) => l.productoId), nuevo);
         if (!base.lineas.length) { reset(id); return [m(out)]; }
-        setStep(id, 'confirmar', base);
-        return [m(`${out}\n${resumen(T, base)}\n${T.confirmarPreg}`, [T.si, T.cancelar])];
+        return avanzar(id, base, [out], true);
       }
     }
-    return despuesDeConfirmar(id, base);
+    return avanzar(id, base, base.metodo ? [] : [T.retiraEn(s().nombre, s().direccion), T.sucursalEta(s().nombre, s().etaBaseMin)]);
   }
+
+  // ¿Lo que queda al quitar la zona es solo la zona? («Obarrio» a secas no es una dirección de entrega).
+  const soloZona = (texto, zona) => !normalize(texto).replace(normalize(zona), '').replace(/\b(en|para|a|in|to|zona|area)\b/g, '').replace(/[^a-z0-9]/g, '');
 
   function pasoDireccion(id, texto) {
     const T = lang(id);
-    const sl = { ...getConv(id).slots };
-    const n = normalize(texto);
-    const z = zonaDe(texto);
+    const { metodo, resto } = extraerPago(texto);
+    const sl = { ...getConv(id).slots, ...(metodo ? { metodo } : {}) };
+    const n = normalize(resto);
+    const z = zonaDe(resto);
     // salida a retiro: «retiro», «Retiro en sucursal», «pickup», «lo recojo yo», «retirar en Norte»…
     if (RETIRO.test(n) && (RETIRO_VERBO.test(n) || !z)) return aplicarRetiro(id, sl, n);
+    // solo la forma de pago («pago con Yappy»): se anota y se sigue pidiendo la dirección
+    if (metodo && !n) return avanzar(id, sl);
     // «Entrega a domicilio» / «Delivery»: se mantiene la entrega y se pide de nuevo la dirección
     if (!z && ENTREGA.test(n) && !/\d/.test(n) && n.split(' ').length <= 4) {
       setStep(id, 'direccion', { ...sl, fallosDir: 0 });
       return [m(T.pedirDireccion)];
+    }
+    // La zona ya se sabe («…para Obarrio»): la calle y el edificio completan la dirección exacta.
+    if (!z && sl.zona && sl.tipo === 'entrega' && parecedir(resto, n)) {
+      delete sl.fallosDir;
+      const cola = `, ${sl.zona}`;
+      const nuevo = { ...sl, direccion: `${resto.trim().slice(0, MAX_DIR - cola.length)}${cola}`, exacta: true };
+      return avanzar(id, nuevo, nuevo.metodo ? [] : [T.atiende(sucNombre(sl.sucursalId), sl.eta ?? 30)]);
     }
     if (!z) {
       const fallos = (sl.fallosDir ?? 0) + 1;
       setStep(id, 'direccion', { ...sl, fallosDir: fallos });
       const zonas = state().sucursales.flatMap((s) => s.zonasEntrega).join(', ');
       if (fallos >= 2) return [m(T.ofrecerOpciones(zonas), T.botonesTipo)];
-      if (!parecedir(texto, n)) return [m(T.direccionNoValida, T.botonesTipo)];
+      if (!parecedir(resto, n)) return [m(T.direccionNoValida, T.botonesTipo)];
       return [m(T.fueraZona(zonas), T.botonesTipo)];
     }
     delete sl.fallosDir;
-    Object.assign(sl, { tipo: 'entrega', direccion: texto.trim().slice(0, MAX_DIR), zona: z.zona, exacta: true, eta: z.etaMin });
+    const exacta = !soloZona(resto, z.zona);
+    Object.assign(sl, { tipo: 'entrega', direccion: exacta ? resto.trim().slice(0, MAX_DIR) : z.zona, zona: z.zona, exacta, eta: z.etaMin });
     if (z.sucursalId !== sl.sucursalId) {
       sl.sucursalId = z.sucursalId;
       const faltan = sl.lineas.filter((l) => !isAvailable(state(), l.productoId, z.sucursalId));
       if (faltan.length) {
         sl.lineas = sl.lineas.filter((l) => isAvailable(state(), l.productoId, z.sucursalId));
-        const out = [`${T.atiende(sucNombre(z.sucursalId), z.etaMin)}\n${textoAgotados(T, faltan.map((l) => l.productoId), z.sucursalId)}`];
-        if (!sl.lineas.length) { reset(id); return [m(out[0])]; }
-        setStep(id, 'confirmar', sl);
-        return [m(`${out[0]}\n${resumen(T, sl)}\n${T.confirmarPreg}`, [T.si, T.cancelar])];
+        const out = `${T.atiende(sucNombre(z.sucursalId), z.etaMin)}\n${textoAgotados(T, faltan.map((l) => l.productoId), z.sucursalId)}`;
+        if (!sl.lineas.length) { reset(id); return [m(out)]; }
+        return avanzar(id, sl, [out], true);
       }
     }
-    return pedirPago(id, sl, [T.atiende(sucNombre(sl.sucursalId), z.etaMin)]);
+    // con la forma de pago ya dada, el resumen final ya dice qué sucursal lo prepara
+    return avanzar(id, sl, sl.metodo && sl.exacta ? [] : [T.atiende(sucNombre(sl.sucursalId), z.etaMin)]);
   }
 
   function pasoPago(id, texto, n) {
     const T = lang(id);
     const sl = getConv(id).slots;
-    const metodo = /yappy/.test(n) ? 'yappy' : /tarjeta|card|credit|debit|debito/.test(n) ? 'tarjeta' : /efectivo|cash/.test(n) ? 'efectivo' : null;
+    const metodo = metodoDe(n);
     if (!metodo) {
       if (RETIRO.test(n)) return aplicarRetiro(id, sl, n);
-      if (ENTREGA.test(n) && sl.tipo !== 'entrega') return despuesDeConfirmar(id, { ...sl, tipo: 'entrega' });
+      if (ENTREGA.test(n) && sl.tipo !== 'entrega') return avanzar(id, { ...sl, tipo: 'entrega', exacta: false });
+      // una dirección escrita a esta altura corrige la de entrega
       if (sl.tipo === 'entrega' && n.length > 2 && parecedir(texto, n)) {
         if (zonaDe(texto)) return pasoDireccion(id, texto);
         const cola = sl.zona ? `, ${sl.zona}` : '';
         const dir = `${texto.trim().slice(0, MAX_DIR - cola.length)}${cola}`;
-        return pedirPago(id, { ...sl, direccion: dir, exacta: true }, [T.direccionAnotada]);
+        return avanzar(id, { ...sl, direccion: dir, exacta: true }, [T.direccionAnotada]);
       }
       return [m(T.pagoInvalido, T.botonesPago)];
     }
+    // «Yappy, y la dirección es Calle 50, Obarrio»: si además trae una dirección, también se anota
+    const { resto } = extraerPago(texto);
+    if (sl.tipo === 'entrega' && normalize(resto) && zonaDe(resto)) return pasoDireccion(id, texto);
+    return avanzar(id, { ...sl, metodo });
+  }
+
+  // El cliente ya confirmó el resumen completo: se crea el pedido y se cobra (simulado).
+  function crearPedido(id, sl) {
+    const T = lang(id);
+    const metodo = sl.metodo;
     let r;
     try {
       r = createOrder(store, { lineas: sl.lineas, tipo: sl.tipo, sucursalId: sl.sucursalId, direccion: sl.direccion, canal: 'whatsapp', conversacionId: id });
@@ -408,22 +490,80 @@ export function createBot(store, opts = {}) {
         const rest = sl.lineas.filter((l) => !ids.includes(l.productoId));
         const out = textoAgotados(T, ids, sl.sucursalId);
         if (!rest.length) { reset(id); return [m(out)]; }
-        const nuevo = { ...sl, lineas: rest };
-        setStep(id, 'confirmar', nuevo);
-        return [m(`${out}\n${resumen(T, nuevo)}\n${T.confirmarPreg}`, [T.si, T.cancelar])];
+        return avanzar(id, { ...sl, lineas: rest }, [out]);
       }
-      if (r.razon === 'sin_zona') { setStep(id, 'direccion', sl); return [m(T.pedirDireccion)]; }
+      if (r.razon === 'sin_zona') { setStep(id, 'direccion', { ...sl, exacta: false }); return [m(T.pedirDireccion)]; }
       if (r.razon === 'vacio') { reset(id); return [m(T.pedidoVacio)]; }
       return falla(id);
     }
     const p = r.pedido;
-    try { payOrder(store, p.id, metodo); } catch { return falla(id); }
-    reset(id);
     const total = priceOrder(state(), p.lineas).total;
-    const pago = { yappy: T.pagoYappy, tarjeta: T.pagoTarjeta, efectivo: T.pagoEfectivo }[metodo];
     const cerrada = avisoCerrada(T, p.sucursalId, 'cerradaListo');
     const eta = p.etaMin ?? (p.tipo === 'retiro' ? state().sucursales.find((x) => x.id === p.sucursalId)?.etaBaseMin : undefined);
-    return [m(`${T.pedidoListo(p.id, total, pago, eta)}${cerrada ? `\n${cerrada}` : ''}`, undefined, [{ type: 'pedido:creado', payload: { pedidoId: p.id } }])];
+    const accion = [{ type: 'pedido:creado', payload: { pedidoId: p.id } }];
+    const listo = (pago) => `${T.pedidoListo(p.id, total, pago, eta)}${cerrada ? `\n${cerrada}` : ''}`;
+    try {
+      if (metodo === 'yappy') {
+        esperarComprobanteYappy(store, p.id);
+        setStep(id, 'comprobante', { pedidoId: p.id });
+        return [m(listo(T.pagoYappyEspera), [T.botonComprobante], accion)];
+      }
+      payOrder(store, p.id, metodo);
+    } catch { return falla(id); }
+    reset(id);
+    if (metodo === 'tarjeta') {
+      const f = textoFactura(id, p.id);
+      return [m(`${listo(T.pagoTarjeta)}${f ? `\n\n${f}` : ''}`, undefined, accion)];
+    }
+    return [m(listo(T.pagoEfectivo), undefined, accion)];
+  }
+
+  // ---------- factura simulada ----------
+  // Emite (si hace falta) la factura del pedido y devuelve su texto para el chat, una sola vez por pedido.
+  function textoFactura(convId, pedidoId) {
+    issueInvoice(store, pedidoId);
+    const p = state().pedidos.find((x) => x.id === pedidoId);
+    if (!p?.factura || p.factura.enChat) return '';
+    store.update((s) => { s.pedidos.find((x) => x.id === pedidoId).factura.enChat = true; });
+    const tot = p.total !== undefined ? p : { ...p, ...priceOrder(state(), p.lineas) };
+    return lang(convId).factura(p.factura, tot);
+  }
+
+  // ---------- comprobante de Yappy (simulado) ----------
+  const COMPROBANTE = /comprobante|captura|adjunt|screenshot|receipt|proof|ya (le )?(pague|pagamos|hice|envie|mande|transferi)|listo,? (ya )?pague|i (have )?(paid|sent)|done|sent it|ya esta|^(listo|enviado|pagado|paid|sent)\W*$/;
+
+  function recibirComprobante(id) {
+    const T = lang(id);
+    const { pedidoId } = getConv(id).slots;
+    const p = state().pedidos.find((x) => x.id === pedidoId);
+    reset(id);
+    if (!p) return falla(id);
+    if (p.pago?.estado !== PAGO_YAPPY.espera) return [m(T.estadoPedido(p.id, p.estado))];
+    try { registrarComprobanteYappy(store, pedidoId); } catch { return falla(id); }
+    // Verificación simulada: unos segundos después el pago queda confirmado y sale la factura por el chat.
+    programar(() => {
+      try {
+        const q = state().pedidos.find((x) => x.id === pedidoId);
+        if (!q || q.pago?.estado !== PAGO_YAPPY.recibido || !getConv(id)) return;
+        confirmarPagoYappy(store, pedidoId);
+        const f = textoFactura(id, pedidoId);
+        const mensaje = append(id, m(`${lang(id).pagoConfirmado(pedidoId)}${f ? `\n\n${f}` : ''}`));
+        store.emit('chat:mensaje', { convId: id, mensaje });
+      } catch { /* una verificación fallida no debe romper el chat */ }
+    }, verificacionMs);
+    return [m(T.comprobanteRecibido)];
+  }
+
+  function pasoComprobante(id, texto, n) {
+    const T = lang(id);
+    if (COMPROBANTE.test(n)) return recibirComprobante(id);
+    const s = state();
+    const otra = consulta(id, n) ?? horarioUbicacion(T, s, n);
+    if (otra) return [m([...otra.map((x) => x.texto), T.esperandoComprobante].join('\n'), [T.botonComprobante])];
+    // otra intención clara (un pedido nuevo, una reserva): se atiende; el pedido sigue esperando su comprobante
+    const res = parseOrder(texto, s, sucDefault());
+    if (RESERVA.test(n) || ORDEN.test(n) || res.lineas.length || MENU.test(n)) { reset(id); return info(id, n, texto); }
+    return [m(T.esperandoComprobante, [T.botonComprobante])];
   }
 
   function falla(id) {
@@ -509,7 +649,7 @@ export function createBot(store, opts = {}) {
       const p = s.pedidos.find((x) => x.conversacionId === id);
       if (!p) {
         const c = getConv(id);
-        if (['confirmar', 'tipo', 'direccion', 'pago'].includes(c.paso)) {
+        if (PASOS_PEDIDO.includes(c.paso)) {
           const suc = s.sucursales.find((x) => x.id === c.slots.sucursalId);
           return [m(T.pedidoPendiente(c.slots.eta ?? suc?.etaBaseMin ?? 30))];
         }
@@ -561,8 +701,12 @@ export function createBot(store, opts = {}) {
     switch (c.paso) {
       case 'confirmar': return m(`${resumen(T, c.slots)}\n${T.confirmarPreg}`, [T.si, T.cancelar]);
       case 'tipo': return m(T.pedirTipo, T.botonesTipo);
-      case 'direccion': return m(T.pedirDireccion);
+      case 'direccion':
+        // tras una dirección fallida se ofrecen las dos salidas (otra dirección o retiro), con botones
+        if (c.slots?.fallosDir) return m(T.ofrecerOpciones(state().sucursales.flatMap((s) => s.zonasEntrega).join(', ')), T.botonesTipo);
+        return m(c.slots?.zona ? T.pedirDetalle(c.slots.zona) : T.pedirDireccion);
       case 'pago': return m(T.pedirPago, T.botonesPago);
+      case 'comprobante': return m(T.esperandoComprobante, [T.botonComprobante]);
       case 'fecha': return m(T.pedirFecha);
       case 'hora': return m(T.pedirHora);
       case 'personas': return m(T.pedirPersonas);
@@ -651,10 +795,20 @@ export function createBot(store, opts = {}) {
     if (HUMANO.test(n)) { handoff(id); return [m(T.humano)]; }
     if (CANCELAR.test(n)) { reset(id); return [m(T.cancelado, T.botonesInicio)]; }
     const paso = getConv(id).paso;
-    if (['confirmar', 'tipo', 'direccion', 'pago'].includes(paso)) {
+    if (PASOS_PEDIDO.includes(paso)) {
       const q = interrumpe(id, texto, n, paso);
       if (q) return q;
+      // una corrección del pedido («agrega una coca», «quita la limonada») se aplica en cualquier paso
+      if (paso !== 'confirmar') {
+        const resto = sinAfirmacion(texto); // «sí, pero cámbialo a 3 hamburguesas»
+        const nr = normalize(resto);
+        if (nr && esEdicion(resto, nr, getConv(id).slots)) return editarPedido(id, resto, nr);
+      }
+      // un «sí» antes de tiempo: todavía faltan datos; se repite lo pendiente sin contarlo como error
+      if (paso !== 'confirmar' && SI.test(n)) { const rep = repetirPaso(id); return [m(`${T.faltanDatos}
+${rep.texto}`, rep.botones)]; }
     }
+    if (paso === 'comprobante') return pasoComprobante(id, texto, n);
     if (paso === 'confirmar') return pasoConfirmar(id, texto, n);
     if (paso === 'tipo') return pasoTipo(id, texto, n);
     if (paso === 'direccion') return pasoDireccion(id, texto, n);
@@ -669,8 +823,11 @@ export function createBot(store, opts = {}) {
       if (!conversacionId || !getConv(conversacionId)) return;
       const T = lang(conversacionId);
       let texto = T.avisoEstado(pedidoId, estado);
-      const factura = state().pedidos.find((p) => p.id === pedidoId)?.factura;
-      if (estado === 'Entregado' && factura) texto += `\n${T.avisoFactura(factura)}`;
+      // Al entregar sale la factura simulada, si no salió ya al confirmarse el pago.
+      if (estado === 'Entregado') {
+        const f = textoFactura(conversacionId, pedidoId);
+        if (f) texto += `\n\n${f}`;
+      }
       const mensaje = append(conversacionId, m(texto));
       store.emit('chat:mensaje', { convId: conversacionId, mensaje });
     } catch { /* un aviso fallido no debe romper el cambio de estado */ }

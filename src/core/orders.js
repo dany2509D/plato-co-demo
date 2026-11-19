@@ -151,6 +151,50 @@ export function payOrder(store, pedidoId, metodo) {
   return buscar(store, pedidoId);
 }
 
+// ---------- Yappy simulado por el chat ----------
+// El dolor que vende la demo es revisar comprobantes de Yappy a mano. Por eso el pago por chat pasa por:
+// 'esperando comprobante' → 'comprobante recibido' → 'pagado'. Cada paso queda en pago.historial (lo lee el panel
+// «En vivo») y emite 'pedido:pago'. No se conecta a Yappy: la verificación también es simulada.
+export const PAGO_YAPPY = { espera: 'esperando comprobante', recibido: 'comprobante recibido', pagado: 'pagado' };
+
+function marcarPago(store, pedidoId, metodo, estado) {
+  buscar(store, pedidoId);
+  const en = new Date().toISOString();
+  store.update((s) => {
+    const p = s.pedidos.find((x) => x.id === pedidoId);
+    const historial = [...(p.pago?.historial ?? []), { estado, en }];
+    p.pago = { metodo, estado, historial };
+  });
+  const p = buscar(store, pedidoId);
+  const evento = { pedidoId, metodo, estado };
+  if (p.conversacionId) evento.conversacionId = p.conversacionId;
+  store.emit('pedido:pago', evento);
+  return p;
+}
+
+const METODO_NOMBRE = { yappy: 'Yappy', tarjeta: 'Tarjeta', efectivo: 'Efectivo' };
+const ESTADO_PAGO = { pendiente: 'Pendiente', 'esperando comprobante': 'Esperando comprobante', 'comprobante recibido': 'Comprobante recibido', pagado: 'Pago confirmado', 'contra entrega': 'Contra entrega' };
+// «Yappy · Esperando comprobante»: etiqueta del pago para el panel y la cocina.
+export function etiquetaPago(pago) {
+  const estado = ESTADO_PAGO[pago?.estado] ?? pago?.estado ?? 'Pendiente';
+  return pago?.metodo ? `${METODO_NOMBRE[pago.metodo] ?? pago.metodo} · ${estado}` : estado;
+}
+
+export const esperarComprobanteYappy =(store, pedidoId) => marcarPago(store, pedidoId, 'yappy', PAGO_YAPPY.espera);
+
+// Solo avanza si el pedido está esperando el comprobante (un segundo envío no repite el paso).
+export function registrarComprobanteYappy(store, pedidoId) {
+  const p = buscar(store, pedidoId);
+  if (p.pago?.metodo !== 'yappy' || p.pago.estado !== PAGO_YAPPY.espera) return p;
+  return marcarPago(store, pedidoId, 'yappy', PAGO_YAPPY.recibido);
+}
+
+export function confirmarPagoYappy(store, pedidoId) {
+  const p = buscar(store, pedidoId);
+  if (p.pago?.metodo !== 'yappy' || p.pago.estado !== PAGO_YAPPY.recibido) return p;
+  return marcarPago(store, pedidoId, 'yappy', PAGO_YAPPY.pagado);
+}
+
 // Minutos entre la creación y el momento en que quedó 'Listo'; null si aún no.
 export function prepMinutes(pedido) {
   const ini = pedido.historial?.[0]?.en ?? pedido.creadoEn;

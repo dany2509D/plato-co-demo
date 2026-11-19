@@ -75,22 +75,23 @@ describe('IMPORTANT 2: horarios en inglés', () => {
   });
   it('dentro de pago y confirmación se responde y se repite la pregunta pendiente', () => {
     say('I want a lemonade for Obarrio');
-    let out = txt(say('What time do you close?'));
-    expect(out).toMatch(/Our hours/);
-    expect(out).toMatch(/Do you want to confirm/);
-    expect(conv().paso).toBe('confirmar');
-    say('yes');
-    out = txt(say('when do you open?'));
+    say('Calle 50');
+    let out = txt(say('when do you open?'));
     expect(out).toMatch(/Our hours/);
     expect(out).toMatch(/How would you like to pay/);
     expect(conv().paso).toBe('pago');
+    say('card');
+    out = txt(say('What time do you close?'));
+    expect(out).toMatch(/Our hours/);
+    expect(out).toMatch(/Do you want to confirm/);
+    expect(conv().paso).toBe('confirmar');
   });
 });
 
 describe('IMPORTANT 3: estado sin pedido registrado, en pasos del pedido', () => {
   it.each(['¿cuánto demora mi pedido?', '¿cuándo llega?', 'how long will my order take', 'when will it arrive?'])('en el pago: "%s"', (q) => {
     say('Quiero una limonada para Obarrio');
-    say('sí');
+    say('Calle 50');
     const out = txt(say(q));
     expect(out).toMatch(/Aún no lo he registrado|I have not placed it yet/);
     expect(out).toMatch(/30 min/);
@@ -100,6 +101,8 @@ describe('IMPORTANT 3: estado sin pedido registrado, en pasos del pedido', () =>
   });
   it('en la confirmación también', () => {
     say('Quiero una limonada para Obarrio');
+    say('Calle 50');
+    say('Yappy');
     const out = txt(say('¿cuánto demora mi pedido?'));
     expect(out).toMatch(/Aún no lo he registrado/);
     expect(out).toContain('¿Desea confirmar el pedido?');
@@ -128,7 +131,7 @@ describe('IMPORTANT 4: ocasión y demás pasos de la reserva', () => {
   it('"quiero una limonada" inicia el pedido', () => {
     aOcasion();
     expect(txt(say('quiero una limonada'))).toMatch(/1 x Limonada/);
-    expect(conv().paso).toBe('confirmar');
+    expect(conv().paso).toBe('tipo');
   });
   it('"Horarios y ubicación" responde y vuelve a preguntar la ocasión', () => {
     aOcasion();
@@ -190,6 +193,8 @@ describe('IMPORTANT 5: la misma frase repetida no duplica el pedido', () => {
   it('repetir la frase completa en la confirmación no duplica', () => {
     const frase = 'Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio';
     say(frase);
+    say('Calle 50');
+    say('Yappy');
     const out = txt(say(frase));
     expect(out).toMatch(/Ya tengo eso en su pedido/);
     expect(out).toContain('¿Desea confirmar el pedido?');
@@ -221,15 +226,15 @@ describe('IMPORTANT 5: la misma frase repetida no duplica el pedido', () => {
 describe('minors', () => {
   it('(b) la dirección: el texto ajeno no se guarda', () => {
     say('Quiero una limonada para Obarrio');
-    say('sí');
+    say('Calle 50');
     for (const ajeno of ['Horarios', 'quiero una pizza', '¿tienen estacionamiento?', 'asdf qwerty']) {
       const out = txt(say(ajeno));
       expect(out, ajeno).not.toContain('Anotado');
-      expect(conv().slots.direccion, ajeno).toBe('Obarrio');
+      expect(conv().slots.direccion, ajeno).toBe('Calle 50, Obarrio');
       expect(conv().paso, ajeno).toBe('pago');
     }
-    expect(txt(say('Calle 50, edificio Plaza'))).toContain('Anotado');
-    expect(conv().slots.direccion).toContain('Calle 50, edificio Plaza');
+    expect(txt(say('Calle 60, edificio Plaza'))).toContain('Anotado');
+    expect(conv().slots.direccion).toContain('Calle 60, edificio Plaza');
   });
   it('(b) acepta direcciones reales: zona sola, con número, o de 3 palabras', () => {
     say('Quiero una limonada');
@@ -237,13 +242,17 @@ describe('minors', () => {
     say('Entrega a domicilio');
     expect(txt(say('asdf qwerty'))).toMatch(/dirección/);
     expect(conv().paso).toBe('direccion');
-    expect(txt(say('Obarrio'))).toMatch(/pagar/);
+    // la zona sola no basta para entregar: se pide la dirección exacta
+    expect(txt(say('Obarrio'))).toMatch(/dirección exacta en Obarrio/);
+    expect(conv().paso).toBe('direccion');
+    expect(txt(say('Calle 50'))).toMatch(/pagar/);
     expect(conv().paso).toBe('pago');
+    expect(conv().slots.direccion).toBe('Calle 50, Obarrio');
   });
   it('(c) el retiro dice el tiempo estimado', () => {
     say('Quiero una limonada para retirar en la sucursal Norte');
-    say('sí');
-    const out = txt(say('Efectivo contra entrega'));
+    say('Efectivo contra entrega');
+    const out = txt(say('sí'));
     expect(out).toMatch(/Tiempo estimado: 40 min/);
   });
   it('(d) "add a coke" como primer mensaje se contesta en inglés', () => {
@@ -251,10 +260,12 @@ describe('minors', () => {
     expect(out).toMatch(/Your order/);
     expect(conv().idioma).toBe('en');
     nuevo();
-    expect(txt(say('2 burgers and fries'))).toMatch(/Do you want to confirm/);
+    expect(txt(say('2 burgers and fries'))).toMatch(/Delivery or pickup/);
   });
   it('(e) "sí, pero cámbialo a 3 hamburguesas" cambia la cantidad', () => {
     say('Quiero 2 hamburguesas clásicas y una limonada para Obarrio');
+    say('Calle 50');
+    say('Yappy');
     const out = txt(say('sí, pero cámbialo a 3 hamburguesas'));
     expect(out).toContain('3 x Hamburguesa clásica');
     expect(out).toContain('1 x Limonada');

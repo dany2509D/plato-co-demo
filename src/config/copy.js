@@ -477,7 +477,7 @@ const COPY = {
     pasos: {
       pedido: {
         titulo: 'El cliente pide por WhatsApp',
-        nota: 'Su cliente escribe como habla. El asistente arma el pedido, calcula el total y lo confirma. El pedido entra solo y va a la sucursal que atiende esa zona.',
+        nota: 'Su cliente escribe como habla. El asistente arma el pedido, pide dirección y forma de pago, muestra el resumen con el total y el cliente confirma. Con Yappy, el comprobante llega por el chat. El pedido entra solo y va a la sucursal que atiende esa zona.',
         auto: 'Hacer el pedido por mí',
       },
       envivo: {
@@ -487,7 +487,7 @@ const COPY = {
       },
       cocina: {
         titulo: 'La cocina avanza el pedido',
-        nota: 'La cocina lo ve en su pantalla y lo mueve de etapa con un toque. Cada cambio le llega al cliente por el chat, y al entregar sale la factura simulada.',
+        nota: 'La cocina lo ve en su pantalla, con el pago ya confirmado, y lo mueve de etapa con un toque. Cada cambio le llega al cliente por el chat; la factura simulada sale en cuanto se confirma el pago (o al entregar, si paga en efectivo).',
         auto: 'Avanzar el pedido por mí',
       },
       agotado: {
@@ -533,7 +533,7 @@ const COPY = {
     bannerDemo: 'Demo de Panacea Logic AI · Datos ficticios · No ingrese información real',
     bannerAria: 'Aviso de demostración',
     bannerCorto: 'Demo · datos ficticios',
-    bannerCta: 'Agende un diagnóstico gratis de 30 minutos',
+    bannerCta: 'Agende un diagnóstico gratis de 15 minutos',
     bannerCtaCorto: 'Agendar diagnóstico',
     noEncontrado: {
       eyebrow: 'Error 404',

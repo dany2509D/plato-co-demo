@@ -16,7 +16,7 @@ export const URL_DIAGNOSTICO = 'https://panacealogic.dev/cuentanos-tu-proyecto';
 export const STEPS = [
   {
     id: 'pedido', ruta: '#/chat', titulo: 'El cliente pide por WhatsApp',
-    nota: 'El cliente escribe como habla y el asistente arma el pedido, calcula el total y le confirma. El pedido entra solo y se asigna a la sucursal por zona.',
+    nota: 'El cliente escribe como habla. El asistente arma el pedido, pide dirección y forma de pago, muestra el resumen con el total y el cliente confirma. Con Yappy, el comprobante llega por el chat y el pago se verifica solo.',
     auto: 'Hacer el pedido por mí',
   },
   {
@@ -26,7 +26,7 @@ export const STEPS = [
   },
   {
     id: 'cocina', ruta: '#/admin/cocina', titulo: 'La cocina avanza el pedido',
-    nota: 'La cocina ve el pedido en su pantalla y lo mueve de etapa con un toque. Cada cambio le llega al cliente por el chat, y al entregar se emite la factura simulada.',
+    nota: 'La cocina ve el pedido en su pantalla, con el pago ya confirmado, y lo mueve de etapa con un toque. Cada cambio le llega al cliente por el chat; la factura simulada sale en cuanto se confirma el pago.',
     auto: 'Avanzar el pedido por mí',
   },
   {
@@ -107,13 +107,17 @@ export function reservaDelTour(state, ctx) {
 }
 
 // Siguiente acción del paso 1 («Hacer el pedido por mí») según lo que de verdad hay en el chat:
-//  'listo'    el pedido del recorrido ya existe;
+//  'listo'    el pedido del recorrido ya existe (y, si se pagó con Yappy, ya envió el comprobante);
 //  'cancelar' hay un flujo a medias que no es el del recorrido (otro pedido, una reserva, etc.): se empieza de cero;
-//  'frase' | 'confirmar' | 'direccion' | 'yappy'   el siguiente mensaje o toque del guion;
+//  'frase' | 'direccion' | 'yappy' | 'confirmar' | 'comprobante'   el siguiente mensaje o toque del guion,
+//             en el orden del chat: pedido → dirección → pago → resumen y confirmación → comprobante de Yappy;
 //  'detener'  el guion ya se envió y no se puede avanzar (p. ej. todo agotado): el paso NO debe darse por hecho.
 export function siguienteAccionPedido(state, ctx) {
-  if (!falta('pedido', state, ctx)) return 'listo';
   const conv = state.conversaciones.find((c) => c.id === CONV);
+  if (!falta('pedido', state, ctx)) {
+    const p = pedidoDelTour(state, ctx);
+    return p.pago?.estado === 'esperando comprobante' && conv?.paso === 'comprobante' ? 'comprobante' : 'listo';
+  }
   const msgs = conv?.mensajes ?? [];
   let ini = 0;
   msgs.forEach((m, i) => { if (m.de === 'cliente' && /^\s*cancelar\s*$/i.test(m.texto)) ini = i + 1; });

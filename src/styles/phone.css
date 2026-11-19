@@ -12,6 +12,9 @@ body:has(.chat-pag) .site-footer { margin-top: 0; }
 .chat-frase { margin: 0 0 var(--sp-3); font-family: var(--font-body); font-weight: 400; font-size: var(--fs-statement); line-height: 1.08; letter-spacing: -.03em; text-transform: none; color: var(--c-on-dark); }
 .chat-frase span { color: var(--c-on-dark-muted); }
 .chat-pista { max-width: 76ch; margin: 0; font-size: .9375rem; color: var(--c-on-dark-muted); }
+/* Nota para quien presenta: solo en el modo Presentación (menú Demo), nunca a la vista del prospecto por defecto. */
+.chat-pista--pres { display: none; }
+body.pres-activa .chat-pista--pres { display: block; margin-top: var(--sp-1, 8px); padding-left: 10px; border-left: 2px solid var(--c-gold); }
 .chat-cols { display: grid; gap: var(--sp-5); align-items: stretch; margin-top: var(--sp-5); }
 @media (min-width: 900px) { .chat-cols { grid-template-columns: minmax(340px, 5fr) minmax(0, 7fr); gap: var(--sp-6); } }
 .chat-col-tel, .chat-col-vivo { display: flex; flex-direction: column; min-width: 0; }

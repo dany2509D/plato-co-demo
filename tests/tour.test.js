@@ -84,7 +84,7 @@ describe('guardas de idempotencia', () => {
     const { store, bot } = mundo();
     const ctx = createContext();
     expect(falta('pedido', store.get(), ctx)).toBe(true);
-    for (const t of [FRASE_PEDIDO, 'Sí, confirmar', 'Calle 50, Obarrio', 'Yappy']) bot.reply('c-web', t);
+    for (const t of [FRASE_PEDIDO, 'Calle 50, Obarrio', 'Yappy', 'Sí, confirmar']) bot.reply('c-web', t);
     const ped = pedidoDelTour(store.get(), ctx);
     expect(ped?.canal).toBe('whatsapp');
     expect(ctx.orderId).toBe(ped.id);
@@ -94,7 +94,7 @@ describe('guardas de idempotencia', () => {
   it('avanzar solo falta mientras el pedido no esté entregado', () => {
     const { store, bot } = mundo();
     const ctx = createContext();
-    for (const t of [FRASE_PEDIDO, 'Sí, confirmar', 'Calle 50, Obarrio', 'Yappy']) bot.reply('c-web', t);
+    for (const t of [FRASE_PEDIDO, 'Calle 50, Obarrio', 'Yappy', 'Sí, confirmar']) bot.reply('c-web', t);
     pedidoDelTour(store.get(), ctx);
     expect(falta('avanzar', store.get(), ctx)).toBe(true);
     for (let i = 0; i < 5; i++) advanceStatus(store, ctx.orderId);
@@ -167,7 +167,7 @@ describe('reserva', () => {
 
 describe('guarda del paso 1 (I12): el pedido del recorrido de verdad existe', () => {
   // Misma regla que el presentador: pide la siguiente acción y la ejecuta por el chat real.
-  const FRASES = { frase: FRASE_PEDIDO, cancelar: 'cancelar', confirmar: 'Sí, confirmar', direccion: DIRECCION, yappy: 'Yappy' };
+  const FRASES = { frase: FRASE_PEDIDO, cancelar: 'cancelar', confirmar: 'Sí, confirmar', direccion: DIRECCION, yappy: 'Yappy', comprobante: 'Enviar comprobante' };
   function conducir(store, bot, ctx) {
     const hechas = [];
     for (let i = 0; i < 8; i++) {
@@ -178,11 +178,14 @@ describe('guarda del paso 1 (I12): el pedido del recorrido de verdad existe', ()
     }
     return hechas;
   }
-  it('conversación limpia: frase, confirmar, dirección y Yappy', () => {
+  it('conversación limpia: frase, dirección, Yappy, confirmar y comprobante', () => {
     const { store, bot } = mundo();
     const ctx = createContext();
-    expect(conducir(store, bot, ctx)).toEqual(['frase', 'confirmar', 'yappy', 'listo']);
+    expect(conducir(store, bot, ctx)).toEqual(['frase', 'direccion', 'yappy', 'confirmar', 'comprobante', 'listo']);
     expect(falta('pedido', store.get(), ctx)).toBe(false);
+    const p = pedidoDelTour(store.get(), ctx);
+    expect(p.direccion).toContain('Obarrio');
+    expect(p.pago.estado).toBe('comprobante recibido');
   });
   it('si el presentador escribió "hola" antes, igual se envía la frase del pedido', () => {
     const { store, bot } = mundo();

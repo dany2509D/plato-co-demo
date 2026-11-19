@@ -52,9 +52,9 @@ En la cabecera abra **«Demo ▾» → «Presentación guiada»** (en celular: *
 
 | Paso | Qué ve la audiencia | «Hacer por mí» |
 |------|---------------------|----------------|
-| 1. El cliente pide por WhatsApp | El chat arma el pedido y lo confirma | Escribe el pedido, confirma, da la dirección y paga con Yappy |
+| 1. El cliente pide por WhatsApp | El chat arma el pedido, pide dirección y pago, muestra el resumen y el cliente confirma | Escribe el pedido, da la dirección, elige Yappy, confirma y envía el comprobante |
 | 2. El restaurante lo ve al instante | Panel «En vivo» con el pedido y el aviso | (solo mirar) |
-| 3. La cocina avanza el pedido | Tarjeta en Cocina; el cliente recibe avisos | Avanza el pedido hasta entregarlo y se emite la factura |
+| 3. La cocina avanza el pedido | Tarjeta en Cocina con el pago confirmado; el cliente recibe avisos | Avanza el pedido hasta entregarlo |
 | 4. Un plato se agota | Menú: «agotado» en un clic | Agota el plato |
 | 5. Una reserva para 4 | Reserva por una frase y mesa en el plano | Hace la reserva y muestra la mesa |
 | 6. Todo medido | Indicadores y mensaje de cierre | (solo mirar) |
@@ -65,17 +65,18 @@ En el último paso aparece el enlace **«Agende su diagnóstico gratis»**.
 
 1. **Pedido por chat.** Vaya a `#/chat` y escriba:
    `Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio`
-   El bot responde con las líneas, **Total US$ 22.10** (subtotal 20.65 + ITBMS 1.45), «Lo prepara Plato & Co. Centro, tiempo estimado 30 min» y pregunta «¿Desea confirmar el pedido?». Pulse **Sí, confirmar**.
-2. El bot pide la dirección exacta. Escriba `Calle 50, Obarrio`. Responde «Le atenderá Plato & Co. Centro…» y pregunta cómo pagar: pulse **Yappy**. Respuesta: «Pedido ped-NNN registrado… Pago con Yappy simulado: recibido». En el panel «En vivo» ya aparece el pedido.
-3. **Cocina.** Pulse «Entrar como administrador», en Cocina pulse «Avanzar» sobre ese pedido (Recibido → En cocina → Listo → En camino → Entregado). Vuelva a `#/chat`: cada cambio llegó como aviso y, al entregar, la **factura electrónica simulada** con CUFE ficticio.
-4. **Agotado.** En el panel, Menú, busque «Hamburguesa clásica» y márquela agotada. En el chat escriba:
+   El bot responde con las líneas, **Total US$ 22.10** (subtotal 20.65 + ITBMS 1.45), «Lo prepara Plato & Co. Centro, tiempo estimado 30 min» y pide la dirección exacta en Obarrio. Todavía no pregunta si confirma.
+2. Escriba la dirección y, si quiere, la forma de pago en el mismo mensaje: `Calle 50, edificio Global Bank piso 3. Pago con Yappy` (o la dirección sola y luego pulse **Yappy**). El bot muestra el **resumen completo** (platos, total, «Entrega en: Calle 50, edificio Global Bank piso 3, Obarrio», «Pago: Yappy») y recién ahí pregunta «¿Desea confirmar el pedido?». Pulse **Sí, confirmar**.
+3. **Yappy.** Respuesta: «Pedido ped-NNN registrado… Esperando su comprobante de Yappy». Pulse **Enviar comprobante** (o adjunte una imagen): «Comprobante recibido…» y, unos segundos después, «Pago confirmado» con la **factura electrónica simulada** (número, CUFE ficticio, total con ITBMS). En el panel «En vivo» se ve cada estado: esperando comprobante → comprobante recibido → pago confirmado. Es el punto de venta: nadie revisa capturas de Yappy a mano.
+4. **Cocina.** Pulse «Entrar como administrador»: la tarjeta muestra la dirección completa y «Pago: Yappy · Pago confirmado». Pulse «Avanzar» (Recibido → En cocina → Listo → En camino → Entregado). Vuelva a `#/chat`: cada cambio llegó como aviso. (Con efectivo, la factura sale al entregar.)
+5. **Agotado.** En el panel, Menú, busque «Hamburguesa clásica» y márquela agotada. En el chat escriba:
    `Quiero una hamburguesa clásica para Obarrio`
    El bot responde «Hamburguesa clásica está agotado en esta sucursal. Le puedo ofrecer: …» (alternativas de la misma categoría).
-5. **Reserva.** Escriba `cancelar` y luego:
+6. **Reserva.** Escriba `cancelar` y luego:
    `Quiero reservar para 4 mañana a las 8 pm, cumpleaños`
    Respuesta: «Reserva confirmada: … 4 persona(s), mesa …». En Reservas (panel) la mesa aparece en el plano.
-6. **Una persona.** En el chat pulse **«Pasar a una persona»**: el bot confirma y en «En vivo» queda «Conversación marcada: Requiere persona».
-7. **Cierre.** Muestre Indicadores y diga: «Cero pedidos copiados a mano, en todas sus sucursales». Invite al diagnóstico gratis de 30 minutos.
+7. **Una persona.** En el chat pulse **«Pasar a una persona»**: el bot confirma y en «En vivo» queda «Conversación marcada: Requiere persona».
+8. **Cierre.** Muestre Indicadores y diga: «Cero pedidos copiados a mano, en todas sus sucursales». Invite al diagnóstico gratis de 15 minutos.
 
 ### Consejos de presentador
 
@@ -137,7 +138,7 @@ docs/                 especificación y sistema de diseño
 
 ## 8. Calidad
 
-- **Pruebas unitarias:** `npm test` (24 archivos, 341 pruebas): parser, bot, pedidos, cocina, reservas, horario, métricas, almacenamiento, rutas y semilla.
+- **Pruebas unitarias:** `npm test` (44 archivos, 881 pruebas): parser, bot, pedidos, cocina, reservas, horario, métricas, almacenamiento, rutas y semilla.
 - **Recorrido E2E con Playwright** (`tests/e2e/recorrido.spec.js`, guía en `tests/e2e/recorrido.md`): portada, menú, pago, chat, cocina, agotado, reserva, «Pasar a una persona», indicadores, reinicio y modo Presentación, a 360, 768 y 1440 px y con `localStorage` bloqueado; verifica que no haya errores en la consola. Playwright no es dependencia del proyecto: instálelo en una carpeta aparte (pasos en `recorrido.md`).
 - **Peso:** JS 206 KB (70,8 KB comprimido con gzip; el límite es 300 KB), CSS 88 KB (18,1 KB gzip). Un solo archivo de cada uno.
 - **Lighthouse móvil** (sobre `npm run preview`):
@@ -162,4 +163,4 @@ docs/                 especificación y sistema de diseño
 ## 10. Enlaces
 
 - Panacea Logic AI: <https://panacealogic.dev>
-- Diagnóstico gratis de 30 minutos: <https://panacealogic.dev/cuentanos-tu-proyecto>
+- Diagnóstico gratis de 15 minutos: <https://panacealogic.dev/cuentanos-tu-proyecto>

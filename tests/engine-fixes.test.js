@@ -27,8 +27,8 @@ describe('I1: retiro en una sucursal con nombre', () => {
     expect(out).toContain('Retira en Plato & Co. Norte');
     expect(conv().slots.sucursalId).toBe(suc(/Norte/).id);
     expect(conv().slots.tipo).toBe('retiro');
-    say('Sí, confirmar');
     say('Efectivo contra entrega');
+    say('Sí, confirmar');
     const p = store.get().pedidos.find((x) => x.conversacionId === 'f');
     expect(p.sucursalId).toBe(suc(/Norte/).id);
     expect(p.tipo).toBe('retiro');
@@ -70,12 +70,24 @@ describe('I1: retiro en una sucursal con nombre', () => {
 describe('I2: solo un "sí" limpio confirma', () => {
   it.each(['Sí, confirmar', 'sí', 'ok', 'Dale', 'yes', 'Yes, confirm', 'confirmo', 'sí por favor'])('"%s" confirma', (t) => {
     say('Quiero una limonada para Obarrio');
+    say('Calle 50');
+    say('tarjeta');
     const out = txt(say(t));
-    expect(out).toMatch(/pagar|pay/i);
-    expect(conv().paso).toBe('pago');
+    expect(out).toMatch(/registrado|placed/i);
+    expect(store.get().pedidos.some((p) => p.conversacionId === 'f')).toBe(true);
+  });
+  it.each(['sí', 'ok', 'yes'])('"%s" antes de tener dirección y pago no confirma: pide lo que falta', (t) => {
+    say('Quiero una limonada para Obarrio');
+    const out = txt(say(t));
+    expect(out).toMatch(/me faltan|I still need/);
+    expect(out).toMatch(/direcci[oó]n exacta|exact address/i);
+    expect(conv().paso).toBe('direccion');
+    expect(store.get().pedidos.some((p) => p.conversacionId === 'f')).toBe(false);
   });
   it('"Sí, pero sin cebolla" aplica la corrección y vuelve a pedir confirmación', () => {
     say('Quiero una hamburguesa clásica para Obarrio');
+    say('Calle 50');
+    say('Yappy');
     const out = txt(say('Sí, pero sin cebolla'));
     expect(out).toMatch(/Hamburguesa cl[aá]sica \(sin cebolla\)/);
     expect(out).toContain('¿Desea confirmar el pedido?');
@@ -84,6 +96,8 @@ describe('I2: solo un "sí" limpio confirma', () => {
   });
   it('"ok, y agrégale una limonada" suma la línea y vuelve a confirmar', () => {
     say('Quiero una hamburguesa clásica para Obarrio');
+    say('Calle 50');
+    say('Yappy');
     const out = txt(say('ok, y agrégale una limonada'));
     expect(out).toContain('1 x Limonada');
     expect(out).toContain('¿Desea confirmar el pedido?');
@@ -92,6 +106,8 @@ describe('I2: solo un "sí" limpio confirma', () => {
   });
   it('en inglés: "yes, but add a coke"', () => {
     say('I want a burger for Obarrio');
+    say('Calle 50');
+    say('Yappy');
     const out = txt(say('yes, but add a coke'));
     expect(out).toContain('1 x Refresco');
     expect(conv().paso).toBe('confirmar');
@@ -99,15 +115,14 @@ describe('I2: solo un "sí" limpio confirma', () => {
 });
 
 describe('I3: preguntas dentro de un paso', () => {
-  beforeEach(() => { say('Quiero una limonada para Obarrio'); say('sí'); expect(conv().paso).toBe('pago'); });
+  beforeEach(() => { say('Quiero una limonada para Obarrio'); say('Calle 50'); expect(conv().paso).toBe('pago'); });
   it('"¿A qué hora cierran?" en el pago responde horarios, repite la pregunta y no guarda dirección', () => {
     const out = txt(say('¿A qué hora cierran?'));
     expect(out).toContain('22:00');
     expect(out).toMatch(/cómo desea pagar/i);
     expect(out).not.toContain('Anotado');
     expect(conv().paso).toBe('pago');
-    expect(conv().slots.direccion).toBe('Obarrio');
-    expect(conv().slots.exacta).toBe(false);
+    expect(conv().slots.direccion).toBe('Calle 50, Obarrio');
   });
   it('"¿la limonada tiene lácteos?" se responde sin salir del pago', () => {
     const out = txt(say('¿la limonada tiene lácteos?'));
@@ -138,13 +153,15 @@ describe('I3: preguntas dentro de un paso', () => {
     expect(out).toMatch(/persona del equipo/);
     expect(out).toMatch(/cómo desea pagar/i);
     expect(conv().paso).toBe('pago');
-    expect(conv().slots.direccion).toBe('Obarrio');
+    expect(conv().slots.direccion).toBe('Calle 50, Obarrio');
   });
 });
 
 describe('I3: preguntas en la confirmación y eco con tildes', () => {
   it('alérgenos en la confirmación se responden y se repite la confirmación', () => {
     say('Quiero una limonada para Obarrio');
+    say('Calle 50');
+    say('Yappy');
     const out = txt(say('¿la hamburguesa clásica tiene gluten?'));
     expect(out).toMatch(/Hamburguesa cl[aá]sica contiene gluten/);
     expect(out).not.toMatch(/No pude identificar/);
@@ -181,8 +198,9 @@ describe('I8: sucursal cerrada', () => {
   });
   it('la confirmación del pedido también lo dice', () => {
     say('Quiero una limonada para Obarrio');
-    say('sí');
-    const out = txt(say('Yappy'));
+    say('Calle 50');
+    say('Yappy');
+    const out = txt(say('sí'));
     expect(out).toMatch(/Pedido .* registrado/);
     expect(out).toMatch(/cerrada ahora/);
     expect(out).toMatch(/quedará programado/);
@@ -206,7 +224,9 @@ describe('I8: sucursal cerrada', () => {
     expect(out).toContain('Total: US$ 22.10');
     expect(out).toContain('Subtotal US$ 20.65, ITBMS 7% US$ 1.45');
     expect(out).toContain('Lo prepara Plato & Co. Centro, tiempo estimado 30 min.');
-    expect(out).toContain('¿Desea confirmar el pedido?');
+    // primero dirección y pago; la confirmación llega con el resumen completo
+    expect(out).not.toContain('¿Desea confirmar el pedido?');
+    expect(out).toMatch(/dirección exacta en Obarrio/);
   });
 });
 
@@ -214,7 +234,7 @@ describe('I11: coca / coke / cola', () => {
   it.each([['agrega una coca', 1], ['add a coke', 1], ['dame 2 cocas', 2], ['quiero una cola', 1]])('"%s" -> Refresco x%i', (t, q) => {
     const out = txt(say(t));
     expect(out).toContain(`${q} x Refresco`);
-    expect(conv().paso).toBe('confirmar');
+    expect(conv().paso).toBe('tipo');
   });
   it('la sugerencia "agrega una coca" funciona durante la confirmación', () => {
     say('Quiero una limonada para Obarrio');
@@ -260,6 +280,8 @@ describe('M9: ambigüedad, enteros y límite', () => {
   });
   it('la ambigüedad también se avisa al editar el pedido', () => {
     say('Quiero una limonada para Obarrio');
+    say('Calle 50');
+    say('Yappy');
     const out = txt(say('agrega un helado'));
     expect(out).toMatch(/Helado de vainilla/);
     expect(conv().slots.lineas).toHaveLength(1);
@@ -267,6 +289,8 @@ describe('M9: ambigüedad, enteros y límite', () => {
   });
   it('"no sé" en la confirmación es incertidumbre, no "No pude identificar"', () => {
     say('Quiero una limonada para Obarrio');
+    say('Calle 50');
+    say('Yappy');
     for (const t of ['no sé', 'no se', 'not sure']) {
       const out = txt(say(t));
       expect(out, t).not.toMatch(/No pude identificar|I could not identify/);

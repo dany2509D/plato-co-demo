@@ -28,9 +28,10 @@ describe('robustez', () => {
   it('si payOrder lanza, mensaje cortés y handoff', () => {
     fallo.pay = true;
     bot.reply('c1', 'Quiero 1 limonada para Obarrio');
-    bot.reply('c1', 'sí');
+    bot.reply('c1', 'Calle 50');
+    bot.reply('c1', 'tarjeta');
     let out;
-    expect(() => { out = bot.reply('c1', 'tarjeta'); }).not.toThrow();
+    expect(() => { out = bot.reply('c1', 'sí'); }).not.toThrow();
     expect(out.map((m) => m.texto).join(' ')).toMatch(/persona/i);
     expect(conv().requiereHumano).toBe(true);
   });
@@ -38,8 +39,9 @@ describe('robustez', () => {
   it('si createOrder lanza, mensaje cortés y handoff', () => {
     fallo.create = true;
     bot.reply('c1', 'Quiero 1 limonada para Obarrio');
-    bot.reply('c1', 'sí');
-    expect(() => bot.reply('c1', 'yappy')).not.toThrow();
+    bot.reply('c1', 'Calle 50');
+    bot.reply('c1', 'yappy');
+    expect(() => bot.reply('c1', 'sí')).not.toThrow();
     expect(conv().requiereHumano).toBe(true);
   });
 

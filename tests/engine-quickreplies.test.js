@@ -105,16 +105,16 @@ describe('botones de los pasos del flujo', () => {
   it('Sí/Cancelar, tipo, pago y ocasión funcionan con sus etiquetas', () => {
     say('Quiero una limonada');
     expect(txt(say('Cancelar'))).toMatch(/cancel/i);
-    say('Quiero una limonada');
-    expect(txt(say(TEXTS.es.si))).toContain(TEXTS.es.pedirTipo);
+    expect(txt(say('Quiero una limonada'))).toContain(TEXTS.es.pedirTipo);
     expect(txt(say(TEXTS.es.botonesTipo[1]))).toMatch(/Retira en/);
-    expect(txt(say(TEXTS.es.botonesPago[2]))).toMatch(/Pedido .* registrado/);
+    expect(txt(say(TEXTS.es.botonesPago[2]))).toContain(TEXTS.es.confirmarPreg);
+    expect(txt(say(TEXTS.es.si))).toMatch(/Pedido .* registrado/);
     // entrega
     say('Quiero una limonada');
-    say('Sí, confirmar');
     expect(txt(say(TEXTS.es.botonesTipo[0]))).toMatch(/dirección/);
     expect(txt(say('Calle 50, Obarrio'))).toMatch(/pagar/);
-    expect(txt(say('Tarjeta'))).toMatch(/Pedido .* registrado/);
+    expect(txt(say('Tarjeta'))).toContain('Pago: tarjeta');
+    expect(txt(say('Sí, confirmar'))).toMatch(/Pedido .* registrado/);
     expect(txt(say('Yappy'))).not.toMatch(/Pedido .* registrado/); // ya no hay pedido en curso
   });
   it.each([['No', 'ninguna'], ['Cumpleaños', 'cumpleaños'], ['Aniversario', 'aniversario'], ['None', 'ninguna'], ['Birthday', 'cumpleaños'], ['Anniversary', 'aniversario']])('ocasión "%s" completa la reserva', (label, ocasion) => {
@@ -125,10 +125,10 @@ describe('botones de los pasos del flujo', () => {
     expect(store.get().reservas.at(-1).ocasion).toBe(ocasion);
   });
   it('botones en inglés del flujo', () => {
-    say('I want a lemonade');
-    expect(txt(say(TEXTS.en.si))).toContain(TEXTS.en.pedirTipo);
+    expect(txt(say('I want a lemonade'))).toContain(TEXTS.en.pedirTipo);
     expect(txt(say(TEXTS.en.botonesTipo[0]))).toMatch(/address/i);
     say('Calle 50, Obarrio');
-    expect(txt(say(TEXTS.en.botonesPago[1]))).toMatch(/placed/);
+    expect(txt(say(TEXTS.en.botonesPago[1]))).toContain(TEXTS.en.confirmarPreg);
+    expect(txt(say(TEXTS.en.si))).toMatch(/placed/);
   });
 });

@@ -48,7 +48,8 @@ describe('BLOQUEANTE: salida a retiro desde el paso de dirección', () => {
   it('el pedido de retiro se completa', () => {
     aFueraDeZona();
     say('retiro en sucursal');
-    const out = txt(say('Yappy'));
+    say('Yappy');
+    const out = txt(say('sí'));
     expect(out).toMatch(/registrado/);
     const p = store.get().pedidos.find((x) => x.conversacionId === 'h');
     expect(p.tipo).toBe('retiro');
@@ -100,14 +101,16 @@ describe('BLOQUEANTE: salida a retiro desde el paso de dirección', () => {
 describe('cada botón de cada paso se atiende', () => {
   const FLUJOS = {
     es: {
-      inicio: [], confirmar: ['Quiero una limonada'], tipo: ['Quiero una limonada', 'sí'],
-      direccionFuera: ['una limonada a domicilio', 'sí', 'Av Balboa'], direccionFuera2: ['una limonada a domicilio', 'sí', 'Av Balboa', 'Av Perú'],
-      pago: ['Quiero una limonada para Obarrio', 'sí'], ocasion: ['reserva para 2 mañana a las 8 pm'], menu: ['Menú del día'],
+      inicio: [], tipo: ['Quiero una limonada'], confirmar: ['Quiero una limonada para Obarrio', 'Calle 50', 'Yappy'],
+      comprobante: ['Quiero una limonada para Obarrio', 'Calle 50', 'Yappy', 'sí'],
+      direccionFuera: ['una limonada a domicilio', 'Av Balboa'], direccionFuera2: ['una limonada a domicilio', 'Av Balboa', 'Av Perú'],
+      pago: ['Quiero una limonada para Obarrio', 'Calle 50'], ocasion: ['reserva para 2 mañana a las 8 pm'], menu: ['Menú del día'],
     },
     en: {
-      inicio: [], confirmar: ['I want a lemonade'], tipo: ['I want a lemonade', 'yes'],
-      direccionFuera: ['I want a lemonade for delivery', 'yes', 'Av Balboa'], direccionFuera2: ['I want a lemonade for delivery', 'yes', 'Av Balboa', 'Av Peru'],
-      pago: ['I want a lemonade for Obarrio', 'yes'], ocasion: ['table for 2 tomorrow at 8 pm'], menu: ['Menu of the day'],
+      inicio: [], tipo: ['I want a lemonade'], confirmar: ['I want a lemonade for Obarrio', 'Calle 50', 'Yappy'],
+      comprobante: ['I want a lemonade for Obarrio', 'Calle 50', 'Yappy', 'yes'],
+      direccionFuera: ['I want a lemonade for delivery', 'Av Balboa'], direccionFuera2: ['I want a lemonade for delivery', 'Av Balboa', 'Av Peru'],
+      pago: ['I want a lemonade for Obarrio', 'Calle 50'], ocasion: ['table for 2 tomorrow at 8 pm'], menu: ['Menu of the day'],
     },
   };
   for (const lang of ['es', 'en']) {
@@ -166,7 +169,7 @@ describe('minors: ocasión libre', () => {
 
 describe('minors: total en la confirmación', () => {
   it.each(['Total?', '¿cuánto es?', 'how much is it?', '¿Cuál es el total?'])('"%s" repite el resumen y el total sin pasar a una persona', (t) => {
-    say(/[a-z] it/.test(t) ? 'I want a lemonade' : 'Quiero una limonada para Obarrio');
+    if (/[a-z] it/.test(t)) { say('I want a lemonade'); say('pickup'); say('card'); } else { say('Quiero una limonada para Obarrio'); say('Calle 50'); say('Yappy'); }
     const out = txt(say(t));
     expect(out).toMatch(/US\$ 2\.94/);
     expect(out).toMatch(/confirmar|confirm/i);
@@ -186,7 +189,7 @@ describe('minors: unas, otra, dos más', () => {
   });
   it('el primer mensaje "quiero unas papas fritas" crea el pedido', () => {
     expect(txt(say('quiero unas papas fritas'))).toMatch(/1 x Papas fritas/);
-    expect(conv().paso).toBe('confirmar');
+    expect(conv().paso).toBe('tipo');
   });
   it('"otra hamburguesa clásica a domicilio" parsea a una hamburguesa clásica', () => {
     const r = parse('otra hamburguesa clásica a domicilio');

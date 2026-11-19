@@ -11,10 +11,10 @@ export function crearBanner() {
   el.innerHTML = `
     <p class="banner-demo__l">
       <span>Demo de <a href="${WEB}" target="_blank" rel="noopener">Panacea Logic AI</a> · Datos ficticios · No ingrese información real</span>
-      <a class="banner-cta" href="${DIAGNOSTICO}" target="_blank" rel="noopener">Agende un diagnóstico gratis de 30 minutos <span aria-hidden="true">→</span></a>
+      <a class="banner-cta" href="${DIAGNOSTICO}" target="_blank" rel="noopener">Agende un diagnóstico gratis de 15 minutos <span aria-hidden="true">→</span></a>
     </p>
     <p class="banner-demo__c">
-      <a href="${WEB}" target="_blank" rel="noopener"><span aria-hidden="true">Demo</span><span class="sr-only">Demo de Panacea Logic AI</span></a><span aria-hidden="true"> · datos ficticios · </span><span class="sr-only">· Datos ficticios · No ingrese información real ·</span><a class="banner-cta" href="${DIAGNOSTICO}" target="_blank" rel="noopener">Agendar diagnóstico<span class="sr-only"> gratis de 30 minutos</span> <span aria-hidden="true">→</span></a>
+      <a href="${WEB}" target="_blank" rel="noopener"><span aria-hidden="true">Demo</span><span class="sr-only">Demo de Panacea Logic AI</span></a><span aria-hidden="true"> · datos ficticios · </span><span class="sr-only">· Datos ficticios · No ingrese información real ·</span><a class="banner-cta" href="${DIAGNOSTICO}" target="_blank" rel="noopener">Agendar diagnóstico<span class="sr-only"> gratis de 15 minutos</span> <span aria-hidden="true">→</span></a>
     </p>`;
   return el;
 }
