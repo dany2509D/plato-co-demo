@@ -94,7 +94,7 @@ body.modo-admin .app-header { display: none; }
   background-repeat: no-repeat; background-position: right 1.25em center; background-size: 12px 8px;
 }
 .adm--cocina .select { background-color: var(--c-card); color: var(--c-on-dark); border-color: var(--c-line-dark);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23faae33' stroke-width='1.6'/></svg>"); }
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23efc547' stroke-width='1.6'/></svg>"); }
 
 /* ---------- Encabezado de página (rol + título) ---------- */
 .pg-cab { display: grid; gap: var(--sp-1); margin-bottom: var(--sp-4); }

@@ -8,9 +8,9 @@ describe('parseRoute: entradas malformadas (M2)', () => {
     expect(r.name).toBe('pedido');
     expect(r.params.id).toBe('%E0%A4%A');
   });
-  it('porcentaje inválido en otras rutas va a inicio sin lanzar', () => {
-    expect(parseRoute('#/%E0%A4%A').name).toBe('inicio');
-    expect(parseRoute('#/admin/%zz').name).toBe('inicio');
+  it('porcentaje inválido en otras rutas va a no-encontrado sin lanzar', () => {
+    expect(parseRoute('#/%E0%A4%A').name).toBe('no-encontrado');
+    expect(parseRoute('#/admin/%zz').name).toBe('no-encontrado');
   });
   it('lee ?s=<seedId> del enlace de pedido', () => {
     expect(parseRoute('#/pedido/ped-051?s=sabc')).toEqual({ name: 'pedido', params: { id: 'ped-051', seed: 'sabc' } });
@@ -36,13 +36,15 @@ describe('parseRoute', () => {
     for (const s of ['reservas', 'menu', 'indicadores'])
       expect(parseRoute('#/admin/' + s).name).toBe('admin-' + s);
   });
-  it('vacío o desconocido cae en inicio', () => {
+  it('vacío y «#/» siguen en inicio; lo desconocido va al 404', () => {
     expect(parseRoute('').name).toBe('inicio');
-    expect(parseRoute('#/nada').name).toBe('inicio');
-    expect(parseRoute('#/admin/xyz').name).toBe('inicio');
+    expect(parseRoute('#/').name).toBe('inicio');
+    expect(parseRoute('#/?s=x').name).toBe('inicio');
+    expect(parseRoute('#/nada').name).toBe('no-encontrado');
+    expect(parseRoute('#/admin/xyz').name).toBe('no-encontrado');
   });
   it('reconoce #/estilo (guía de estilo, no enlazada en la navegación)', () => {
     expect(parseRoute('#/estilo').name).toBe('estilo');
-    expect(parseRoute('#/estilo/otra').name).toBe('inicio');
+    expect(parseRoute('#/estilo/otra').name).toBe('no-encontrado');
   });
 });

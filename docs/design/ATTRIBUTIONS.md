@@ -68,3 +68,26 @@ Fotografías usadas en la demo de Plato & Co. (menú, portada, ambiente y sucurs
 | `src/assets/photos/hero/cta_ingredientes.webp` | Sergey Kotenev | Unsplash | [Unsplash License](https://unsplash.com/license) | [Página de la foto](https://unsplash.com/photos/PiizAdrUf8Y) |
 
 El detalle (texto alternativo, dimensiones) está en `src/assets/photos/manifest.json`. Para verificar que todo esté completo: `node scripts/check-photos.mjs`.
+
+
+## Componentes de interfaz adaptados de 21st.dev
+
+- Fuente: repositorio [serafimcloud/21st](https://github.com/serafimcloud/21st), carpeta `apps/web/components/ui`. Licencia MIT (Copyright (c) 2024 21st.dev).
+- Fecha: 2026-11-19. No se instaló el repositorio (es el código del sitio 21st.dev en Next.js); se leyeron cinco componentes y se reescribieron en JS/CSS sin React ni Tailwind para el estilo de esta demo.
+
+| Componente original | Adaptación | Archivo |
+|---|---|---|
+| `text-morph.tsx` | Palabra que rota letra a letra en «Hoy en la cocina: …» | `src/ui/efectos.js`, `src/styles/motion.css` §6 |
+| `hero-pill.tsx` | Anuncio rectangular del menú del día sobre el titular | `src/views/inicio.js`, `src/styles/motion.css` §6 |
+| `text-shimmer.tsx` | Brillo en «Abierto · cierra …» y «Disponible ahora» | `src/styles/motion.css` §6 |
+| `skeleton.tsx` | Barrido de carga en las cajas de foto | `src/styles/motion.css` §6 |
+| `shimmer-button.tsx` | Destello periódico en los botones principales | `src/styles/motion.css` §6 |
+
+## Video del héroe
+
+| Archivo | Clip | Fuente | Licencia | Enlace |
+|---|---|---|---|---|
+| `public/media/hero-cocina.mp4` | «Chef cooking on a large grill» (14 s, 1280×720, 3,9 MB, sin audio usado: se reproduce silenciado) | Mixkit | [Mixkit Stock Video Free License](https://mixkit.co/license/#videoFree) (uso comercial gratuito, sin atribución obligatoria) | [Página del clip](https://mixkit.co/free-stock-video/chef-cooking-on-a-large-grill-4678/) |
+
+- Descargado el 2026-11-19 desde `assets.mixkit.co` (versión 720p, la más liviana para celular). No muestra marcas ni un restaurante identificable.
+- Si se cambia el archivo, subir `?v=` en `HERO_VIDEO` (`src/views/inicio.js`) para evitar cachés viejas.

@@ -2,7 +2,7 @@
 // La categoría fija la escena y el fondo; el nombre elige la variante (doble, penne, churrasco…);
 // el id del producto fija, de forma determinista, el motivo del fondo, el giro y las migas.
 const C = {
-  gold: '#faae33', goldD: '#e0901c', goldL: '#ffc867', ember: '#823513', emberD: '#6b2a0e', toast: '#c46f24',
+  gold: '#efc547', goldD: '#d9a52a', goldL: '#f6d677', ember: '#8e1f16', emberD: '#731811', toast: '#c46f24',
   char: '#281006', card: '#402011', brown: '#5a2c15', canvas: '#ece2d0', paper: '#f6f0e4', linen: '#e0d3bb',
   rule: '#c9bba2', herb: '#7c8b34', herbD: '#5c6826', herbL: '#a3b04a', tomato: '#c8402a', coral: '#d9775f',
 };

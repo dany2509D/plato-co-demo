@@ -101,7 +101,7 @@ body.pres-activa .chat-pista--pres { display: block; margin-top: var(--sp-1, 8px
 .ia-caja { margin: var(--sp-1) 0 0; width: 100%; max-width: 400px; color: var(--c-on-dark); }
 .ia-sw { display: flex; align-items: center; gap: 12px; min-height: var(--tap); font-weight: 700; font-size: .9375rem; cursor: pointer; }
 .ia-sw input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.ia-pista { flex: none; position: relative; width: 48px; height: 28px; border-radius: var(--r-pill); border: 1.5px solid var(--c-gold); transition: background-color .15s ease; }
+.ia-pista { flex: none; position: relative; width: 48px; height: 28px; border-radius: var(--r-round); border: 1.5px solid var(--c-gold); transition: background-color .15s ease; }
 .ia-pista::after { content: ''; position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: var(--c-gold); transition: transform .15s ease; }
 .ia-sw input:checked + .ia-pista { background: var(--c-gold); }
 .ia-sw input:checked + .ia-pista::after { transform: translateX(20px); background: var(--c-char); }

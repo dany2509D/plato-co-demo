@@ -1,3 +1,4 @@
+import { brand } from '../config/brand.js';
 import { isAvailable, setAvailable } from './menu.js';
 
 // Modo Presentación: datos + motor mínimo, sin DOM. El DOM vive en src/ui/presenter.js.
@@ -5,9 +6,10 @@ import { isAvailable, setAvailable } from './menu.js';
 // no duplique acciones: antes de actuar se pregunta con falta(...) si la acción ya ocurrió.
 
 export const CONV = 'c-web';
-export const FRASE_PEDIDO = 'Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio';
-export const DIRECCION = 'Calle 50, Obarrio';
-export const FRASE_AGOTADO = 'Quiero una hamburguesa clásica para Obarrio';
+const EJ = brand.tema?.ejemplo;
+export const FRASE_PEDIDO = EJ ? 'Quiero ' + EJ.frase : 'Quiero 2 hamburguesas clásicas sin cebolla y una limonada para Obarrio';
+export const DIRECCION = EJ?.direccion ?? 'Calle 50, Obarrio';
+export const FRASE_AGOTADO = EJ?.agotadoPedido ?? 'Quiero una hamburguesa clásica para Obarrio';
 export const FRASE_RESERVA = 'Quiero reservar para 4 mañana a las 8 pm, cumpleaños';
 export const MENSAJE_FINAL = 'Cero pedidos copiados a mano, en todas sus sucursales';
 export const URL_DIAGNOSTICO = 'https://panacealogic.dev/cuentanos-tu-proyecto';
@@ -146,7 +148,7 @@ export function falta(accion, state, ctx) {
 // El plato que se agota: la hamburguesa clásica si hay; si no, el primero disponible de Hamburguesas.
 export function elegirAgotado(state, sucursalId) {
   const disp = state.productos.filter((p) => isAvailable(state, p.id, sucursalId));
-  return disp.find((p) => p.nombre === 'Hamburguesa clásica') ?? disp.find((p) => p.categoria === 'Hamburguesas') ?? null;
+  return disp.find((p) => p.nombre === (EJ?.agotado ?? 'Hamburguesa clásica')) ?? disp.find((p) => p.categoria === 'Hamburguesas') ?? disp[0] ?? null;
 }
 
 // Anota qué plato se va a agotar y cómo estaba (sin tocar el menú): así se puede restaurar al salir.

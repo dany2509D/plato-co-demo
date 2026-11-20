@@ -1,6 +1,8 @@
 // Textos del bot, por idioma. Español de Panamá (trato de "usted") e inglés.
 // Cada clave es un string o una función que recibe datos ya formateados.
 
+import { adaptarTexto, temaActivo } from '../config/temas.js';
+
 const money = (n) => `US$ ${n.toFixed(2)}`;
 export { money };
 
@@ -209,3 +211,14 @@ export const TEXTS = {
 };
 
 export const t = (lang) => TEXTS[lang] ?? TEXTS.es;
+
+// Tema de diseño (src/config/temas.js): sustituye los ejemplos de la plantilla original por los del cliente activo.
+if (temaActivo().reemplazos) {
+  for (const lang of Object.values(TEXTS)) {
+    for (const k of Object.keys(lang)) {
+      const v = lang[k];
+      if (typeof v === 'string') lang[k] = adaptarTexto(v);
+      else if (typeof v === 'function') lang[k] = (...a) => { const r = v(...a); return typeof r === 'string' ? adaptarTexto(r) : r; };
+    }
+  }
+}

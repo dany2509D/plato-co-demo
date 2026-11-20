@@ -32,7 +32,8 @@
 .app-header[data-estado="transparente"] {
   --hdr-fg: var(--c-on-dark); --hdr-line: color-mix(in srgb, var(--c-on-dark) 16%, transparent);
   --ctx-focus: var(--c-gold);
-  background: transparent;
+  /* Rediseño editorial: carbón sólido (igual al héroe), así el titular nunca se ve detrás del logotipo al desplazarse */
+  background: var(--c-char);
 }
 .app-header__inner { display: flex; align-items: center; gap: var(--sp-3); height: 100%; }
 
@@ -138,7 +139,7 @@ html.hoja-abierta { overflow: hidden; }
 .hoja-nav__links { list-style: none; margin: 0; padding: 0; }
 .hoja-nav__links a {
   display: block; padding: 10px 0; font-family: var(--font-display); font-size: 3rem; line-height: 1; letter-spacing: -.01em;
-  text-transform: uppercase; color: var(--c-on-dark); text-decoration: none; transition: color var(--dur-fast) var(--ease-out);
+  text-transform: none; color: var(--c-on-dark); text-decoration: none; transition: color var(--dur-fast) var(--ease-out);
 }
 .hoja-nav__links li + li { border-top: var(--rule-w) solid var(--c-line-dark); }
 .hoja-nav__links a:hover, .hoja-nav__links a[aria-current="page"] { color: var(--c-gold); }
@@ -153,42 +154,33 @@ html.hoja-abierta { overflow: hidden; }
 .hoja-nav__demo a:hover, .hoja-nav__demo button:hover { color: var(--c-gold); }
 @media (min-width: 900px) { .hoja-nav:not([open]) { display: none; } }
 
-/* ---------- Pie: carbón, 4 columnas con filetes y logotipo de borde a borde ---------- */
-.site-footer { margin-top: var(--sp-6); padding-block: var(--sp-8) var(--sp-5); }
+/* ---------- Pie (2.ª pasada «cookbook»): el mismo pergamino, separado solo por aire y un filete; texto en tinta ---------- */
+.site-footer { margin-top: var(--sp-5); padding-block: var(--sp-6) var(--sp-4); color: var(--c-ink); background: var(--c-canvas); border-top: var(--rule-w) solid var(--c-rule); }
 .vista[data-ruta="inicio"] + .site-footer { margin-top: 0; }
-.site-footer__grid { display: grid; grid-template-columns: minmax(0, 1fr); }
-.site-footer__col { padding-block: var(--sp-3); border-top: var(--rule-w) solid var(--c-line-dark); }
-.site-footer__col:first-child { border-top: 0; padding-top: 0; }
-@media (min-width: 600px) {
-  .site-footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .site-footer__col { padding: var(--sp-3) var(--sp-4); }
-  .site-footer__col:nth-child(odd) { padding-left: 0; }
-  .site-footer__col:nth-child(even) { border-left: var(--rule-w) solid var(--c-line-dark); }
-  .site-footer__col:nth-child(-n+2) { border-top: 0; padding-top: 0; }
-}
-@media (min-width: 1000px) {
-  .site-footer__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .site-footer__col:nth-child(n) { padding: 0 var(--sp-4); border-top: 0; border-left: var(--rule-w) solid var(--c-line-dark); }
-  .site-footer__col:first-child { padding-left: 0; border-left: 0; }
-}
-.site-footer h2 { margin: 0 0 var(--sp-2); font: 700 .8125rem/1.2 var(--font-body); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--c-gold); }
-.site-footer p { margin: 0 0 var(--sp-1); font-size: .875rem; line-height: 1.5; color: var(--c-on-dark-muted); }
-.site-footer__nota { white-space: nowrap; }
+.site-footer__grid { display: grid; gap: var(--sp-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 600px) { .site-footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .site-footer__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-5); } }
+.site-footer h2 { margin: 0 0 var(--sp-2); font: 400 1.75rem/1.1 var(--font-display); letter-spacing: -.02em; text-transform: none; color: var(--c-ink); }
+.site-footer p { margin: 0 0 var(--sp-1); font-size: .9375rem; line-height: 1.55; color: var(--c-ink-soft); }
+.site-footer__nota { white-space: nowrap; font-style: italic; }
 .site-footer ul { list-style: none; margin: var(--sp-1) 0 0; padding: 0; }
-.site-footer li a { display: inline-flex; align-items: center; min-height: 36px; font-size: .875rem; color: var(--c-on-dark); text-decoration: none; transition: color var(--dur-fast) var(--ease-out); }
-.site-footer li a:hover { color: var(--c-gold); text-decoration: underline; }
-.site-footer a { color: var(--c-gold); }
-/* Logotipo ajustado al ancho del contenedor (§3.10): --fs-wordmark */
+.site-footer li a { display: inline-flex; align-items: center; min-height: 40px; font-size: 1rem; font-weight: 500; color: var(--c-ink); text-decoration: none; }
+.site-footer li a:hover { text-decoration: underline; text-underline-offset: .2em; }
+.site-footer a { color: var(--c-ink); }
+.site-footer a.btn { color: var(--btn-fg); text-decoration: none; }
+.site-footer a.btn:hover { color: var(--btn-hover-fg); }
+.site-footer__wa { margin: 4px 0 8px; }
+/* Nombre de la casa de borde a borde, en Cormorant ligera (--fs-wordmark) */
 .site-footer__mark {
-  display: block; margin: var(--sp-8) 0 var(--sp-3); overflow: hidden;
-  font-family: var(--font-display); font-weight: 400; font-size: var(--fs-wordmark); line-height: .8; letter-spacing: -.022em;
-  text-transform: uppercase; white-space: nowrap; color: var(--c-gold); text-decoration: none;
+  display: block; margin: var(--sp-5) 0 var(--sp-3); overflow: hidden;
+  font-family: var(--font-display); font-weight: 300; font-size: calc(var(--fs-wordmark) * .92); line-height: .95; letter-spacing: -.04em;
+  text-transform: none; white-space: nowrap; color: var(--c-ink); text-decoration: none;
 }
 .site-footer__mark span { display: inline-block; }
 .site-footer__mark:focus-visible { outline-offset: 6px; border-radius: 0; }
-.site-footer .rule-dotted-gold { margin: 0 0 var(--sp-3); }
+.site-footer .rule { margin: 0 0 var(--sp-3); border-top-color: var(--c-rule); }
 .site-footer__legal { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--sp-1) var(--sp-4); }
-.site-footer__legal p { margin: 0; max-width: 78ch; font-size: .8125rem; }
+.site-footer__legal p { margin: 0; max-width: 78ch; font-size: .875rem; }
 body.modo-admin .site-footer { display: none; }
 
 @media (prefers-reduced-motion: reduce) {

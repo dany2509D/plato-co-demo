@@ -1,3 +1,4 @@
+import { brand } from '../config/brand.js';
 // Portada #/ (rediseño 2, bloque B · direccion-v2 §2.1): héroe con foto a sangre y titular de una línea →
 // sucursales con foto → lo que más se pide (4) → cómo funciona (banda carbón) → cifras →
 // menú del día + combos → reseñas → banda CTA con foto. El pie lo monta main.js.
@@ -12,8 +13,20 @@ import { combosHTML, bindCombos, menuDelDiaHTML } from '../ui/combos.js';
 import { fotoEscena } from '../ui/photo.js';
 import { icono, circuloIcono } from '../ui/icons.js';
 import { formatearCifra } from '../ui/reveal.js';
+import { estadoSucursal } from '../core/horario.js';
+import { estadoCorto } from '../ui/branch-picker.js';
+import { montarHeroVideo } from '../ui/hero-video.js';
+import { textMorph } from '../ui/efectos.js';
+import { menuDelDiaActivo } from '../core/horario.js';
 
-const DESTACADOS = ['Hamburguesa doble', 'Fettuccine Alfredo', 'Churrasco', 'Bowl de pollo y arroz'];
+import { DESTACADOS } from '../data/descripciones.js';
+const PORTADA = brand.tema?.portada ?? {};
+// Video del héroe (public/media). Un tema puede traer el suyo en portada.heroVideo; si falta el archivo queda la foto.
+const HERO_VIDEO = PORTADA.heroVideo ?? 'media/hero-cocina.mp4?v=1'; // subir ?v= al cambiar el archivo (evita cachés viejas)
+// Palabras que rotan en «Hoy en la cocina: …» (TextMorph de 21st.dev, ver efectos.js)
+const EYEBROW = PORTADA.eyebrow ?? 'Hamburguesas · pastas · parrilla · bowls';
+const PALABRAS = EYEBROW.split('·').map((w) => w.trim().toLowerCase()).filter(Boolean);
+const MDD = brand.tema?.menuDelDia ?? { nombre: 'Menú del día', precio: 9.95 };
 
 // Reseñas ficticias de la demo.
 const RESENAS = [
@@ -37,6 +50,11 @@ const ROLES = [
 const ESTRELLA = 'M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z';
 export const estrellasHTML = (n, clase = '') => `<span class="estrellas ${esc(clase)}" role="img" aria-label="${Number(n)} de 5 estrellas">${
   Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${ESTRELLA}" class="${i < n ? 'on' : ''}"/></svg>`).join('')}</span>`;
+
+// Titular del héroe palabra por palabra (motion.css las hace subir desde una máscara). El texto sigue siendo uno
+// solo para lectores de pantalla: los espacios quedan entre las palabras.
+const palabrasHTML = (t) => String(t).split(/\s+/).filter(Boolean)
+  .map((w, i) => `<span class="w"><span style="--i:${i}">${esc(w)}</span></span>`).join(' ');
 
 // Cifra con contador: el valor real en .sr-only; el número animado (aria-hidden) lo maneja reveal.js.
 function cifra(valor, { dec = 0, unidad = '', unidadSr = unidad, etiqueta, animar }) {
@@ -74,6 +92,13 @@ export function vistaInicio(main) {
     const mdd = menuDelDiaHTML(state, suc, { id: 'mdd-t' });
     nodo.querySelector('[data-dia]').innerHTML = mdd ? `<section class="c-sec c-dia" aria-labelledby="mdd-t"><div class="container--wide${rv}">${mdd}</div></section>` : '';
     nodo.querySelector('[data-combos]').innerHTML = combosHTML(state, suc);
+    const s = state.sucursales.find((x) => x.id === suc) ?? state.sucursales[0];
+    if (s) {
+      const st = estadoSucursal(s.horario, new Date());
+      const corto = s.nombre.replace(`${brand.nombre} `, '');
+      nodo.querySelector('[data-hero-estado]').innerHTML = `<b class="${st.abierto ? 'is-abierto' : ''}">${esc(corto)}</b> · <span class="${st.abierto ? 't-brillo' : ''}">${esc(estadoCorto(st, s.horario))}</span>`;
+      nodo.querySelector('[data-hero-eta]').textContent = `${s.etaBaseMin}–${s.etaBaseMin + 10} min`;
+    }
   }
 
   function pintar() {
@@ -82,34 +107,53 @@ export function vistaInicio(main) {
     const animar = true; // contadores de cifras (reveal.js); el valor real va en .sr-only
 
     nodo.innerHTML = `
-      <section class="c-hero on-dark" data-hero aria-labelledby="hero-t">
-        <div class="container--wide c-hero__cab">
-          <p class="eyebrow c-hero__eyebrow">Hamburguesas · pastas · parrilla · bowls</p>
-          <h1 id="hero-t" class="c-hero__t">Hecho al momento.</h1>
-        </div>
-        <div class="c-hero__escena">
-          ${fotoEscena('hero', { eager: true, clase: 'c-hero__foto', alt: 'Hamburguesa con papas fritas y tomates cherry sobre una pizarra oscura' })}
-          <div class="container--wide c-hero__sobre">
-            <div class="c-proof">
-              ${estrellasHTML(5)}
-              <p class="c-proof__n">4,8</p>
-              <p class="c-proof__t">2.140 reseñas · cifras ficticias</p>
-            </div>
-            <div class="c-hero__txt">
-              <p class="c-hero__lead">Servido con ganas: platos generosos y su mesa lista cuando llegue.</p>
-              <div class="c-hero__cta">
-                <a class="btn c-hero__btn" href="#/menu">Pedir ahora <span aria-hidden="true">→</span></a>
-                <a class="btn btn--ghost c-hero__btn c-hero__btn--ghost" href="#/chat">Reservar mesa</a>
-              </div>
-            </div>
+      <section class="c-hero c-hero--video" data-hero-video aria-labelledby="hero-t">
+        <div class="c-hero__pin">
+        <div class="c-hero__marco">
+          <div class="c-hero__media" aria-hidden="true">
+            ${fotoEscena(PORTADA.heroFoto ?? 'hero', { eager: true, clase: 'c-hero__foto', alt: '' })}
+            <video class="c-hero__video" src="${esc(HERO_VIDEO)}" muted loop playsinline preload="auto" disablepictureinpicture tabindex="-1"></video>
           </div>
+          <div class="container--wide c-hero__txt">
+            <a class="c-hero__pill" href="#/menu?c=menu-del-dia">
+              <span class="c-hero__pill-i" aria-hidden="true">${icono('estrella', { tam: 12 })}</span>
+              <span>${esc(MDD.nombre)} · $${Number(MDD.precio).toFixed(2)}${menuDelDiaActivo() ? ' · <span class="t-brillo">disponible ahora</span>' : ''}</span>
+              <span class="c-hero__pill-f" aria-hidden="true">→</span>
+            </a>
+            <p class="eyebrow c-hero__eyebrow">Hoy en la cocina: <span class="tm" data-morph aria-hidden="true"></span><span class="sr-only">${esc(PALABRAS.join(', '))}</span></p>
+            <h1 id="hero-t" class="c-hero__t">${palabrasHTML(PORTADA.titulo ?? 'Hecho al momento.')}</h1>
+            <p class="c-hero__lead">${esc(PORTADA.lead ?? 'Platos generosos cocinados cuando usted pide. Entrega en Ciudad de Panamá, retiro en tienda o su mesa reservada en tres sucursales.')}</p>
+            <div class="c-hero__cta">
+              <a class="btn btn--accent btn--lg btn--brillo c-hero__btn" href="#/menu">Ver menú y pedir <span aria-hidden="true">→</span></a>
+              <a class="btn btn--wa btn--lg c-hero__btn" href="#/chat">${icono('whatsapp', { tam: 20 })}<span>Pedir por WhatsApp</span></a>
+            </div>
+            <ul class="c-hero__datos" role="list">
+              <li>${icono('reloj', { tam: 18 })}<span data-hero-estado></span></li>
+              <li>${icono('en-camino', { tam: 18 })}<span>Entrega en <b data-hero-eta></b></span></li>
+              <li>${estrellasHTML(5)}<span><b>4,8</b> · 2.140 reseñas <small>(ficticias)</small></span></li>
+            </ul>
+          </div>
+          <button type="button" class="c-hero__pausa" data-video-pausa aria-pressed="false"><span class="c-hero__pausa-i" aria-hidden="true">${icono('pausa', { tam: 16 })}${icono('play', { tam: 16 })}</span><span data-t>Pausar video</span></button>
+        </div>
         </div>
       </section>
 
       <section class="c-sec c-sucs" aria-labelledby="suc-t">
         <div class="container--wide">
-          ${cabeza('suc-t', 'Pedir o reservar', 'Elija su sucursal', '<p class="c-head__nota">Le mostramos lo que hay hoy en esa cocina, si está abierta y cuánto tarda su pedido.</p>', rv)}
+          ${cabeza('suc-t', 'Ciudad de Panamá', 'Sucursales y horarios', '<p class="c-head__nota">Elija la suya: le mostramos lo que hay hoy en esa cocina, si está abierta, hasta dónde entrega y cuánto tarda su pedido.</p>', rv)}
           <div data-picker></div>
+          <div class="c-contacto">
+            <div class="c-contacto__txt">
+              <p class="c-contacto__t">¿Prefiere escribir?</p>
+              <p>Pida, reserve o pregunte por alérgenos por WhatsApp. Responde el asistente al momento y una persona si la necesita.</p>
+              <p class="c-contacto__tel">WhatsApp y teléfono: <strong>${esc(brand.telefono)}</strong></p>
+            </div>
+            <div class="c-contacto__acc">
+              <a class="btn btn--wa btn--lg" href="#/chat">${icono('whatsapp', { tam: 20 })}<span>Pedir por WhatsApp</span></a>
+              <a class="btn btn--ghost btn--lg" href="tel:${esc(brand.telefono.replace(/[^+\d]/g, ''))}">Llamar</a>
+            </div>
+            <p class="c-contacto__nota">Demo: el botón abre el chat simulado de WhatsApp; el número es ficticio.</p>
+          </div>
         </div>
       </section>
 
@@ -120,7 +164,7 @@ export function vistaInicio(main) {
         </div>
       </section>
 
-      <section class="c-sec c-how on-dark" aria-labelledby="como-t">
+      <section class="c-sec c-how" aria-labelledby="como-t">
         <div class="container--wide">
           <div class="c-how__intro${rv}">
             <div class="c-how__frase">
@@ -134,8 +178,7 @@ export function vistaInicio(main) {
           </div>
           <ol class="c-how__pasos">
             ${PASOS.map(([ico, t, d], i) => `<li class="c-how__paso${rv}" style="--rv-delay:${i * 0.1}s">
-              ${circuloIcono(ico, { tam: 24, tono: 'oscuro' })}
-              <p class="c-how__n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</p>
+              ${circuloIcono(ico, { tam: 24 })}
               <h3>${esc(t)}</h3><p>${esc(d)}</p></li>`).join('')}
           </ol>
           <ul class="c-roles" role="list" aria-label="Una mesa, tres personas">
@@ -168,7 +211,7 @@ export function vistaInicio(main) {
 
       <section class="c-sec c-combos" aria-labelledby="combos-t">
         <div class="container--wide">
-          ${cabeza('combos-t', 'Para resolver rápido', 'Combos en tres pasos', `<a class="btn btn--ghost" href="#/menu?c=combos">Ver en el menú <span aria-hidden="true">→</span></a>`, rv)}
+          ${cabeza('combos-t', 'Para resolver rápido', 'Combos con ahorro', `<a class="btn btn--ghost" href="#/menu?c=combos">Ver en el menú <span aria-hidden="true">→</span></a>`, rv)}
           <div data-combos></div>
         </div>
       </section>
@@ -185,14 +228,13 @@ export function vistaInicio(main) {
         </div>
       </section>
 
-      <section class="c-cta on-dark" aria-labelledby="cta-t">
-        ${fotoEscena('cta_ingredientes', { alt: '', clase: 'c-cta__foto reveal--foto' })}
+      <section class="c-cta" aria-labelledby="cta-t">
         <div class="container--wide c-cta__in">
           <h2 id="cta-t" class="c-cta__t">¿Con hambre?</h2>
           <p class="c-cta__lead">Pida en línea para entrega o retiro, o escríbanos y el asistente arma su pedido.</p>
           <div class="c-cta__acc">
-            <a class="btn btn--lg" href="#/menu">Pedir en línea</a>
-            <a class="btn btn--ghost btn--lg c-cta__ghost" href="#/chat">Pedir por chat</a>
+            <a class="btn btn--accent btn--lg" href="#/menu">Ver menú y pedir <span aria-hidden="true">→</span></a>
+            <a class="btn btn--wa btn--lg" href="#/chat">${icono('whatsapp', { tam: 20 })}<span>Pedir por WhatsApp</span></a>
           </div>
         </div>
       </section>`;
@@ -202,6 +244,8 @@ export function vistaInicio(main) {
     bindCombos(nodo.querySelector('[data-combos]'), store);
   }
   pintar();
+  const offVideo = montarHeroVideo(nodo.querySelector('[data-hero-video]'));
+  const offMorph = textMorph(nodo.querySelector('[data-morph]'), PALABRAS);
   const off = store.on('menu:cambio', () => pintarSucursal());
-  return () => off();
+  return () => { off(); offVideo(); offMorph(); };
 }

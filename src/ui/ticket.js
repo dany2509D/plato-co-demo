@@ -11,7 +11,10 @@
  * `precio` null/undefined → no se muestra importe en esa línea. Sin `totales` no hay bloque de totales.
  * Colores: variante 'papel' (pergamino) u 'oscuro' (carbón, para ir sobre foto). Sin sombras ni degradados.
  */
-import { esc, money } from './dom.js';
+import { esc } from './dom.js';
+
+// El ticket/factura conserva el formato fiscal «US$ 19.15» (la carta usa «$19.15»).
+const money = (n) => `US$ ${Number(n).toFixed(2)}`;
 import { fotoProducto } from './photo.js';
 import { totalesPedido, lineasPedido, nombreCorto } from '../views/compra-util.js';
 import '../styles/momentos.css';

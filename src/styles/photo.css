@@ -16,9 +16,8 @@
 
 /* Estado base del revelado con máscara (§6.1). El observador (clase .is-in) lo añade reveal.js (bloque B).
  * Solo se oculta cuando <html> tiene .rv-ready; sin JS o con movimiento reducido la foto es visible. Nunca en el LCP. */
-.rv-ready .reveal--foto { clip-path: inset(0 0 100% 0); opacity: 1; transform: none; transition: clip-path var(--dur-photo) var(--ease-out); }
-.rv-ready .reveal--foto img { transform: scale(1.08); transition: transform .9s var(--ease-out), filter .3s var(--ease-out); }
-.rv-ready .reveal--foto.is-in { clip-path: inset(0); }
+/* Rediseño editorial (19 nov 2026): la foto ya no se recorta a 0 esperando el scroll; siempre visible, solo asienta un zoom 1.04 → 1. */
+.rv-ready .reveal--foto img { transform: scale(1.04); transition: transform .9s var(--ease-out), filter .3s var(--ease-out); }
 .rv-ready .reveal--foto.is-in img { transform: none; }
 .rv-ready .reveal--foto.is-in:hover img { transform: scale(1.04); }
 

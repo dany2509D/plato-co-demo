@@ -9,7 +9,7 @@
 .kpi:first-child { padding-left: 0; }
 @media (min-width: 640px) { .kpi + .kpi { border-left: var(--rule-w) solid var(--c-adm-hair); } }
 @media (max-width: 639px) { .kpi { padding-inline: 0; } .kpi + .kpi { border-top: var(--rule-w) solid var(--c-adm-hair); } }
-.kpi-valor { font-family: var(--font-display); font-size: clamp(2.5rem, min(40cqw, 240cqw / var(--n, 4)), 7rem); line-height: 1; letter-spacing: var(--tr-display); text-transform: uppercase; color: var(--c-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kpi-valor { font-family: var(--font-display); font-size: clamp(2.5rem, min(40cqw, 240cqw / var(--n, 4)), 7rem); line-height: 1; letter-spacing: var(--tr-display); text-transform: none; color: var(--c-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
 @media (max-width: 639px) { .kpi-valor { font-size: clamp(2.5rem, min(40cqw, 240cqw / var(--n, 4)), 4rem); } }
 .kpi--texto .kpi-valor { padding-block: .08em; }
 .kpi-etiqueta { margin-top: var(--sp-2); font-size: .875rem; font-weight: 500; color: var(--c-adm-muted); }

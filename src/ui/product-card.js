@@ -1,8 +1,9 @@
-import { esc, money, toast } from './dom.js';
+import { esc, toast } from './dom.js';
 import { fotoProducto } from './photo.js';
 import { icono } from './icons.js';
 import { abrirDialogo } from './dialog.js';
 import { cart } from './cart-singleton.js';
+import { descripcionDe, esMasVendido, esNuevo } from '../data/descripciones.js';
 
 const SIN_DATO = 'Consulte alérgenos con una persona';
 
@@ -17,11 +18,21 @@ export function badgesHTML(p) {
   return out.join('');
 }
 
-// Precio con la moneda pequeña y la cifra en Anton.
+// Precio «$11.50»: el signo pegado a la cifra, cifras tabulares.
 export const precioHTML = (n, cls = 'precio') => {
-  const [, cifra] = money(n).split(' ');
-  return `<span class="${cls}"><span class="precio__mon">US$</span>${cifra}</span>`;
+  const cifra = Number(n).toFixed(2);
+  return `<span class="${cls}"><span class="precio__mon">$</span>${cifra}</span>`;
 };
+
+// Etiquetas comerciales sobre la foto (máx. 2): Más vendido, Nuevo, Picante, Vegetariano. Solo con datos de la carta.
+function etiquetasHTML(p) {
+  const out = [];
+  if (esMasVendido(p.nombre)) out.push('<span class="badge badge--top">Más vendido</span>');
+  if (esNuevo(p.nombre)) out.push('<span class="badge badge--nuevo">Nuevo</span>');
+  if (/picante/i.test(p.nombre)) out.push('<span class="badge badge--hot">Picante</span>');
+  if (p.vegetariano) out.push('<span class="badge badge--veg">Vegetariano</span>');
+  return out.length ? `<span class="dish__tags">${out.slice(0, 2).join('')}</span>` : '';
+}
 
 // Línea meta: solo datos declarados; nunca afirma «libre de».
 function metaTexto(p) {
@@ -46,18 +57,19 @@ export function dialogoCabecera(p) {
 export function productCardHTML(p, { etiqueta = 'Agregar', clase = '', variante = 'grid', eager = false, agotado = Boolean(p.agotado) } = {}) {
   const v = variante === 'fila' ? 'fila' : 'grid';
   const pp = agotado && !p.agotado ? { ...p, agotado: true } : p;
-  const picante = /picante/i.test(p.nombre);
+  const desc = descripcionDe(p.nombre);
   return `
     <article class="dish foto-host dish--${v}${agotado ? ' dish--agotado' : ''} ${esc(clase)}">
       <div class="dish__media">
         ${fotoProducto(pp, { variante: 'grid', eager })}
-        ${picante ? '<span class="dish__picante badge badge--spicy">Picante</span>' : ''}
+        ${agotado ? '' : etiquetasHTML(p)}
         ${agotado ? '<span class="dish__agotado">Agotado hoy</span>' : ''}
-        <button type="button" class="dish__add" data-add="${esc(p.id)}" aria-label="${esc(etiqueta)} ${esc(p.nombre)}"${agotado ? ' disabled' : ''}>${icono('mas', { tam: 20 })}</button>
       </div>
       <div class="dish__body">
         <div class="dish__head"><h3 class="dish__name">${esc(p.nombre)}${p.vegetariano ? ' <span class="dish__v" role="img" aria-label="vegetariano">(V)</span>' : ''}</h3>${precioHTML(p.precio, 'dish__price')}</div>
+        ${desc ? `<p class="dish__desc">${esc(desc)}</p>` : ''}
         ${metaTexto(p)}
+        <button type="button" class="btn btn--sm dish__add" data-add="${esc(p.id)}" aria-label="${esc(etiqueta)} ${esc(p.nombre)}"${agotado ? ' disabled' : ''}>${agotado ? 'Agotado' : `${icono('mas', { tam: 18 })}<span>${esc(etiqueta)}</span>`}</button>
       </div>
     </article>`;
 }
@@ -68,22 +80,32 @@ export function bindAdd(contenedor, store) {
     const b = e.target.closest('[data-add]') || e.target.closest('.dish')?.querySelector('[data-add]:not([disabled])');
     if (!b || !contenedor.contains(b) || b.disabled) return;
     const p = store.get().productos.find((x) => x.id === b.dataset.add);
-    if (p) agregarFlujo(p);
+    if (p) agregarFlujo(p, { alAgregar: () => confirmarBoton(b) });
   });
 }
 
-export function agregarFlujo(p) {
+// «Agregar» → «Agregado» con una marca que se dibuja (motion.css · .is-ok) y vuelve a su estado en 1,4 s.
+function confirmarBoton(b) {
+  if (!b?.isConnected || b.classList.contains('is-ok')) return;
+  const antes = b.innerHTML;
+  b.classList.add('is-ok');
+  b.innerHTML = `${icono('check', { tam: 18 })}<span>Agregado</span>`;
+  setTimeout(() => { if (b.isConnected) { b.classList.remove('is-ok'); b.innerHTML = antes; } }, 1400);
+}
+
+export function agregarFlujo(p, { alAgregar } = {}) {
   if (!p.modificadores.length) {
     cart.add(p.id, [], 1);
     toast(`Agregado: ${p.nombre}`);
+    alAgregar?.();
     return;
   }
-  abrirModificadores(p);
+  abrirModificadores(p, alAgregar);
 }
 
 const etiquetaMod = (m) => m.charAt(0).toUpperCase() + m.slice(1);
 
-function abrirModificadores(p) {
+function abrirModificadores(p, alAgregar) {
   const termino = p.modificadores.filter((m) => m.startsWith('término'));
   const extras = p.modificadores.filter((m) => !m.startsWith('término'));
   const form = document.createElement('form');
@@ -125,5 +147,6 @@ function abrirModificadores(p) {
     cart.add(p.id, mods, Number(fd.get('cantidad')) || 1);
     cerrar();
     toast(`Agregado: ${p.nombre}`);
+    alAgregar?.();
   });
 }

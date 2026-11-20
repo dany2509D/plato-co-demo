@@ -1,7 +1,8 @@
 // Utilidades mínimas de DOM compartidas por las vistas del cliente.
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ESC[c]);
-export const money = (n) => `US$ ${Number(n).toFixed(2)}`;
+// Precio de cara al cliente: «$11.50» (dólar, punto decimal). El bot y el panel usan su propio formato «US$».
+export const money = (n) => `$${Number(n).toFixed(2)}`;
 
 export function el(html) {
   const t = document.createElement('template');

@@ -18,7 +18,7 @@
 /* ================= Compartido (portada · carta · diálogo de modificadores; dueños B y A2) ================= */
 .c-proof strong, .suc-fila__n, .suc-fila__nombre, .suc-fila__eta b, .suc-tarjeta__in strong, .numeral-pill, .c-how__n, .c-resena blockquote::before,
 .dish__price, .mdd__cifra, .combo__price, .mod-precio {
-  font-family: var(--font-display); font-weight: 400; text-transform: uppercase; line-height: .85; white-space: nowrap;
+  font-family: var(--font-display); font-weight: 300; text-transform: none; line-height: 1; white-space: nowrap;
 }
 .c-hero__t, .c-cta__t { font-size: var(--cli-poster); line-height: var(--cli-lh); letter-spacing: -.025em; margin: 0; }
 .c-h2, .mdd__t { line-height: .9; letter-spacing: -.02em; margin: 0; }
@@ -46,7 +46,7 @@
 .c-head { align-items: flex-end; gap: var(--sp-2) var(--sp-5); margin-bottom: var(--sp-5); }
 .c-h2 { font-size: clamp(2.75rem, 1.2rem + 5.4vw, 6rem); }
 .c-head__nota { max-width: 38ch; margin: 0; font-size: var(--fs-lead); line-height: 1.45; color: var(--ctx-muted); }
-.precio__mon { margin-right: .35em; font: 700 .75rem/1.6 var(--font-body); letter-spacing: .06em; vertical-align: top; }
+.precio__mon { margin-right: .03em; font: inherit; letter-spacing: 0; vertical-align: baseline; } /* «$11.50»: signo del mismo tamaño que la cifra */
 .numeral-pill { flex: none; display: inline-grid; place-items: center; min-width: 40px; height: 40px; padding: 0 8px; border: 1px solid; border-radius: var(--r-pill); font-size: 1.0625rem; line-height: 1; }
 .estrellas { display: inline-flex; gap: 3px; }
 .estrellas svg { width: 20px; height: 20px; }
@@ -73,7 +73,7 @@
 /* ================= Piezas comunes del flujo de compra ================= */
 /* Cifras en Anton: total y ETA. Todo lo demás (nombres, pasos, IDs) en DM Sans. */
 .totales__cifra, .pd-eta__num, .pd-titulo__estado, .m-cab__t, .m-sec__t, .ck-titulo, .ck-paso__n {
-  font-family: var(--font-display); font-weight: 400; text-transform: uppercase; line-height: .85; letter-spacing: -.02em;
+  font-family: var(--font-display); font-weight: 300; text-transform: none; line-height: 1; letter-spacing: -.02em;
 }
 /* Títulos de bloque en DM Sans (anulan h2/h3 en Anton de base.css) */
 .cart-panel__t, .ck-resumen__t, .pd-bloque__t, .pd-factura__t, .ck-paso__cab {
@@ -402,10 +402,10 @@ dialog.modal-hoja.is-arrastrando { transition: none; }
 .ck-cab .eyebrow, .ck-vacio .eyebrow, .ck-form .label { font-size: .875rem; }
 .ck-form .help { font-size: .9375rem; line-height: 1.45; }
 .ck-aviso .btn--sm { font-size: .875rem; }
-.totales__cifra .precio__mon { font-size: .875rem; }
+.totales__cifra .precio__mon { font-size: inherit; margin-right: .03em; }
 .menu-vista .dish__meta { font-size: .9375rem; }
 .menu-vista .dish__v { font-size: .875rem; }
-.menu-vista .dish__price .precio__mon, .menu-vista .combo__price .precio__mon, .menu-vista .mdd__cifra .precio__mon { font-size: .875rem; }
+.menu-vista .dish__price .precio__mon, .menu-vista .combo__price .precio__mon, .menu-vista .mdd__cifra .precio__mon { font-size: inherit; margin-right: .03em; }
 .menu-vista .dish__agotado, .menu-vista .dish .badge { font-size: .875rem; }
 .menu-vista :is(.combos-nota, .combo__antes, .mdd__precio > span:last-child) { font-size: .9375rem; }
 

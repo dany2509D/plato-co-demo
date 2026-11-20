@@ -8,6 +8,8 @@ import './styles/portada.css';
 import './styles/admin.css';
 import './styles/kitchen.css';
 import './styles/gestion.css';
+import './styles/motion.css';
+import './styles/forma.css';
 import { brand } from './config/brand.js';
 import { crearBanner } from './ui/banner.js';
 import { onRouteChange, parseRoute } from './ui/router.js';
@@ -25,18 +27,34 @@ import { adminMenu } from './views/admin-menu.js';
 import { renderIndicadores } from './views/admin-indicadores.js';
 import { vistaChat } from './views/chat.js';
 import { vistaEstilo } from './views/estilo.js';
+import { vistaNoEncontrado } from './views/no-encontrado.js';
 import { crearFooter } from './ui/footer.js';
 import { vigilarReveal } from './ui/reveal.js';
 import { getAppBot } from './bot/instance.js';
 import { montarPresentacion, startPresentation } from './ui/presenter.js';
 import { crearCabecera, vigilarCabecera } from './ui/cabecera.js';
+import { TEMAS, aplicarTokens, guardarTema, temaActivo, temaActivoId } from './config/temas.js';
+
+// Tema de diseño activo (botón «Diseño» del menú Demo): sus tokens CSS se aplican antes de pintar nada.
+aplicarTokens(temaActivo());
+
+// Cambiar de diseño reinicia los datos (la carta y las sucursales del tema se siembran al cargar) y recarga la página.
+function cambiarTema(id) {
+  if (id === temaActivoId() || !TEMAS[id]) return;
+  if (!window.confirm(`¿Cambiar al diseño «${TEMAS[id].nombre}»? Se reiniciarán los datos de la demo (carta, pedidos y reservas de ejemplo).`)) return;
+  if (!guardarTema(id)) return;
+  try { localStorage.removeItem('plato-co-demo:v1'); } catch { /* sin almacenamiento: la recarga siembra igual */ }
+  location.hash = '#/';
+  location.reload();
+}
 
 const TITULOS = {
-  inicio: 'Inicio', menu: 'Menú', carrito: 'Su pedido', chat: 'Asistente', estilo: 'Guía de estilo', pedido: 'Seguimiento de pedido',
+  inicio: 'Inicio', menu: 'La carta', carrito: 'Su pedido', chat: 'Asistente', estilo: 'Guía de estilo', pedido: 'Seguimiento de pedido',
+  'no-encontrado': 'Página no encontrada',
   'admin-cocina': 'Cocina', 'admin-reservas': 'Reservas', 'admin-menu': 'Administrar menú', 'admin-indicadores': 'Indicadores',
 };
 
-const VISTAS = { inicio: vistaInicio, menu: vistaMenu, carrito: vistaCarrito, pedido: vistaPedido, chat: vistaChat, estilo: vistaEstilo };
+const VISTAS = { inicio: vistaInicio, menu: vistaMenu, carrito: vistaCarrito, pedido: vistaPedido, chat: vistaChat, estilo: vistaEstilo, 'no-encontrado': vistaNoEncontrado };
 
 const ADMIN = {
   'admin-cocina': adminCocina,
@@ -58,7 +76,7 @@ const banner = crearBanner();
 app.append(banner);
 
 // Cabecera (bloque B, src/ui/cabecera.js): utilidades de la demo en el menú «Demo ▾» y hoja móvil.
-const header = crearCabecera({ alReiniciar: reiniciarDemo, alPresentar: () => startPresentation() });
+const header = crearCabecera({ alReiniciar: reiniciarDemo, alPresentar: () => startPresentation(), alTema: cambiarTema });
 app.append(header);
 
 const main = document.createElement('main');
@@ -73,9 +91,14 @@ vigilarReveal(main);
 // Transparente sobre el héroe → sólida al pasarlo; fija --stick-top / --banner-h para los elementos pegajosos.
 vigilarCabecera(header);
 
+let cuentaPrevia = null;
 function pintarCuenta() {
   const n = cart.count();
   header.querySelector('[data-cuenta]').textContent = String(n);
+  // Rebote del contador cuando sube (motion.css · .is-bump); no al cargar la página.
+  const bolsa = header.querySelector('.nav-carrito');
+  if (cuentaPrevia !== null && n > cuentaPrevia) { bolsa.classList.remove('is-bump'); void bolsa.offsetWidth; bolsa.classList.add('is-bump'); }
+  cuentaPrevia = n;
   header.querySelector('.nav-carrito').setAttribute('aria-label', `Carrito, ${n} ${n === 1 ? 'producto' : 'productos'}`);
 }
 store.subscribe(pintarCuenta);
@@ -103,6 +126,9 @@ function renderVista(ruta) {
     h.textContent = titulo;
     main.append(h);
   }
+  // Transición de página (motion.css): solo en las vistas del cliente; el panel no se mueve.
+  main.classList.remove('vista-entra');
+  if (!esAdmin) { void main.offsetWidth; main.classList.add('vista-entra'); }
   window.scrollTo(0, 0);
 }
 

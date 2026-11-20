@@ -1,4 +1,5 @@
 import { plato, coloresPlato } from '../assets/brand/geometria.js';
+import { aplicarTema } from './temas.js';
 
 // ---------------------------------------------------------------------------------------------------------------
 // MARCA (plantilla). Para otra identidad cambie nombre, iniciales, lema y colores: todo lo demás (logo, sello,
@@ -26,7 +27,7 @@ const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" rol
   color: coloresPlato({ tomate: colores.tomate, papel: colores.papel, oro: colores.oro }),
 })}</svg>`;
 
-export const brand = {
+const base = {
   nombre,
   iniciales: 'P&C',             // monograma dentro del plato
   lema: 'Hecho al momento',     // texto del sello redondo
@@ -83,3 +84,6 @@ export const brand = {
     },
   ],
 };
+
+// Tema de diseño activo (botón «Diseño» del menú Demo): «plato» deja la marca tal cual.
+export const brand = aplicarTema(base);

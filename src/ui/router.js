@@ -14,7 +14,8 @@ export function parseRoute(hash) {
   if (SIMPLES.includes(a) && partes.length === 1) return { name: a, params: {} };
   if (a === 'pedido' && b && partes.length === 2) return { name: 'pedido', params: seed ? { id: b, seed } : { id: b } };
   if (a === 'admin' && ADMIN.includes(b) && partes.length === 2) return { name: 'admin-' + b, params: {} };
-  return { name: 'inicio', params: {} };
+  // Hash vacío o «#/» → inicio; cualquier otra cosa desconocida → página 404 de marca.
+  return partes.length === 0 ? { name: 'inicio', params: {} } : { name: 'no-encontrado', params: {} };
 }
 
 export function onRouteChange(callback) {

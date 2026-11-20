@@ -35,10 +35,10 @@ export function branchPicker(store, onChange, { variante = 'tarjetas', leyenda =
     if (variante === 'fotos') {
       return `<label class="suc-foto">${input}
         <span class="suc-foto__media">${fotoSucursal(i, { clase: 'reveal--foto' })}<span class="suc-foto__marca" aria-hidden="true">✓ Su sucursal</span></span>
-        <span class="suc-foto__n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
         <span class="suc-foto__nombre">${esc(corto(s))}</span>
         <span class="suc-foto__dir">${esc(s.direccion)}</span>
         <span class="suc-foto__hor">Hoy de ${esc(s.horario.abre)} a ${esc(s.horario.cierra)}</span>
+        ${s.zonasEntrega?.length ? `<span class="suc-foto__zonas">Entrega en ${esc(s.zonasEntrega.join(', '))}</span>` : ''}
         <span class="suc-foto__pie">
           <span class="suc-estado suc-estado--corto${st.abierto ? ' is-abierto' : ''}${st.cierraPronto ? ' is-pronto' : ''}">${esc(estadoCorto(st, s.horario))}</span>
           <span class="suc-foto__eta"><b>${eta(s)} min</b> <small>entrega aprox.</small></span>
@@ -47,7 +47,6 @@ export function branchPicker(store, onChange, { variante = 'tarjetas', leyenda =
     }
     if (variante === 'filas') {
       return `<label class="suc-fila">${input}
-        <span class="suc-fila__n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
         <span class="suc-fila__nombre">${esc(corto(s))}</span>
         <span class="suc-fila__datos"><span>${esc(s.direccion)}</span><span>Hoy de ${esc(s.horario.abre)} a ${esc(s.horario.cierra)}</span></span>
         ${estado}

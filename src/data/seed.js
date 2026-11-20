@@ -20,7 +20,7 @@ const OFFSET_PANAMA_MS = -5 * 3600 * 1000; // America/Panama: UTC-5 todo el año
 const MOD_CARNE = ['término medio', 'término tres cuartos', 'término bien cocido'];
 
 // [nombre, categoria, precio, vegetariano, modificadores, alergenos, alergenosDeclarados]
-const MENU = [
+const MENU_BASE = [
   ['Aros de cebolla', 'Entradas', 4.5, true, ['sin salsa', 'agrandar'], ['gluten'], true],
   ['Alitas con salsa', 'Entradas', 7.5, false, ['sin salsa', 'agrandar'], [], false],
   ['Nachos con queso', 'Entradas', 6.75, true, ['sin cebolla', 'agrandar'], ['lácteos'], true],
@@ -64,7 +64,7 @@ const MENU = [
 ];
 
 // [nombre, descripcion, [nombres de productos], precio]
-const COMBOS = [
+const COMBOS_BASE = [
   ['Combo clásico', 'Hamburguesa clásica, papas fritas y refresco', ['Hamburguesa clásica', 'Papas fritas', 'Refresco'], 11.95],
   ['Combo doble', 'Hamburguesa doble, aros de cebolla y limonada', ['Hamburguesa doble', 'Aros de cebolla', 'Limonada'], 15.5],
   ['Combo pasta', 'Fettuccine Alfredo, ensalada de la casa y té helado', ['Fettuccine Alfredo', 'Ensalada de la casa', 'Té helado'], 15.95],
@@ -72,6 +72,10 @@ const COMBOS = [
   ['Combo verde', 'Bowl vegetariano, sopa de tomate y jugo de naranja', ['Bowl vegetariano', 'Sopa de tomate', 'Jugo de naranja'], 14.5],
   ['Combo dulce', 'Brownie con helado y café americano', ['Brownie con helado', 'Café americano'], 7.25],
 ];
+
+// Tema de diseño (src/config/temas.js): un prospecto puede traer su propia carta y sus combos.
+const MENU = brand.tema?.menu ?? MENU_BASE;
+const COMBOS = brand.tema?.combos ?? COMBOS_BASE;
 
 const slug = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 

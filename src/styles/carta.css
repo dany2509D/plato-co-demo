@@ -3,55 +3,67 @@
 
 /* ================= Tarjeta de plato (rediseño 2, §3.3) ================= */
 .dish-grid, .combos-grid { display: grid; gap: var(--sp-3); } /* base compartida */
-.dish-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
-.dish-grid--menu { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); column-gap: 24px; row-gap: 56px; }
+.dish-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 20px; }
+.dish-grid--menu { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 20px; }
 
-/* Sin caja: ni borde, ni fondo, ni sombra, ni radio. Toda la tarjeta es pulsable. */
-.dish { position: relative; display: flex; flex-direction: column; overflow: visible; background: none; border: 0; border-radius: 0; box-shadow: none; cursor: pointer; transition: none; }
-.dish:hover { border-color: transparent; }
+/* Tarjeta estructurada (rediseño editorial, 19 nov 2026): papel blanco, filete de 1 px, radio 10 px.
+   Foto arriba sin velos, etiquetas reales sobre la foto, nombre + precio, ingredientes, alérgenos y botón «Agregar».
+   Toda la tarjeta sigue siendo pulsable (bindAdd delega en el botón). */
+.dish {
+  position: relative; display: flex; flex-direction: column; overflow: hidden; cursor: pointer;
+  background: var(--c-linen); border: 0; border-radius: 0; box-shadow: none;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.dish:hover .dish__name { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .18em; }
+.dish:active { transform: translateY(1px); }
 .dish__media { position: relative; }
-.dish__media .foto { width: 100%; }
-.dish__body { display: flex; flex-direction: column; gap: 6px; padding: 16px 0 0; }
-.dish__head { align-items: flex-start; gap: 16px; }
-/* DM Sans dentro de la tarjeta (nada de Anton) */
-.dish__name { flex: 1; min-width: 0; margin: 0; font: 600 1.125rem/1.25 var(--font-body); letter-spacing: 0; text-transform: none; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.dish__v { font-size: .8125rem; font-weight: 500; color: var(--c-ink-muted); white-space: nowrap; }
-.dish__price { flex: none; font: 600 1.125rem/1.25 var(--font-body); text-transform: none; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.dish__price .precio__mon { margin-right: .3em; font-size: .75rem; line-height: 1.7; }
-.dish__meta { margin: 0; display: flex; align-items: center; gap: 6px; min-width: 0; font-size: .8125rem; line-height: 1.4; color: var(--c-ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dish__media .foto { width: 100%; border-radius: 0; }
+.dish__body { display: flex; flex-direction: column; gap: 6px; flex: 1; padding: 16px 18px 18px; }
+.dish__head { display: flex; align-items: baseline; gap: 12px; }
+.dish__name { flex: 1; min-width: 0; margin: 0; font: 400 1.625rem/1.1 var(--font-display); letter-spacing: -.02em; text-transform: none; color: var(--c-ink); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dish__price { flex: none; font: 500 1.0625rem/1.2 var(--font-body); text-transform: none; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--c-ink); }
+.dish__price .precio__mon { margin-right: 1px; font-size: inherit; }
+.dish__desc { margin: 0; font-size: .9375rem; line-height: 1.55; color: var(--c-ink-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dish__meta { margin: 0; display: flex; align-items: center; gap: 6px; min-width: 0; font-size: .8125rem; font-style: italic; line-height: 1.4; color: var(--c-ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dish__meta--ask .ico { color: var(--c-ember); }
 .dish__meta--ask span { overflow: hidden; text-overflow: ellipsis; }
-.dish__picante { position: absolute; left: 12px; top: 12px; z-index: 2; }
+.dish__tags { position: absolute; left: 10px; top: 10px; z-index: 2; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 20px); }
+.dish__tags .badge { min-height: 26px; padding: 3px 8px; font-size: .8125rem; }
+.dish__tags .badge--veg { background: var(--c-linen); }
 
-/* Botón «+» redondo sobre la foto */
-.dish__add { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0; color: var(--c-ink); background: var(--c-paper); border: 1px solid var(--c-ink); border-radius: 50%; cursor: pointer; transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
-.dish__add:hover, .dish:hover .dish__add:not(:disabled) { background: var(--c-gold); border-color: var(--c-ink); }
-.dish__add:active { transform: scale(.94); }
-.dish__add:disabled { cursor: not-allowed; opacity: .55; background: var(--c-linen); }
+/* Botón «Agregar»: rectangular, con texto (no un «+» suelto) y zona táctil de 44 px */
+.dish__add.btn { align-self: stretch; margin-top: auto; min-height: 44px; gap: 6px; font-size: .9375rem; }
+.dish__body > .dish__meta { margin-bottom: 8px; }
+.dish__body > .dish__add.btn { margin-top: auto; }
+.dish__add.btn::after { content: none; }
+
 
 /* Agotado: foto en gris (photo.css) + etiqueta con fondo sólido (contraste AA garantizado) */
 .dish--agotado { cursor: default; }
-.dish__agotado { position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%); padding: 6px 14px; font-size: .8125rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap; color: var(--c-canvas); background: var(--c-ink); border-radius: var(--r-pill); }
+.dish--agotado:hover .dish__name { text-decoration: none; }
+.dish--agotado:active { transform: none; }
+.dish__agotado { position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%); padding: 6px 14px; font-size: .8125rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap; color: #fff; background: var(--c-ink); border-radius: var(--r-tag); }
 .dish--agotado .dish__name, .dish--agotado .dish__price { color: var(--c-ink-muted); }
 
-/* Móvil: destacados de la portada en fila deslizable; menú en filas con filete */
+/* Móvil: destacados de la portada en fila deslizable; menú en filas (foto 112 px a la izquierda) */
 @media (max-width: 699px) {
-  .dish-grid--fila { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 82%; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: calc(-1 * var(--gutter)); padding: 0 var(--gutter) var(--sp-2); scroll-padding-inline: var(--gutter); }
+  .dish-grid--fila { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 78%; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: calc(-1 * var(--gutter)); padding: 2px var(--gutter) var(--sp-2); scroll-padding-inline: var(--gutter); }
   .dish-grid--fila > * { scroll-snap-align: start; }
 }
 @media (max-width: 599px) {
-  .dish-grid--menu { gap: 0; }
-  .dish-grid--menu .dish, .dish--fila { display: grid; grid-template-columns: 120px minmax(0, 1fr); column-gap: 14px; align-items: start; padding-block: 14px; border-bottom: 1px solid var(--c-rule); }
-  .dish-grid--menu .dish:last-child { border-bottom: 0; }
-  .dish-grid--menu .dish__media, .dish--fila .dish__media { display: contents; }
-  .dish-grid--menu .dish .foto, .dish--fila .foto { grid-column: 1; grid-row: 1; }
-  .dish-grid--menu .dish__body, .dish--fila .dish__body { grid-column: 2; grid-row: 1; min-height: 90px; padding: 0; gap: 4px; }
-  .dish-grid--menu .dish__meta, .dish--fila .dish__meta { padding-right: 52px; }
+  .dish-grid--menu { gap: 12px; }
+  .dish-grid--menu .dish, .dish--fila { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: stretch; }
+  .dish-grid--menu .dish__media, .dish--fila .dish__media { height: 100%; }
+  .dish-grid--menu .dish .foto, .dish--fila .foto { height: 100%; min-height: 132px; --foto-ratio: auto !important; aspect-ratio: auto; }
+  .dish-grid--menu .dish__body, .dish--fila .dish__body { padding: 12px 12px 12px 14px; gap: 4px; }
   .dish-grid--menu .dish__head, .dish--fila .dish__head { flex-direction: column; gap: 2px; }
-  .dish-grid--menu .dish__price, .dish--fila .dish__price { text-align: left; font-size: 1rem; }
-  .dish-grid--menu .dish__add, .dish--fila .dish__add { right: 0; bottom: 14px; }
-  .dish-grid--menu .dish__picante, .dish--fila .dish__picante { left: 6px; top: 20px; }
-  .dish-grid--menu .dish__agotado, .dish--fila .dish__agotado { left: 60px; top: 59px; }
+  .dish-grid--menu .dish__price, .dish--fila .dish__price { text-align: left; font-size: 1.0625rem; }
+  .dish-grid--menu .dish__name, .dish--fila .dish__name { font-size: 1.375rem; }
+  .dish-grid--menu .dish__tags, .dish--fila .dish__tags { left: 6px; top: 6px; max-width: calc(100% - 12px); }
+  .dish-grid--menu .dish__tags .badge:nth-child(2), .dish--fila .dish__tags .badge:nth-child(2) { display: none; }
+  .dish-grid--menu .dish__tags .badge, .dish--fila .dish__tags .badge { font-size: .6875rem; min-height: 22px; padding: 2px 6px; }
+  .dish-grid--menu .dish__agotado, .dish--fila .dish__agotado { font-size: .75rem; padding: 4px 8px; }
+  .dish-grid--menu .dish__add.btn, .dish--fila .dish__add.btn { margin-top: 8px; min-height: 44px; }
 }
 
 /* ================= Diálogo de modificadores: foto 16:9 a sangre ================= */
@@ -62,7 +74,7 @@ dialog.modal-mod { border-radius: 0; border-width: 0; }
 .mod-cab .mod-head { align-items: baseline; margin: 0; padding: 20px var(--sp-3) 0; gap: 16px; }
 .mod-cab .mod-head h2 { flex: 1; min-width: 0; font: 600 1.75rem/1.15 var(--font-body); letter-spacing: -.01em; text-transform: none; }
 .mod-cab .mod-precio { flex: none; font: 600 1.5rem/1.15 var(--font-body); text-transform: none; font-variant-numeric: tabular-nums; }
-.mod-cab .mod-precio .precio__mon { font-size: .75rem; }
+.mod-cab .mod-precio .precio__mon { font-size: inherit; margin-right: .03em; }
 .modal-mod .mod-body { padding-top: var(--sp-2); }
 
 /* ================= Menú del día y combos (sin cajas, §3.7) ================= */
@@ -72,7 +84,7 @@ dialog.modal-mod { border-radius: 0; border-width: 0; }
 .mdd__h { margin: 0; max-width: 34ch; font-size: 1.0625rem; line-height: 1.5; color: var(--c-ink-soft); }
 .mdd__precio { display: flex; flex-direction: column; gap: 4px; margin-top: var(--sp-4); }
 .mdd__cifra { font: 600 2.5rem/1 var(--font-body); text-transform: none; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.mdd__cifra .precio__mon { font-size: .875rem; margin-right: .4em; }
+.mdd__cifra .precio__mon { font-size: inherit; margin-right: .03em; }
 .mdd__precio > span:last-child { font-size: .8125rem; color: var(--c-ink-muted); }
 /* Fotos grandes: tres teselas 4:3 con numeral en aro sobre la foto */
 .num-aro { position: absolute; left: 8px; top: 8px; z-index: 2; display: grid; place-items: center; width: 36px; height: 36px; font: 600 .875rem/1 var(--font-body); color: var(--c-ink); background: var(--c-paper); border: 1px solid var(--c-ink); border-radius: 50%; }
@@ -95,7 +107,7 @@ dialog.modal-mod { border-radius: 0; border-width: 0; }
 .combo__head { align-items: baseline; gap: 16px; padding: 0; border: 0; }
 .combo__head h3 { flex: 1; min-width: 0; font: 600 1.5rem/1.2 var(--font-body); letter-spacing: 0; text-transform: none; }
 .combo__price { flex: none; font: 600 1.5rem/1.2 var(--font-body); text-transform: none; font-variant-numeric: tabular-nums; }
-.combo__price .precio__mon { font-size: .75rem; margin-right: .3em; }
+.combo__price .precio__mon { font-size: inherit; margin-right: .03em; }
 .combo__pasos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
 .combo__pasos li { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .combo__foto .foto { width: 100%; }
@@ -126,3 +138,44 @@ dialog.modal-mod { border-radius: 0; border-width: 0; }
   .dish__add { transition: background-color var(--dur-fast); }
   .dish__add:active { transform: none; }
 }
+
+/* ================= Rediseño editorial (19 nov 2026): combos en tarjeta, como los platos ================= */
+.combos-grid { gap: 16px; }
+.combos-grid > .combo.combo { padding: 24px; background: var(--c-linen); border: 0; border-radius: 0; }
+.combo__head h3 { font: 400 1.875rem/1.1 var(--font-display) !important; letter-spacing: -.02em !important; }
+.combo__price { font-weight: 500 !important; }
+.combo__pie .btn { --btn-bg: var(--c-ink); --btn-fg: #fff; --btn-bd: var(--c-ink); --btn-hover-bg: var(--c-cta-deep); --btn-hover-fg: #fff; }
+.mdd__t { font-weight: 300; letter-spacing: -.03em; }
+.mdd__cifra { font: 300 3.5rem/1 var(--font-display) !important; letter-spacing: -.02em; }
+
+/* Referencia «cookbook»: nada a sangre; la franja de foto de #/menu queda dentro del contenedor, como lámina */
+.m-franja { width: min(100% - 2 * var(--gutter), var(--w-wide)); margin-inline: auto; }
+
+/* ================= Rejilla alineada (subgrid, ≥ 700 px) =================
+ * Cada tarjeta ocupa 5 filas de la rejilla madre (foto · título+precio · descripción · alérgenos · botón) y las
+ * comparte con sus vecinas: si un nombre ocupa dos líneas, toda la fila de tarjetas baja junta y los botones quedan
+ * a la misma altura, siempre al pie. Sin soporte de subgrid: la columna flexible con el botón al pie (regla de arriba). */
+@supports (grid-template-rows: subgrid) {
+  @media (min-width: 700px) {
+    .dish-grid > .dish { display: grid; grid-row: span 5; grid-template-rows: subgrid; row-gap: 0; }
+    .dish-grid > .dish > .dish__body { display: contents; }
+    .dish-grid > .dish .dish__media { grid-row: 1; }
+    .dish-grid > .dish .dish__head { grid-row: 2; padding: 16px 18px 0; }
+    .dish-grid > .dish .dish__desc { grid-row: 3; align-self: start; margin: 6px 18px 0; }
+    .dish-grid > .dish .dish__meta { grid-row: 4; align-self: start; margin: 6px 18px 0; }
+    .dish-grid > .dish .dish__add.btn { grid-row: 5; align-self: end; margin: 14px 18px 18px; }
+  }
+}
+
+/* ================= #/menu: ritmo y panel de pedido ================= */
+.menu-layout { padding-block: var(--sp-4) var(--sp-6); }
+.m-sec__cab { margin-bottom: var(--sp-4); padding-bottom: var(--sp-2); }
+.m-sec__t { line-height: 1; letter-spacing: -.03em; }
+.m-sec__n { font-style: italic; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--c-ink-soft); }
+.m-sec__pie { margin-top: var(--sp-5); }
+.m-cab { padding-bottom: var(--sp-3); }
+/* Pedido en placa de lino (sin filete lateral) */
+@media (min-width: 1024px) {
+  .menu-vista .cart-side { padding: 24px; border-left: 0; background: var(--c-linen); }
+}
+.cart-panel__vacio { padding: var(--sp-2) 0 0; }

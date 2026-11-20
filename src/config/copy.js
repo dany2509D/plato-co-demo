@@ -201,7 +201,7 @@ const COPY = {
     vacioCategoria: 'Por ahora no hay platos disponibles en esta sucursal.',
     carritoBarra: 'Ver carrito · {cuenta}',
     carritoVacioTitulo: 'Aún no ha agregado nada.',
-    carritoVacio: 'Toque + en cualquier plato y lo verá aquí.',
+    carritoVacio: 'Toque «Agregar» en cualquier plato y lo verá aquí.',
     carritoTitulo: 'Su pedido',
     continuarPago: 'Continuar al pago',
     eliminar: 'Eliminar',
@@ -570,7 +570,7 @@ const COPY = {
       disponible: '{nombre} volvió a estar disponible',
     },
     vacios: {
-      carrito: 'Aún no ha agregado nada. Toque + en cualquier plato y lo verá aquí.',
+      carrito: 'Aún no ha agregado nada. Toque «Agregar» en cualquier plato y lo verá aquí.',
       pedidos: 'Todavía no hay pedidos. Cuando llegue el primero, aparecerá aquí.',
       reservas: 'Todavía no hay reservas. Cuando alguien reserve por el chat, aparecerá aquí.',
       busqueda: 'No encontramos nada con esa búsqueda. Pruebe con otra palabra.',

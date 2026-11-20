@@ -1,0 +1,68 @@
+/* ==========================================================================================================
+ * FORMA (19 nov 2026, a pedido: «todo es muy cuadrado»)
+ * El radio 0 de la referencia «cookbook» se suaviza con una escala de radios coherente. Los botones NO son píldora
+ * (pedido inicial): son rectángulos de esquina suave. Lo redondo de verdad queda para lo que es redondo en la mesa
+ * (los platos de los combos) y para los puntos de estado.
+ *   --r-card 18 · tarjetas, placas de lino, diálogos     --r-photo 12 · fotos sueltas
+ *   --r-btn  10 · botones, campos, chips, avisos         --r-tag   6 · etiquetas
+ * Se carga la última (main.js). Las tarjetas recortan su foto (overflow hidden), así que la foto interna va sin radio.
+ * ========================================================================================================== */
+:root { --r-card: 18px; --r-photo: 12px; --r-btn: 10px; --r-tag: 6px; }
+
+/* ---------- Tarjetas y placas ---------- */
+.dish, .combos-grid > .combo.combo, .c-resena, .c-contacto, .c-cta__in, .c-rol, .mdd,
+.menu-vista .cart-side, .surface-adm, .card { border-radius: var(--r-card); }
+.dish, .c-rol { overflow: hidden; }
+.dish-grid > .dish .dish__media .foto, .dish__media .foto { border-radius: 0; }
+dialog.modal, dialog.modal-mod { border-radius: var(--r-card); overflow: hidden; }
+dialog.modal-hoja { border-radius: var(--r-card) var(--r-card) 0 0; }
+
+/* ---------- Fotos sueltas ---------- */
+.suc-foto__media, .suc-foto__media .foto, .c-rol .foto, .mdd__lista .foto, .m-franja .foto,
+.ck-suc__foto, .ck-suc__foto .foto, .suc-tarjeta__foto, .suc-tarjeta__foto .foto, .foto--mini, .cart-linea .foto { border-radius: var(--r-photo); }
+.c-rol .foto { border-radius: calc(var(--r-card) - 8px); }
+/* El anillo de «Su sucursal» sigue la esquina de la foto */
+.suc-foto__media, .suc-tarjeta__foto, .ck-suc__foto { outline-offset: 5px; }
+
+/* ---------- Etiquetas y avisos ---------- */
+.dish__tags .badge, .badge, .suc-foto__marca, .suc-tarjeta__marca, .ck-suc__marca, .dish__agotado { border-radius: var(--r-tag); }
+.c-hero__pill, .c-hero__pausa, .toast, .cart-bar__btn { border-radius: var(--r-btn); }
+
+/* ---------- Héroe: el marco se redondea mientras se encoge (0 → 28 px) ---------- */
+.c-hero__marco { border-radius: calc(var(--p, 0) * 28px); }
+
+/* ---------- Combos: platos redondos superpuestos que se abren en abanico ---------- */
+.combo { display: flex; flex-direction: column; gap: 14px; }
+.combo__platos { --s: min(124px, 27vw); position: relative; display: grid; margin-bottom: 4px; }
+.combo__plato {
+  grid-area: 1 / 1; width: var(--s); aspect-ratio: 1; margin-left: calc(var(--i) * var(--s) * .6);
+  border-radius: 50%; overflow: hidden; border: 4px solid var(--c-linen); background: var(--c-linen);
+  z-index: calc(10 - var(--i)); transition: transform .6s var(--m-ease, ease);
+}
+.combo__plato .foto { width: 100%; height: 100%; aspect-ratio: 1 !important; border-radius: 50%; }
+.combo__plato .foto img { object-fit: cover; }
+.combo:hover .combo__plato { transform: translateX(calc(var(--i) * 14px)) rotate(calc((var(--i) - 1) * 5deg)); }
+.combo:hover .combo__plato .foto img { transform: scale(1.06); }
+/* Sello de ahorro: la mantequilla de los enlaces, girado como una estampa */
+.combo__sello {
+  position: absolute; right: 0; top: 6px; z-index: 20; display: grid; place-items: center; width: 84px; aspect-ratio: 1;
+  font: italic 400 .8125rem/1.15 var(--font-body); text-align: center; color: var(--c-ink);
+  background: var(--c-highlight); border-radius: 50%; transform: rotate(-10deg);
+  transition: transform .6s var(--m-ease, ease);
+}
+.combo__sello b { font: 400 1.375rem/1 var(--font-display); font-style: normal; letter-spacing: -.02em; font-variant-numeric: lining-nums proportional-nums; }
+.combo:hover .combo__sello { transform: rotate(0) scale(1.06); }
+.combo__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.combo__lista { list-style: none; display: flex; flex-wrap: wrap; gap: 2px 0; margin: 0; padding: 0; font-size: .9375rem; line-height: 1.5; color: var(--c-ink-soft); }
+.combo__lista li + li::before { content: '+'; margin: 0 .45em; color: var(--c-ink-muted); }
+.combo__pie { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 6px; }
+.combo__pie .btn { min-height: 44px; padding: 0 1.1em; }
+.combo__pie .btn::after { content: none; }
+@media (max-width: 599px) { .combo__platos { --s: 24vw; } .combo__sello { width: 74px; } .combo__sello b { font-size: 1.2rem; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .combo__plato, .combo__sello { transition: none; }
+  .combo:hover .combo__plato, .combo:hover .combo__sello { transform: none; }
+  .combo__sello { transform: rotate(-10deg); }
+  .c-hero__marco { border-radius: 0; }
+}

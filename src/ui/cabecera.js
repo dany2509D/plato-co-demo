@@ -1,8 +1,8 @@
 /**
  * Cabecera del cliente (rediseño 2, bloque B · direccion-v2 §3.9).
  *
- *   crearCabecera({ alReiniciar, alPresentar }) → <header class="app-header">
- *     Escritorio (≥ 900 px, 72 px): logo + «Plato & Co.», nav (Inicio · Menú · Asistente), «Reservar» (fantasma),
+ *   crearCabecera({ alReiniciar, alPresentar, alTema }) → <header class="app-header">
+ *     Escritorio (≥ 900 px, 72 px): logo + «Plato & Co.», nav (Inicio · Carta · Asistente), «Reservar» (fantasma),
  *     «Pedir» (píldora), carrito (círculo 44 px con contador) y «Demo ▾» (menú accesible: Entrar como administrador,
  *     Reiniciar demo, Presentación guiada). Celular (56 px): logo, carrito y «Menú ≡», que abre una hoja carbón a
  *     pantalla completa (<dialog> modal: Esc, foco atrapado, el foco vuelve al botón).
@@ -18,6 +18,13 @@
 import { brand } from '../config/brand.js';
 import { esc } from './dom.js';
 import { icono } from './icons.js';
+import { t } from '../config/copy.js';
+import { TEMAS, temaActivoId } from '../config/temas.js';
+
+// Botón «Diseño»: un ítem por tema (menuitemradio). El activo lleva aria-checked="true".
+const itemsTema = (rol) => Object.values(TEMAS).map((x) => rol === 'menu'
+  ? `<li role="none"><button role="menuitemradio" tabindex="-1" type="button" data-accion="tema:${x.id}" aria-checked="${x.id === temaActivoId()}">Diseño: ${esc(x.nombre)}${x.id === temaActivoId() ? ' ✓' : ''}</button></li>`
+  : `<button type="button" data-accion="tema:${x.id}" aria-pressed="${x.id === temaActivoId()}">Diseño: ${esc(x.nombre)}${x.id === temaActivoId() ? ' ✓' : ''}</button>`).join('');
 
 /**
  * Estado visual de la cabecera. Pura.
@@ -46,11 +53,11 @@ export function indiceMenu(actual, total, tecla) {
   }
 }
 
-const NAV = [['inicio', '#/', 'Inicio'], ['menu', '#/menu', 'Menú'], ['chat', '#/chat', 'Asistente']];
+const NAV = [['inicio', '#/', t('nav.inicio')], ['menu', '#/menu', t('nav.carta')], ['chat', '#/chat', t('nav.asistente')]];
 const logo = () => brand.logoSvg.replace(/role="img"\s+aria-label="[^"]*"/, 'aria-hidden="true" focusable="false"');
 const marca = () => `<a class="brand" href="#/">${logo()}<span class="brand__name">${esc(brand.nombre)}</span></a>`;
 
-export function crearCabecera({ alReiniciar = () => {}, alPresentar = () => {} } = {}) {
+export function crearCabecera({ alReiniciar = () => {}, alPresentar = () => {}, alTema = () => {} } = {}) {
   const header = document.createElement('header');
   header.className = 'app-header';
   header.dataset.estado = 'solida';
@@ -58,53 +65,55 @@ export function crearCabecera({ alReiniciar = () => {}, alPresentar = () => {} }
     <div class="app-header__inner container--wide">
       ${marca()}
       <nav class="nav" aria-label="Principal">
-        ${NAV.map(([n, h, t]) => `<a href="${h}" data-nav="${n}">${esc(t)}</a>`).join('')}
+        ${NAV.map(([n, h, x]) => `<a href="${h}" data-nav="${n}">${esc(x)}</a>`).join('')}
       </nav>
       <div class="app-header__cta">
-        <a class="btn btn--ghost btn--sm hdr-reservar" href="#/chat">Reservar</a>
-        <a class="btn btn--sm hdr-pedir" href="#/menu">Pedir</a>
-        <a class="nav-carrito" href="#/carrito" data-nav="carrito" aria-label="Carrito, 0 productos">${icono('bolsa', { tam: 20 })}<span class="nav-cuenta" data-cuenta>0</span></a>
+        <a class="btn btn--ghost btn--sm hdr-reservar" href="#/chat">${esc(t('nav.reservar'))}</a>
+        <a class="btn btn--sm hdr-pedir" href="#/menu">${esc(t('nav.pedir'))}</a>
+        <a class="nav-carrito" href="#/carrito" data-nav="carrito" aria-label="${esc(t('nav.carrito', { n: 0 }))}">${icono('bolsa', { tam: 20 })}<span class="nav-cuenta" data-cuenta>0</span></a>
         <div class="demo-menu">
-          <button type="button" class="demo-menu__btn" id="demo-menu-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="demo-menu-lista">Demo <span class="demo-menu__flecha" aria-hidden="true">▾</span></button>
+          <button type="button" class="demo-menu__btn" id="demo-menu-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="demo-menu-lista">${esc(t('nav.demo'))} <span class="demo-menu__flecha" aria-hidden="true">▾</span></button>
           <ul class="demo-menu__lista" id="demo-menu-lista" role="menu" aria-labelledby="demo-menu-btn" hidden>
-            <li role="none"><a role="menuitem" tabindex="-1" class="btn-admin" href="#/admin/cocina">Entrar como administrador</a></li>
-            <li role="none"><button role="menuitem" tabindex="-1" type="button" class="btn-reiniciar" data-accion="reiniciar">Reiniciar demo</button></li>
-            <li role="none"><button role="menuitem" tabindex="-1" type="button" data-accion="presentar">Presentación guiada</button></li>
+            <li role="none"><a role="menuitem" tabindex="-1" class="btn-admin" href="#/admin/cocina">${esc(t('nav.admin'))}</a></li>
+            <li role="none"><button role="menuitem" tabindex="-1" type="button" class="btn-reiniciar" data-accion="reiniciar">${esc(t('nav.reiniciar'))}</button></li>
+            <li role="none"><button role="menuitem" tabindex="-1" type="button" data-accion="presentar">${esc(t('nav.presentacion'))}</button></li>
+            ${itemsTema('menu')}
           </ul>
         </div>
-        <button type="button" class="hdr-hoja-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="hoja-nav">Menú ${icono('menu', { tam: 20 })}</button>
+        <button type="button" class="hdr-hoja-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="hoja-nav">${esc(t('nav.abrirMenu'))} ${icono('menu', { tam: 20 })}</button>
       </div>
     </div>
     <dialog class="hoja-nav on-dark" id="hoja-nav" aria-label="Menú del sitio">
       <div class="hoja-nav__in container--wide">
         <div class="hoja-nav__cab">
           ${marca()}
-          <button type="button" class="hoja-nav__cerrar" data-cerrar>Cerrar ${icono('cerrar', { tam: 20 })}</button>
+          <button type="button" class="hoja-nav__cerrar" data-cerrar>${esc(t('nav.cerrar'))} ${icono('cerrar', { tam: 20 })}</button>
         </div>
         <nav aria-label="Principal">
           <ul class="hoja-nav__links">
-            ${[...NAV, ['carrito', '#/carrito', 'Su pedido']].map(([n, h, t]) => `<li><a href="${h}" data-nav="${n}">${esc(t)}</a></li>`).join('')}
+            ${[...NAV, ['carrito', '#/carrito', t('nav.suPedido')]].map(([n, h, x]) => `<li><a href="${h}" data-nav="${n}">${esc(x)}</a></li>`).join('')}
           </ul>
         </nav>
         <div class="hoja-nav__cta">
-          <a class="btn btn--lg" href="#/menu">Pedir</a>
-          <a class="btn btn--ghost btn--lg" href="#/chat">Reservar</a>
+          <a class="btn btn--lg" href="#/menu">${esc(t('nav.pedir'))}</a>
+          <a class="btn btn--ghost btn--lg" href="#/chat">${esc(t('nav.reservar'))}</a>
         </div>
         <div class="hoja-nav__demo" role="group" aria-labelledby="hoja-demo-t">
-          <p class="eyebrow" id="hoja-demo-t">Demo</p>
-          <a href="#/admin/cocina">Entrar como administrador</a>
-          <button type="button" data-accion="reiniciar">Reiniciar demo</button>
-          <button type="button" data-accion="presentar">Presentación guiada</button>
+          <p class="eyebrow" id="hoja-demo-t">${esc(t('nav.demo'))}</p>
+          <a href="#/admin/cocina">${esc(t('nav.admin'))}</a>
+          <button type="button" data-accion="reiniciar">${esc(t('nav.reiniciar'))}</button>
+          <button type="button" data-accion="presentar">${esc(t('nav.presentacion'))}</button>
+          ${itemsTema('hoja')}
         </div>
       </div>
     </dialog>`;
-  enlazarMenuDemo(header, { alReiniciar, alPresentar });
-  enlazarHoja(header, { alReiniciar, alPresentar });
+  enlazarMenuDemo(header, { alReiniciar, alPresentar, alTema });
+  enlazarHoja(header, { alReiniciar, alPresentar, alTema });
   return header;
 }
 
 // ---------- Menú «Demo ▾» (botón de menú: flechas, Inicio/Fin, Esc, Tab; el foco vuelve al botón) ----------
-function enlazarMenuDemo(header, { alReiniciar, alPresentar }) {
+function enlazarMenuDemo(header, { alReiniciar, alPresentar, alTema }) {
   const btn = header.querySelector('.demo-menu__btn');
   const lista = header.querySelector('.demo-menu__lista');
   const items = () => [...lista.querySelectorAll('[role="menuitem"]')];
@@ -146,12 +155,13 @@ function enlazarMenuDemo(header, { alReiniciar, alPresentar }) {
     const accion = it.dataset.accion;
     cerrar();
     if (accion === 'reiniciar') alReiniciar();
+    else if (accion?.startsWith('tema:')) alTema(accion.slice(5));
     else if (accion === 'presentar') alPresentar();
   });
 }
 
 // ---------- Hoja móvil (<dialog> modal a pantalla completa) ----------
-function enlazarHoja(header, { alReiniciar, alPresentar }) {
+function enlazarHoja(header, { alReiniciar, alPresentar, alTema }) {
   const btn = header.querySelector('.hdr-hoja-btn');
   const hoja = header.querySelector('.hoja-nav');
   if (typeof hoja.showModal !== 'function') { btn.hidden = true; return; }
@@ -173,6 +183,7 @@ function enlazarHoja(header, { alReiniciar, alPresentar }) {
     if (!accion) return;
     cerrar();
     if (accion === 'reiniciar') alReiniciar();
+    else if (accion.startsWith('tema:')) alTema(accion.slice(5));
     else alPresentar();
   });
   // Si la ventana pasa a escritorio con la hoja abierta, se cierra (la hoja solo existe en celular).

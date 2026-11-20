@@ -46,8 +46,8 @@ export function montarPanelCarrito(cont, store, { onContinuar } = {}) {
           <div><dt>ITBMS 7%</dt><dd>${money(t.itbms)}</dd></div>
           <div class="totales__total"><dt>Total</dt><dd>${precioHTML(t.total, 'totales__cifra')}</dd></div>
         </dl>
-        <div class="cart-panel__cta"><a class="btn btn--lg btn--block" href="#/carrito" data-continuar>Continuar al pago <span aria-hidden="true">→</span></a></div>`
-        : `<div class="cart-panel__vacio">${icono('bolsa', { tam: 28 })}<p><strong>Aún no ha agregado nada.</strong></p><p>Toque <span class="cart-panel__mas" aria-hidden="true">+</span><span class="sr-only">el botón Agregar</span> en un plato y aparecerá aquí.</p></div>`}`;
+        <div class="cart-panel__cta"><a class="btn btn--lg btn--block btn--brillo" href="#/carrito" data-continuar>Continuar al pago <span aria-hidden="true">→</span></a></div>`
+        : `<div class="cart-panel__vacio">${icono('bolsa', { tam: 28 })}<p><strong>Aún no ha agregado nada.</strong></p><p>Toque «Agregar» en un plato y aparecerá aquí.</p></div>`}`;
     // Conserva el foco del teclado tras repintar; si la línea desapareció, lo deja en la siguiente o en el título.
     if (foco) (cont.querySelector(`[data-fk="${foco}"]`) ?? cont.querySelector('[data-fk]') ?? cont.querySelector('.cart-panel__t'))?.focus();
   }

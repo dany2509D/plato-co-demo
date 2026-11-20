@@ -7,6 +7,7 @@ body {
   margin: 0;
   font-family: var(--font-body);
   font-size: var(--fs-base);
+  text-rendering: optimizeLegibility;
   font-weight: 400;
   line-height: var(--lh-body);
   color: var(--c-ink);
@@ -18,35 +19,38 @@ img, svg, video { max-width: 100%; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 p { margin: 0 0 1em; }
-::selection { background: var(--c-gold); color: var(--c-char); }
+::selection { background: var(--c-highlight); color: var(--c-ink); }
 
-/* ---------- Titulares: Anton, mayúsculas, tracking negativo ---------- */
+/* ---------- Titulares: Cormorant Garamond 300, tipo oración, tracking −0,03em (libro de cocina impreso) ---------- */
 h1, h2, h3, .t-numeral, .t-hero, .t-title, .t-sub, .t-card {
   font-family: var(--font-display);
-  font-weight: 400;            /* Anton solo existe en 400: evita negrita falsa */
-  text-transform: uppercase;
+  font-weight: 300;            /* Cormorant Garamond ligera: la voz de libro impreso */
+  text-transform: none;
   line-height: var(--lh-display);
   margin: 0 0 .4em;
   text-wrap: balance;
 }
 h1, .t-title { font-size: var(--fs-d3); letter-spacing: var(--tr-display); }
-h2, .t-sub { font-size: var(--fs-d4); letter-spacing: var(--tr-title); line-height: .95; }
-h3, .t-card { font-size: var(--fs-d5); letter-spacing: 0; line-height: 1.05; }
+h2, .t-sub { font-size: var(--fs-d4); letter-spacing: var(--tr-title); line-height: 1.1; }
+h3, .t-card { font-size: var(--fs-d5); letter-spacing: -.01em; line-height: 1.15; font-weight: 400; }
 .t-hero { font-size: var(--fs-d2); letter-spacing: var(--tr-display); }
 .t-numeral { font-size: var(--fs-d1); letter-spacing: var(--tr-display); line-height: .85; margin: 0; }
-h4, h5, h6 { font-family: var(--font-body); font-weight: 700; font-size: 1.0625rem; line-height: 1.3; margin: 0 0 .4em; }
+h4, h5, h6 { font-family: var(--font-body); font-weight: 600; font-size: 1.0625rem; line-height: 1.3; margin: 0 0 .4em; }
 .t-lead { font-size: var(--fs-lead); line-height: 1.5; max-width: 52ch; }
 .t-small { font-size: var(--fs-sm); }
 .t-muted { color: var(--ctx-muted); }
 .eyebrow {
   display: inline-block; margin: 0 0 var(--sp-1);
-  font-family: var(--font-body); font-size: .8125rem; font-weight: 700; line-height: 1.2;
-  text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--ctx-muted);
+  font-family: var(--font-body); font-size: 1rem; font-style: italic; font-weight: 400; line-height: 1.3;
+  text-transform: none; letter-spacing: 0; color: var(--ctx-muted);
 }
 
 /* ---------- Enlaces ---------- */
 a { color: var(--ctx-link); text-underline-offset: .18em; text-decoration-thickness: 1px; }
 a:hover { text-decoration-thickness: 2px; }
+/* Enlace editorial dentro del texto corrido: resaltado mantequilla, sin subrayado (referencia «cookbook») */
+:is(p, li, dd, blockquote) > a:not(.btn):not([class]) { color: var(--c-ink); text-decoration: none; background: var(--c-highlight); padding: 0 .15em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+:is(p, li, dd, blockquote) > a:not(.btn):not([class]):hover { text-decoration: underline; text-decoration-thickness: 1px; }
 
 /* ---------- Foco visible: tinta sobre crema, oro sobre bandas oscuras ---------- */
 :focus-visible { outline: 2px solid var(--ctx-focus); outline-offset: 2px; border-radius: 2px; }
@@ -92,9 +96,11 @@ a:hover { text-decoration-thickness: 2px; }
 .on-dark.grain::after, .band--dark.grain::after, .band--card.grain::after, .band--rust.grain::after { opacity: .12; filter: invert(1); }
 
 /* Aparecer al hacer scroll (src/ui/reveal.js añade .is-in; sin JS o con movimiento reducido todo es visible) */
-.rv-ready .reveal { opacity: 0; transform: translateY(18px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); transition-delay: var(--rv-delay, 0s); }
-.rv-ready .reveal.is-in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .rv-ready .reveal { opacity: 1; transform: none; transition: none; } }
+/* Rediseño editorial (19 nov 2026): el contenido NUNCA se oculta esperando el scroll (nada de opacity: 0).
+   .reveal solo añade un desplazamiento mínimo de 8 px que se asienta al entrar; el texto se ve y se lee desde el primer pintado. */
+.rv-ready .reveal { transform: translateY(8px); transition: transform var(--dur) var(--ease); transition-delay: var(--rv-delay, 0s); }
+.rv-ready .reveal.is-in { transform: none; }
+@media (prefers-reduced-motion: reduce) { .rv-ready .reveal { transform: none; transition: none; } }
 
 /* Barra de desplazamiento discreta */
 html { scrollbar-color: var(--c-line-strong) var(--c-canvas); }
@@ -102,3 +108,6 @@ html { scrollbar-color: var(--c-line-strong) var(--c-canvas); }
 /* Vista (contenedor de las pantallas actuales; B y C lo irán sustituyendo por .container) */
 .vista { padding: var(--sp-3) var(--gutter) var(--sp-5); max-width: var(--w-content); margin: 0 auto; }
 main:focus { outline: none; }
+
+/* Cifras grandes en Cormorant: versales y proporcionales (las tabulares abren huecos: «1 2») */
+.c-cifra__num, .c-cifra__num *, .mdd__cifra, .stat__num, .c-proof__n, .totales__cifra, .totales__cifra * { font-variant-numeric: lining-nums proportional-nums; }

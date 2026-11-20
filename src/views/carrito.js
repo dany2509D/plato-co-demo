@@ -24,8 +24,8 @@ const chipZona = (suc, zona, dir) => (suc
   ? `<span class="ck-chip ck-chip--ok">${icono('check', { tam: 18 })} Le atiende ${esc(suc.nombre)} · llega en unos ${zona.etaMin} min</span>`
   : dir ? `<span class="ck-chip ck-chip--warn">${icono('alerta', { tam: 18 })} No encontramos esa zona en nuestra cobertura</span>` : '');
 
-// Paso numerado: numeral Anton (decorativo) + título DM Sans 600. Va en <legend> si el paso es un grupo de radios.
-const cabPaso = (n, titulo, tag = 'legend') => `<${tag} class="ck-paso__cab"><span class="ck-paso__n" aria-hidden="true">${n}</span><span class="ck-paso__t">${titulo}</span></${tag}>`;
+// Cabecera de paso: título DM Sans 600 (rediseño editorial: sin numeral decorativo «01/02/03»). Va en <legend> si el paso es un grupo de radios.
+const cabPaso = (_n, titulo, tag = 'legend') => `<${tag} class="ck-paso__cab"><span class="ck-paso__t">${titulo}</span></${tag}>`;
 
 export function vistaCarrito(main) {
   const nodo = el('<div class="carrito-vista"></div>');
@@ -55,7 +55,6 @@ export function vistaCarrito(main) {
         return `<label class="ck-suc">
           <input type="radio" name="sucursal-cliente" value="${esc(s.id)}" ${s.id === actual ? 'checked' : ''}>
           <span class="ck-suc__foto">${fotoEscena(clave, { ratio: '4/3', alt: '', clase: clave === 'sucursal_1' ? 'foto--warm' : '' })}<span class="ck-suc__marca" aria-hidden="true">${icono('check', { tam: 16 })}<span class="ck-suc__marca-l">Su sucursal</span><span class="ck-suc__marca-c">Elegida</span></span></span>
-          <span class="ck-suc__n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
           <span class="ck-suc__nombre">${esc(nombreCorto(s))}</span>
           <span class="ck-suc__dato">${esc(s.direccion)}</span>
           <span class="suc-estado${st.abierto ? ' is-abierto' : ''}">${esc(st.abierto ? 'Abierto' : 'Cerrado')}<span>${esc(st.detalle)}</span></span>
@@ -96,7 +95,7 @@ export function vistaCarrito(main) {
           <div class="ck-vacio__txt">
             <p class="eyebrow">Su pedido</p>
             <h1 class="ck-titulo">Aún está vacío</h1>
-            <p class="t-lead">Todavía no ha elegido nada. La carta tiene 40 platos hechos al momento.</p>
+            <p class="t-lead">Todavía no ha elegido nada. La carta tiene ${store.get().productos.length} platos hechos al momento.</p>
             <a class="btn btn--lg" href="#/menu">Ver la carta <span aria-hidden="true">→</span></a>
           </div>
           ${fotoEscena('delivery', { ratio: '4/3', alt: '', clase: 'ck-vacio__foto' })}
