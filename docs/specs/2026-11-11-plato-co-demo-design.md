@@ -5,7 +5,7 @@ Fuentes: `08-restaurante-pedidos-reservas.md`, `00-base-comun.md` y las 12 regla
 
 ## 1. Intención
 
-Demo comercial de Panacea Logic AI para reuniones con restaurantes de varias sucursales. Debe mostrar que un pedido o una reserva que llega por WhatsApp entra a la sucursal correcta, pasa a cocina y sale facturado sin copiar nada a mano.
+Demo comercial  para reuniones con restaurantes de varias sucursales. Debe mostrar que un pedido o una reserva que llega por WhatsApp entra a la sucursal correcta, pasa a cocina y sale facturado sin copiar nada a mano.
 
 Cambios respecto a la spec 08 original (pedidos por el usuario):
 - La marca ya no es "Fogón Criollo". Es **Plato & Co.**, una plantilla general de restaurante casual, sin cocina ni modismos locales. Sirve para Restaurante Ossa, Slabón Café Bistró y Mentiritas Blancas cambiando solo la configuración.
@@ -91,4 +91,4 @@ Recorre el guion de 2 minutos de la spec 08, con una nota por paso, y se puede p
 
 ## 10. Fuera de alcance
 
-Integración real con delivery o punto de venta, GPS, pagos reales, WhatsApp real. Publicación en `restaurante.panacealogic.dev` queda para después, cuando el usuario la pida.
+Integración real con delivery o punto de venta, GPS, pagos reales, WhatsApp real. Publicación en un subdominio propio queda para después, cuando el usuario la pida.

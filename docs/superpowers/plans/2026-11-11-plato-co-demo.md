@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Construir la demo "Pedidos y reservas por WhatsApp" de Panacea Logic AI para restaurantes con varias sucursales, bajo la marca ficticia Plato & Co.
+**Goal:** Construir la demo "Pedidos y reservas por WhatsApp"  para restaurantes con varias sucursales, bajo la marca ficticia Plato & Co.
 
 **Architecture:** Sitio estático Vite + JavaScript puro. Un store único (estado en `localStorage` con respaldo en memoria, con eventos) lo comparten la web, el bot y el panel, así que un cambio en uno se ve en los demás. La lógica de negocio vive en `src/core` y `src/bot` (probada con Vitest); las vistas solo dibujan y llaman a esa lógica.
 
@@ -14,7 +14,7 @@
 
 - Sitio estático, navegación por hash (`#/ruta`), sin backend obligatorio; JavaScript ≤ 300 KB comprimido.
 - Todo acceso a `localStorage` dentro de `try/catch` con respaldo en memoria (BASE-RNF-02).
-- Banner fijo en todas las rutas, también en `#/admin`: "Demo de Panacea Logic AI · Datos ficticios · No ingrese información real", con enlaces a `https://panacealogic.dev` y a "Agende un diagnóstico gratis de 30 minutos" → `https://panacealogic.dev/cuentanos-tu-proyecto`, ambos en pestaña nueva.
+- Banner fijo en todas las rutas, también en `#/admin`: "Demo · Datos ficticios · No ingrese información real", con un enlace a "Agende un diagnóstico gratis de 30 minutos" en pestaña nueva.
 - Botón visible "Reiniciar demo" con confirmación; deja exactamente el estado semilla.
 - Marca ficticia **Plato & Co.**, sin nombres, logos ni datos reales; teléfonos `+507 6000-0000`.
 - Español de Panamá, trato de "usted". Moneda **US$** en toda la demo. ITBMS 7%. Zona horaria `America/Panama`.
@@ -258,6 +258,6 @@ Según la sección 2 de la spec: `src/config/brand.js`, `src/data/seed.js`, `src
 - [ ] **Step 1:** Escribir el recorrido E2E con Playwright (la base lo levanta con `vite preview` y lo cierra): pedido por chat → cocina → avisos → agotado → reserva → factura; correrlo en 360, 768 y 1440 px y con `localStorage` bloqueado.
 - [ ] **Step 2: Run** `npx vitest run` y el E2E — Expected: todo en verde, sin errores en consola.
 - [ ] **Step 3:** Lighthouse móvil: Accesibilidad ≥ 90, Rendimiento ≥ 85; verificar peso de JS ≤ 300 KB comprimido; corregir lo que falle.
-- [ ] **Step 4:** README en español: cómo correrlo, cómo desplegarlo (estático en `restaurante.panacealogic.dev`, `/api/chat` opcional con la clave en variable de entorno), cómo cambiar la marca en `src/config/brand.js` y el guion de 2 minutos.
+- [ ] **Step 4:** README en español: cómo correrlo, cómo desplegarlo (estático en un subdominio propio, `/api/chat` opcional con la clave en variable de entorno), cómo cambiar la marca en `src/config/brand.js` y el guion de 2 minutos.
 - [ ] **Step 5:** Confirmar que no queda ningún servidor corriendo y que no hay claves en el repo (`git grep -i "sk-"`).
 - [ ] **Step 6: Commit** `docs: README y verificación final`
