@@ -1,4 +1,5 @@
-/* CAMBIOS: 19 nov 2026 (2.ª pasada · referencia «cookbook» tipo Alison Roman): papel pergamino #f6f0e1, tarjeta lino #fffaec,
+/* CAMBIOS: 20 nov 2026 · tipografía: titulares Fraunces (serif variable «blanda») y texto Geist (ver tipografia.css).
+   19 nov 2026 (2.ª pasada · referencia «cookbook» tipo Alison Roman): papel pergamino #f6f0e1, tarjeta lino #fffaec,
    tinta berenjena #290a08 (texto, relleno del ÚNICO botón lleno y superficies oscuras), filete #e5e7eb, resaltado de enlace
    mantequilla #fff3cc (fondo, texto en tinta 16,6), titulares Cormorant Garamond 300 (sustituto de Jannon Neo) y cuerpo Lora
    (sustituto de Modale Antique); radio 0 y sin sombras en todo. Contrastes: tinta/pergamino 16,2 · ink-soft 9,3 · ink-muted 5,9 ·
@@ -94,8 +95,8 @@
   --ctx-surface-line: var(--c-rule);
 
   /* ---------- Tipografía ---------- */
-  --font-display: 'Cormorant Garamond', 'EB Garamond', Georgia, 'Times New Roman', serif;
-  --font-body: 'Lora', 'Source Serif Pro', Georgia, 'Times New Roman', serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Escala fluida: 360 px → 1440 px. d-* = Anton en mayúsculas; t-* = DM Sans */
   --fs-d1: clamp(4.5rem, 2rem + 14vw, 12.5rem);     /* cifras gigantes 72 → 200 px */
   --fs-d2: clamp(3.25rem, 1.5rem + 8vw, 8rem);      /* título de héroe 52 → 128 px */

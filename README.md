@@ -73,10 +73,10 @@ Las rutas usan `#/…` (hash), así que funcionan en cualquier hosting estático
 Dirección actual (19 nov 2026): **editorial de libro de cocina**, una doble página impresa llevada a la pantalla.
 
 - **Color:** papel pergamino `#f6f0e1`, tarjetas en lino `#fffaec` y tinta berenjena `#290a08` para el texto y el único botón lleno. Los enlaces en texto corrido van resaltados en mantequilla `#fff3cc`. Todos los pares de texto cumplen contraste AA (tinta sobre pergamino: 16,2).
-- **Tipografía:** titulares en Cormorant Garamond 300 (tipo oración, tracking −0,03em) y cuerpo en Lora, ambas de Google Fonts.
+- **Tipografía:** titulares en **Fraunces**, una serif variable «blanda» (peso 600, tamaño óptico automático, tracking cerrado y una palabra en cursiva como acento), y texto en **Geist**, la sans de 21st.dev. Ambas desde Google Fonts.
 - **Forma:** esquinas suaves (tarjetas 18 px, fotos 12 px, botones y campos 10 px, etiquetas 6 px), sin botones píldora ni sombras. Lo redondo de verdad queda para los platos de los combos.
 - **Héroe:** video de cocina a pantalla completa que, al bajar, se encoge y redondea hasta quedar como una lámina sobre el pergamino. Debajo está la foto del héroe: es el póster, lo primero que pinta y el respaldo si el video falla. Tiene botón «Pausar video».
-- **Movimiento:** entrada del titular palabra por palabra, transición entre páginas, tarjetas en cascada, parallax suave ligado al scroll, rellenos de tinta en los botones de contorno y confirmación «Agregado ✓» con rebote del carrito. Una sola curva y cuatro duraciones; nada queda oculto esperando al scroll.
+- **Movimiento:** entrada del titular letra por letra, frase de «Cómo funciona» que se entinta al bajar, palabras clave subrayadas con marcador, transición entre páginas, tarjetas en cascada, parallax suave ligado al scroll, rellenos de tinta en los botones de contorno y confirmación «Agregado ✓» con rebote del carrito. Una sola curva y cuatro duraciones; nada queda oculto esperando al scroll.
 - **Carta:** las tarjetas de una fila comparten filas (CSS subgrid), así que títulos, descripciones y botones quedan alineados aunque un nombre ocupe dos líneas.
 - **Reducir movimiento:** con esa opción del sistema, todo queda quieto y visible, y el video no se reproduce solo.
 
@@ -85,8 +85,9 @@ Dirección actual (19 nov 2026): **editorial de libro de cocina**, una doble pá
 | `src/styles/tokens.css` | Fuente única de colores, tipografía, espacios y radios |
 | `src/styles/motion.css` | Sistema de movimiento y efectos adaptados de 21st.dev |
 | `src/styles/forma.css` | Escala de radios y diseño de los combos |
+| `src/styles/tipografia.css` | Pesos, ejes de Fraunces y efectos de texto |
 | `src/ui/hero-video.js` | Encogido del héroe al bajar, pausa y respaldos |
-| `src/ui/efectos.js` | Palabra que rota letra a letra en el héroe |
+| `src/ui/efectos.js` | Palabra que rota en el héroe y frase que se entinta al bajar |
 | `docs/design/system.md` | Sistema de diseño (reglas y componentes) |
 
 **Temas de diseño:** el menú «Demo» tiene un botón **«Diseño»** para cambiar entre la marca original y vistas previas para prospectos (hoy, «Coyote CV», con su paleta y su carta). Cambiar de tema reinicia los datos. Se definen en `src/config/temas.js`.
@@ -181,7 +182,7 @@ El botón «IA real» del chat llama a `/api/chat`, una función serverless (`ap
 
 1. `npm run build` y suba el contenido de `dist/` a cualquier hosting estático (Netlify, Vercel, Cloudflare Pages, Nginx…). Destino previsto: `restaurante.panacealogic.dev`, siempre con **HTTPS**.
 2. No hace falta ninguna regla de reescritura: las rutas son `#/…`.
-3. Las únicas peticiones externas son las tipografías de Google Fonts. Si el hosting las bloquea, el sitio se ve con tipografías de respaldo (Georgia).
+3. Las únicas peticiones externas son las tipografías de Google Fonts (Fraunces y Geist). Si se bloquean, el sitio se ve con tipografías de respaldo (Georgia y la sans del sistema).
 4. El video del héroe pesa 4 MB y se sirve desde `dist/media/`. Conviene que el hosting lo entregue con caché larga.
 5. **Opcional:** para la IA real, despliegue también `api/chat.js` como función serverless (sección 7). Sin ella la demo funciona completa en modo guion.
 

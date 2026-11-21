@@ -1,0 +1,79 @@
+/* ==========================================================================================================
+ * TIPOGRAFÍA (20 nov 2026, a pedido: «ese tipado no es el mejor ni el más llamativo»)
+ *   Titulares: Fraunces, serif variable «blanda» (ejes peso 300–800, tamaño óptico 9–144 y SOFT 0–100). A tamaño
+ *              grande se dibuja con más contraste y curvas suaves: cálida, golosa, con carácter de marca de comida.
+ *   Texto:     Geist, la sans de 21st.dev: neutra, moderna y muy legible en celular.
+ *   Contraste: titulares 600 con tracking cerrado, una palabra en cursiva como acento; cuerpo 400/500.
+ * Los tokens --font-display / --font-body (tokens.css) apuntan a estas familias; aquí van pesos, ejes y efectos.
+ * Se carga la última (main.js).
+ * ========================================================================================================== */
+
+/* ---------- Ejes de Fraunces: suavidad y tamaño óptico automático en todos los titulares ---------- */
+h1, h2, h3, .c-h2, .c-hero__t, .c-statement, .c-cta__t, .c-contacto__t, .m-cab__t, .m-sec__t, .mdd__t, .mdd__cifra,
+.c-cifra__num, .totales__cifra, .dish__name, .combo__head h3, .combo__sello b, .c-rol__t, .c-how__paso h3,
+.suc-foto__nombre, .site-footer h2, .site-footer__mark, .c-resena blockquote, .eyebrow {
+  font-optical-sizing: auto; font-variation-settings: "SOFT" 60;
+}
+
+/* ---------- Titulares grandes: 600, tracking cerrado ---------- */
+h1, h2 { font-weight: 600; letter-spacing: -.03em; }
+h3 { font-weight: 500; }
+.c-hero__t { font-weight: 600; line-height: .95; letter-spacing: -.04em; font-variation-settings: "SOFT" 100; }
+.c-h2, .m-sec__t, .m-cab__t, .mdd__t { font-weight: 600 !important; line-height: 1 !important; letter-spacing: -.035em !important; }
+.c-cta__t { font-weight: 600; letter-spacing: -.04em; font-variation-settings: "SOFT" 100; }
+.c-contacto__txt .c-contacto__t { font-weight: 600; letter-spacing: -.03em; }
+.c-statement { font-weight: 500; letter-spacing: -.03em; line-height: 1.08; }
+.site-footer__mark { font-weight: 600; letter-spacing: -.045em; font-variation-settings: "SOFT" 100; }
+
+/* ---------- Títulos medianos: 500–600 ---------- */
+.dish__name { font-weight: 500; font-size: 1.5rem; letter-spacing: -.02em; }
+.combo__head h3 { font-weight: 600 !important; letter-spacing: -.025em !important; }
+.c-rol__t, .c-how__paso h3, .site-footer h2 { font-weight: 500; letter-spacing: -.02em; }
+.suc-foto__nombre { font-weight: 600; letter-spacing: -.035em; }
+
+/* ---------- Cifras: Fraunces 600 con figuras de caja alta ---------- */
+.c-cifra__num, .mdd__cifra, .totales__cifra, .combo__sello b { font-weight: 600 !important; }
+
+/* ---------- Acentos en cursiva (la cursiva de Fraunces es la firma) ---------- */
+.eyebrow { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 1.0625rem; letter-spacing: 0; }
+.c-resena blockquote { font-weight: 400; }
+.c-hero__t .w--acento { font-style: italic; font-weight: 500; color: var(--c-gold); }
+
+/* ---------- Texto en Geist ---------- */
+body { font-feature-settings: "ss01" 0; letter-spacing: -.005em; }
+.btn { font-weight: 600; letter-spacing: -.01em; }
+.dish__price, .combo__price { font-weight: 600 !important; font-variant-numeric: tabular-nums; }
+.label { font-weight: 600; }
+
+/* ==========================================================================================================
+ * EFECTOS DE TEXTO adaptados de 21st.dev (MIT), sin React. Ver docs/design/ATTRIBUTIONS.md
+ * ========================================================================================================== */
+
+/* «Vertical Cut Reveal» → el titular del héroe entra LETRA por letra desde el corte de cada palabra */
+.c-hero__t .w > .ch { display: inline-block; animation: m-sube .9s var(--m-ease) both; animation-delay: calc(.1s + var(--c, 0) * 26ms); }
+
+/* «Text Highlight / Underline To Background» → una palabra clave del título se subraya con marcador al aparecer.
+   Es decoración: el texto se lee siempre; sin JS o con movimiento reducido el trazo ya está completo. */
+.resalta {
+  color: inherit; padding: 0 .06em; margin: 0 -.06em;
+  background: linear-gradient(transparent 60%, color-mix(in srgb, var(--c-gold) 62%, transparent) 60% 90%, transparent 90%) no-repeat 0 0 / 100% 100%;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.rv-ready .reveal .resalta { background-size: 0% 100%; transition: background-size 1s var(--m-ease) .35s; }
+.rv-ready .reveal.is-in .resalta { background-size: 100% 100%; }
+
+/* «Scroll Fill Headline» → la frase de «Cómo funciona» se entinta palabra por palabra al bajar (efectos.js escribe
+   --p). Empieza en ink-muted (contraste 5,9: legible desde el inicio) y termina en tinta (16,2). */
+.c-statement .rl {
+  color: var(--rl-fin, var(--c-ink));
+  color: color-mix(in srgb, var(--rl-fin, var(--c-ink)) calc(clamp(0, var(--p, 1) * var(--n, 1) - var(--i, 0), 1) * 100%), var(--c-ink-muted));
+  font-style: inherit; transition: color .25s linear;
+}
+.c-statement em { --rl-fin: var(--c-ink-soft); font-style: italic; font-weight: 400; }
+.c-statement span:not(.rl) { color: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .c-hero__t .w > .ch { animation: none !important; }
+  .rv-ready .reveal .resalta { background-size: 100% 100%; transition: none; }
+  .c-statement .rl { --p: 1; transition: none; }
+}

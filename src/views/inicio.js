@@ -16,7 +16,7 @@ import { formatearCifra } from '../ui/reveal.js';
 import { estadoSucursal } from '../core/horario.js';
 import { estadoCorto } from '../ui/branch-picker.js';
 import { montarHeroVideo } from '../ui/hero-video.js';
-import { textMorph } from '../ui/efectos.js';
+import { textMorph, rellenoAlScroll } from '../ui/efectos.js';
 import { menuDelDiaActivo } from '../core/horario.js';
 
 import { DESTACADOS } from '../data/descripciones.js';
@@ -53,8 +53,24 @@ export const estrellasHTML = (n, clase = '') => `<span class="estrellas ${esc(cl
 
 // Titular del héroe palabra por palabra (motion.css las hace subir desde una máscara). El texto sigue siendo uno
 // solo para lectores de pantalla: los espacios quedan entre las palabras.
-const palabrasHTML = (t) => String(t).split(/\s+/).filter(Boolean)
-  .map((w, i) => `<span class="w"><span style="--i:${i}">${esc(w)}</span></span>`).join(' ');
+// Ahora letra por letra («Vertical Cut Reveal» de 21st.dev): cada letra lleva su --c; la última palabra va en cursiva.
+// El h1 lleva aria-label con el texto completo y las letras van aria-hidden (los lectores no deletrean).
+function palabrasHTML(t) {
+  const palabras = String(t).split(/\s+/).filter(Boolean);
+  let c = 0;
+  return `<span aria-hidden="true">${palabras.map((w, i) => `<span class="w${i === palabras.length - 1 && palabras.length > 1 ? ' w--acento' : ''}">${
+    Array.from(w, (ch) => `<span class="ch" style="--c:${c++}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</span>`;
+}
+
+// Frase que se entinta al bajar («Scroll Fill Headline» de 21st.dev): una <span class="rl"> por palabra con su --i.
+function rellenoHTML(principal, cola) {
+  let i = 0;
+  const pal = (t) => String(t).split(/\s+/).filter(Boolean).map((w) => `<span class="rl" style="--i:${i++}">${esc(w)}</span>`).join(' ');
+  const a = pal(principal);
+  const b = pal(cola);
+  return { html: `${a} <em>${b}</em>`, n: i };
+}
+const FRASE = rellenoHTML('Su cliente escribe como a un amigo.', 'La cocina lo recibe sola y la factura sale por el mismo chat.');
 
 // Cifra con contador: el valor real en .sr-only; el número animado (aria-hidden) lo maneja reveal.js.
 function cifra(valor, { dec = 0, unidad = '', unidadSr = unidad, etiqueta, animar }) {
@@ -65,9 +81,10 @@ function cifra(valor, { dec = 0, unidad = '', unidadSr = unidad, etiqueta, anima
   </div>`;
 }
 
+// En el título, *palabra* se marca con el subrayado de marcador (.resalta, tipografia.css).
 const cabeza = (id, eyebrow, titulo, extra = '', rv = '') => `
   <div class="c-head${rv}">
-    <div><p class="eyebrow">${esc(eyebrow)}</p><h2 id="${esc(id)}" class="c-h2">${esc(titulo)}</h2></div>
+    <div><p class="eyebrow">${esc(eyebrow)}</p><h2 id="${esc(id)}" class="c-h2">${esc(titulo).replace(/\*(.+?)\*/g, '<mark class="resalta">$1</mark>')}</h2></div>
     ${extra}
   </div>`;
 
@@ -121,7 +138,7 @@ export function vistaInicio(main) {
               <span class="c-hero__pill-f" aria-hidden="true">→</span>
             </a>
             <p class="eyebrow c-hero__eyebrow">Hoy en la cocina: <span class="tm" data-morph aria-hidden="true"></span><span class="sr-only">${esc(PALABRAS.join(', '))}</span></p>
-            <h1 id="hero-t" class="c-hero__t">${palabrasHTML(PORTADA.titulo ?? 'Hecho al momento.')}</h1>
+            <h1 id="hero-t" class="c-hero__t" aria-label="${esc(PORTADA.titulo ?? 'Hecho al momento.')}">${palabrasHTML(PORTADA.titulo ?? 'Hecho al momento.')}</h1>
             <p class="c-hero__lead">${esc(PORTADA.lead ?? 'Platos generosos cocinados cuando usted pide. Entrega en Ciudad de Panamá, retiro en tienda o su mesa reservada en tres sucursales.')}</p>
             <div class="c-hero__cta">
               <a class="btn btn--accent btn--lg btn--brillo c-hero__btn" href="#/menu">Ver menú y pedir <span aria-hidden="true">→</span></a>
@@ -140,7 +157,7 @@ export function vistaInicio(main) {
 
       <section class="c-sec c-sucs" aria-labelledby="suc-t">
         <div class="container--wide">
-          ${cabeza('suc-t', 'Ciudad de Panamá', 'Sucursales y horarios', '<p class="c-head__nota">Elija la suya: le mostramos lo que hay hoy en esa cocina, si está abierta, hasta dónde entrega y cuánto tarda su pedido.</p>', rv)}
+          ${cabeza('suc-t', 'Ciudad de Panamá', 'Sucursales y *horarios*', '<p class="c-head__nota">Elija la suya: le mostramos lo que hay hoy en esa cocina, si está abierta, hasta dónde entrega y cuánto tarda su pedido.</p>', rv)}
           <div data-picker></div>
           <div class="c-contacto">
             <div class="c-contacto__txt">
@@ -159,7 +176,7 @@ export function vistaInicio(main) {
 
       <section class="c-sec c-dest" aria-labelledby="dest-t">
         <div class="container--wide">
-          ${cabeza('dest-t', 'Los favoritos de la casa', 'Lo que más se pide', `<a class="btn btn--ghost" href="#/menu">Ver todo el menú <span aria-hidden="true">→</span></a>`, rv)}
+          ${cabeza('dest-t', 'Los favoritos de la casa', 'Lo que *más* se pide', `<a class="btn btn--ghost" href="#/menu">Ver todo el menú <span aria-hidden="true">→</span></a>`, rv)}
           <div class="dish-grid dish-grid--fila c-dest__grid" data-destacados role="region" aria-label="Platos destacados" tabindex="0"></div>
         </div>
       </section>
@@ -169,7 +186,7 @@ export function vistaInicio(main) {
           <div class="c-how__intro${rv}">
             <div class="c-how__frase">
               <p class="eyebrow">Cómo funciona</p>
-              <h2 id="como-t" class="c-statement">Su cliente escribe como a un amigo. <span>La cocina lo recibe sola y la factura sale por el mismo chat.</span></h2>
+              <h2 id="como-t" class="c-statement" data-relleno style="--n:${FRASE.n}" aria-label="Su cliente escribe como a un amigo. La cocina lo recibe sola y la factura sale por el mismo chat.">${FRASE.html}</h2>
             </div>
             <div class="c-how__lado">
               <p>Así trabaja Plato &amp; Co. con un asistente de pedidos: el chat toma el pedido, la cocina lo ve al instante y la gerencia compara sus sucursales. En esta demo el chat simula WhatsApp y la factura es de ejemplo.</p>
@@ -211,7 +228,7 @@ export function vistaInicio(main) {
 
       <section class="c-sec c-combos" aria-labelledby="combos-t">
         <div class="container--wide">
-          ${cabeza('combos-t', 'Para resolver rápido', 'Combos con ahorro', `<a class="btn btn--ghost" href="#/menu?c=combos">Ver en el menú <span aria-hidden="true">→</span></a>`, rv)}
+          ${cabeza('combos-t', 'Para resolver rápido', 'Combos con *ahorro*', `<a class="btn btn--ghost" href="#/menu?c=combos">Ver en el menú <span aria-hidden="true">→</span></a>`, rv)}
           <div data-combos></div>
         </div>
       </section>
@@ -246,6 +263,7 @@ export function vistaInicio(main) {
   pintar();
   const offVideo = montarHeroVideo(nodo.querySelector('[data-hero-video]'));
   const offMorph = textMorph(nodo.querySelector('[data-morph]'), PALABRAS);
+  const offRelleno = rellenoAlScroll(nodo.querySelector('[data-relleno]'));
   const off = store.on('menu:cambio', () => pintarSucursal());
-  return () => { off(); offVideo(); offMorph(); };
+  return () => { off(); offVideo(); offMorph(); offRelleno(); };
 }

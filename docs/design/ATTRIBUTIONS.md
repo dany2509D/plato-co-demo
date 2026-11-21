@@ -82,6 +82,9 @@ El detalle (texto alternativo, dimensiones) está en `src/assets/photos/manifest
 | `text-shimmer.tsx` | Brillo en «Abierto · cierra …» y «Disponible ahora» | `src/styles/motion.css` §6 |
 | `skeleton.tsx` | Barrido de carga en las cajas de foto | `src/styles/motion.css` §6 |
 | `shimmer-button.tsx` | Destello periódico en los botones principales | `src/styles/motion.css` §6 |
+| Vertical Cut Reveal (catálogo de 21st.dev) | Titular del héroe que entra letra por letra | `src/views/inicio.js`, `src/styles/tipografia.css` |
+| Scroll Fill Headline (catálogo de 21st.dev) | Frase de «Cómo funciona» que se entinta al bajar | `src/ui/efectos.js`, `src/styles/tipografia.css` |
+| Text Highlight / Underline To Background (catálogo de 21st.dev) | Palabra clave del título subrayada con marcador | `src/styles/tipografia.css` |
 
 ## Video del héroe
 
@@ -91,3 +94,8 @@ El detalle (texto alternativo, dimensiones) está en `src/assets/photos/manifest
 
 - Descargado el 2026-11-19 desde `assets.mixkit.co` (versión 720p, la más liviana para celular). No muestra marcas ni un restaurante identificable.
 - Si se cambia el archivo, subir `?v=` en `HERO_VIDEO` (`src/views/inicio.js`) para evitar cachés viejas.
+
+## Tipografías
+
+- **Fraunces** (Undercase Type) y **Geist** (Vercel), servidas por Google Fonts bajo la [SIL Open Font License 1.1](https://openfontlicense.org). Elegidas el 2026-11-20.
+- Los tres efectos del catálogo en línea de 21st.dev se tomaron solo como idea (nombre y comportamiento) y se escribieron desde cero en JS/CSS; no se copió su código.

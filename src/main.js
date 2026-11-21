@@ -10,6 +10,7 @@ import './styles/kitchen.css';
 import './styles/gestion.css';
 import './styles/motion.css';
 import './styles/forma.css';
+import './styles/tipografia.css';
 import { brand } from './config/brand.js';
 import { crearBanner } from './ui/banner.js';
 import { onRouteChange, parseRoute } from './ui/router.js';

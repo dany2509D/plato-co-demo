@@ -1,6 +1,8 @@
 // Efectos adaptados de componentes de 21st.dev (MIT, https://github.com/serafimcloud/21st), reescritos en JS sin
 // React ni Tailwind para el estilo «libro de cocina» de esta demo. Ver docs/design/ATTRIBUTIONS.md.
-//   · textMorph   ← TextMorph   (letras que se transforman de una palabra a la siguiente)
+//   · textMorph       ← TextMorph           (letras que se transforman de una palabra a la siguiente)
+//   · rellenoAlScroll ← Scroll Fill Headline (la frase se entinta palabra por palabra al bajar)
+//   · Vertical Cut Reveal y Text Highlight son solo CSS: ver tipografia.css.
 //   · TextShimmer, HeroPill, Skeleton y ShimmerButton son solo CSS: ver la sección «21st» de motion.css.
 
 const reducido = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -45,4 +47,28 @@ export function textMorph(el, palabras, { intervalo = 2600 } = {}) {
   };
   t = setTimeout(siguiente, intervalo);
   return () => clearTimeout(t);
+}
+
+/** Progreso del relleno (0 → 1): empieza cuando el título asoma al 85 % de la ventana y termina al llegar al 35 %. Pura. */
+export function progresoRelleno(top, alto, ventana) {
+  const inicio = ventana * 0.85;
+  const fin = ventana * 0.35 - alto * 0.5;
+  return Math.min(1, Math.max(0, (inicio - top) / Math.max(1, inicio - fin)));
+}
+
+/** Escribe --p en `el` según su posición. Con movimiento reducido queda en 1 (todo entintado). Devuelve la limpieza. */
+export function rellenoAlScroll(el) {
+  if (!el) return () => {};
+  if (reducido()) { el.style.setProperty('--p', '1'); return () => {}; }
+  let raf = 0;
+  const medir = () => {
+    raf = 0;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--p', progresoRelleno(r.top, r.height, window.innerHeight).toFixed(3));
+  };
+  const pedir = () => { if (!raf) raf = requestAnimationFrame(medir); };
+  window.addEventListener('scroll', pedir, { passive: true });
+  window.addEventListener('resize', pedir);
+  medir();
+  return () => { window.removeEventListener('scroll', pedir); window.removeEventListener('resize', pedir); if (raf) cancelAnimationFrame(raf); };
 }
