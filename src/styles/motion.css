@@ -1,0 +1,228 @@
+/* ==========================================================================================================
+ * MOVIMIENTO (19 nov 2026) · un solo sistema, editorial y contenido.
+ * Principios:
+ *   1. Una curva de firma (--m-ease: expo-out) para todo lo que entra; --m-ease-io para lo que va y vuelve.
+ *   2. Nada espera al scroll para VERSE: lo que se anima al desplazarse ya es visible (solo se desplaza o se escala).
+ *      Las únicas opacidades parciales son la entrada del héroe al cargar (< 1,3 s) y el cambio de página (0,45 s).
+ *   3. Se anima transform / opacity / clip-path / background-size (compositor). Nunca alto, ancho ni márgenes.
+ *   4. Con prefers-reduced-motion: reduce todo queda quieto (bloque final).
+ * Se carga la última (main.js), así que puede afinar reglas de los demás archivos.
+ * ========================================================================================================== */
+:root {
+  --m-ease: cubic-bezier(.16, 1, .3, 1);        /* expo-out: llega rápido y se posa despacio */
+  --m-ease-io: cubic-bezier(.65, 0, .35, 1);    /* ida y vuelta (rellenos de hover) */
+  --m-1: .18s;   /* respuesta inmediata: color, pulsado */
+  --m-2: .35s;   /* hover de botones y enlaces */
+  --m-3: .7s;    /* entradas de bloques */
+  --m-4: 1.1s;   /* fotos y titulares grandes */
+  --m-stagger: 70ms;
+}
+
+/* ---------------------------------------------------------------------------------------------------------
+ * 1 · ENTRADA DEL HÉROE (al cargar #/)
+ * --------------------------------------------------------------------------------------------------------- */
+/* Titular palabra por palabra: cada palabra sube desde una máscara (recortada, no transparente) */
+.c-hero__t .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .14em; margin-bottom: -.14em; }
+.c-hero__t .w > span { display: inline-block; animation: m-sube var(--m-4) var(--m-ease) both; animation-delay: calc(.08s + var(--i, 0) * var(--m-stagger)); }
+@keyframes m-sube { from { transform: translateY(108%) rotate(2deg); } }
+
+/* El resto de la columna en cascada */
+.c-hero__eyebrow, .c-hero__lead, .c-hero__cta, .c-hero__datos { animation: m-asoma var(--m-3) var(--m-ease) both; }
+.c-hero__eyebrow { animation-delay: .05s; }
+.c-hero__lead { animation-delay: .38s; }
+.c-hero__cta { animation-delay: .48s; }
+.c-hero__datos { animation-delay: .58s; }
+@keyframes m-asoma { from { opacity: 0; transform: translateY(14px); } }
+
+/* La foto/póster bajo el video se asienta desde un leve zoom */
+.c-hero .c-hero__foto img { animation: m-foto 1.6s var(--m-ease) .1s both; }
+@keyframes m-foto { from { transform: scale(1.12); } }
+
+/* ---------------------------------------------------------------------------------------------------------
+ * 2 · CAMBIO DE PÁGINA (main.js añade .vista-entra al montar una ruta del cliente)
+ * --------------------------------------------------------------------------------------------------------- */
+main.vista-entra > * { animation: m-pagina .45s var(--m-ease) both; }
+@keyframes m-pagina { from { opacity: .35; transform: translateY(10px); } }
+
+/* ---------------------------------------------------------------------------------------------------------
+ * 3 · AL DESPLAZARSE (todo ya visible: solo se desplaza o se escala)
+ * --------------------------------------------------------------------------------------------------------- */
+/* Bloques: suben 24 px y se posan (reveal.js añade .is-in al entrar) */
+.rv-ready .reveal { transform: translateY(24px); transition: transform .9s var(--m-ease); transition-delay: var(--rv-delay, 0s); }
+.rv-ready .reveal.is-in { transform: none; }
+/* Cascada automática en las rejillas de platos (izquierda → derecha) */
+.dish-grid > .reveal:nth-child(2) { --rv-delay: .07s; }
+.dish-grid > .reveal:nth-child(3) { --rv-delay: .14s; }
+.dish-grid > .reveal:nth-child(4) { --rv-delay: .21s; }
+
+/* Fotos: el zoom de hover se posa con la curva de firma */
+.foto img { transition: transform .9s var(--m-ease), filter .3s var(--m-ease); }
+
+/* Parallax suave ligado al scroll (CSS scroll-driven; navegadores sin soporte: foto quieta).
+   Usa las propiedades individuales translate/scale para no pisar el transform del hover. */
+@supports (animation-timeline: view()) {
+  .suc-foto .foto img, .c-rol .foto img, .mdd__foto .foto img, .m-franja .foto img {
+    scale: 1.1; animation: m-parallax linear both; animation-timeline: view(); animation-range: cover;
+  }
+  @keyframes m-parallax { from { translate: 0 -4.5%; } to { translate: 0 4.5%; } }
+  /* overflow: hidden convierte el marco en contenedor de scroll y view() mediría contra él: clip recorta igual sin serlo */
+  .suc-foto .foto, .c-rol .foto, .mdd__foto .foto, .m-franja .foto { overflow: clip; }
+
+
+  /* El nombre de la casa en el pie sube desde su línea base al entrar (recortado por su contenedor) */
+  .site-footer__mark span { animation: m-marca linear both; animation-timeline: view(); animation-range: entry 0% cover 35%; }
+  @keyframes m-marca { from { transform: translateY(38%); } }
+}
+
+/* ---------------------------------------------------------------------------------------------------------
+ * 4 · MICROINTERACCIONES
+ * --------------------------------------------------------------------------------------------------------- */
+/* Botones de contorno: la tinta entra de izquierda a derecha y el texto pasa a pergamino */
+.btn--ghost, .btn--wa {
+  background-image: linear-gradient(var(--c-ink), var(--c-ink)); background-repeat: no-repeat; background-position: 0 0; background-size: 0% 100%;
+  transition: background-size .5s var(--m-ease-io), color var(--m-2) var(--m-ease-io), border-color var(--m-2), transform .08s;
+}
+.btn--ghost:hover, .btn--wa:hover { background-color: transparent; background-image: linear-gradient(var(--c-ink), var(--c-ink)); background-size: 100% 100%; color: var(--c-canvas); }
+.btn--wa .ico { transition: color var(--m-2) var(--m-ease-io); }
+.btn--wa:hover .ico { color: var(--c-canvas); }
+/* Lleno: pulsado con ligera compresión */
+.btn:active { transform: translateY(1px) scale(.985); }
+.btn > span[aria-hidden="true"] { transition: transform var(--m-2) var(--m-ease); }
+
+/* Navegación: el subrayado se dibuja desde la izquierda y se va hacia la derecha */
+.nav a::after { transform-origin: right; transition: transform var(--m-2) var(--m-ease); }
+.nav a:hover::after, .nav a[aria-current="page"]::after { transform-origin: left; }
+
+/* Enlaces de texto con resaltado: el subrayado crece desde la izquierda */
+:is(p, li, dd, blockquote) > a:not(.btn):not([class]) {
+  background-image: linear-gradient(var(--c-highlight), var(--c-highlight)), linear-gradient(var(--c-ink), var(--c-ink));
+  background-size: 100% 100%, 0% 1px; background-position: 0 0, 0 100%; background-repeat: no-repeat; background-color: transparent;
+  transition: background-size var(--m-2) var(--m-ease);
+}
+:is(p, li, dd, blockquote) > a:not(.btn):not([class]):hover { text-decoration: none; background-size: 100% 100%, 100% 1px; }
+
+/* Tarjetas de plato: la flecha de «Ver todo» y el nombre responden juntos; el botón de agregar confirma (ver 5) */
+.dish .dish__name { transition: text-decoration-color var(--m-2); }
+.c-rol__cta .ico { transition: transform var(--m-2) var(--m-ease); }
+.c-rol:hover .c-rol__cta .ico { transform: translateX(4px); }
+
+/* «Agregar»: contorno en tinta que se LLENA (de izquierda a derecha) al pasar por cualquier parte de la tarjeta.
+   Más liviano que 40 bloques oscuros en la carta y con una respuesta clara; en táctil queda el contorno, claramente un botón. */
+.dish__add.btn {
+  --btn-bg: transparent; --btn-fg: var(--c-ink); --btn-bd: var(--c-ink); --btn-hover-bg: transparent; --btn-hover-fg: var(--c-canvas);
+  background-image: linear-gradient(var(--c-ink), var(--c-ink)); background-repeat: no-repeat; background-position: 0 0; background-size: 0% 100%;
+  transition: background-size .5s var(--m-ease-io), color var(--m-2) var(--m-ease-io), transform .08s;
+}
+.dish:hover .dish__add.btn:not(:disabled), .dish__add.btn:not(:disabled):hover, .dish__add.btn:focus-visible {
+  background-color: transparent; background-image: linear-gradient(var(--c-ink), var(--c-ink)); background-size: 100% 100%; color: var(--c-canvas);
+}
+.dish__add.btn .ico { transition: transform var(--m-2) var(--m-ease); }
+.dish:hover .dish__add.btn:not(:disabled) .ico { transform: rotate(90deg); }
+.dish__add.btn:disabled { background-image: none; }
+/* Foto de la tarjeta: zoom lento y la etiqueta se asienta */
+.dish .foto img { transition: transform 1.1s var(--m-ease), filter .3s; }
+.dish:hover .foto img { transform: scale(1.05); }
+
+/* Pestañas de la carta: el subrayado (tinta) se retira hacia la derecha y el nuevo crece desde la izquierda */
+.m-tab::after { background: var(--c-ink); height: 2px; transform-origin: right; transition: transform .45s var(--m-ease); }
+.m-tab:hover::after, .m-tab[aria-selected="true"]::after { transform-origin: left; }
+.m-tab { transition: color var(--m-2) var(--m-ease); }
+
+/* Al cambiar de categoría las tarjetas entran en cascada (breve: < 0,8 s) */
+.m-sec--entra .dish-grid > .dish { animation: m-asoma .6s var(--m-ease) both; }
+.m-sec--entra .dish-grid > .dish:nth-child(2) { animation-delay: .05s; }
+.m-sec--entra .dish-grid > .dish:nth-child(3) { animation-delay: .1s; }
+.m-sec--entra .dish-grid > .dish:nth-child(4) { animation-delay: .15s; }
+.m-sec--entra .dish-grid > .dish:nth-child(5) { animation-delay: .2s; }
+.m-sec--entra .dish-grid > .dish:nth-child(n+6) { animation-delay: .25s; }
+
+/* ---------------------------------------------------------------------------------------------------------
+ * 5 · RESPUESTA AL AGREGAR (main.js / product-card.js)
+ * --------------------------------------------------------------------------------------------------------- */
+/* Contador del carrito: rebote corto y la bolsa se mece */
+.nav-carrito.is-bump .nav-cuenta { animation: m-bump .5s var(--m-ease); }
+.nav-carrito.is-bump .ico { animation: m-mece .5s var(--m-ease-io); }
+@keyframes m-bump { 0% { transform: scale(1); } 35% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes m-mece { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-10deg); } 60% { transform: rotate(7deg); } }
+/* Botón «Agregar» → «Agregado» con la marca que se dibuja */
+.dish__add.btn.is-ok, .dish:hover .dish__add.btn.is-ok { --btn-bd: var(--c-success); background-image: linear-gradient(var(--c-success), var(--c-success)); background-size: 100% 100%; color: #fff; border-color: var(--c-success); }
+.dish__add.is-ok .ico path { stroke-dasharray: 24; animation: m-traza .45s var(--m-ease) both; }
+@keyframes m-traza { from { stroke-dashoffset: 24; } }
+
+/* ---------------------------------------------------------------------------------------------------------
+ * MOVIMIENTO REDUCIDO: todo quieto, todo visible
+ * --------------------------------------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .c-hero__t .w > span, .c-hero__eyebrow, .c-hero__lead, .c-hero__cta, .c-hero__datos, .c-hero__escena, .c-hero .c-hero__foto img,
+  main.vista-entra > *, .suc-foto .foto img, .c-rol .foto img, .mdd__foto .foto img, .m-franja .foto img, .site-footer__mark span,
+  .nav-carrito.is-bump .nav-cuenta, .nav-carrito.is-bump .ico, .dish__add.is-ok .ico path, .m-sec--entra .dish-grid > .dish { animation: none !important; }
+  .dish__add.btn, .dish .foto img, .m-tab::after, .dish__add.btn .ico { transition: none; }
+  .dish:hover .foto img, .dish:hover .dish__add.btn .ico { transform: none; }
+  .suc-foto .foto img, .c-rol .foto img, .mdd__foto .foto img, .m-franja .foto img { scale: none; translate: none; }
+  .rv-ready .reveal { transform: none; transition: none; }
+  .btn--ghost, .btn--wa, :is(p, li, dd, blockquote) > a:not(.btn):not([class]), .foto img { transition: none; }
+  .btn:active { transform: none; }
+}
+
+/* ---------------------------------------------------------------------------------------------------------
+ * 6 · COMPONENTES ADAPTADOS DE 21st.dev (MIT · github.com/serafimcloud/21st), sin React ni Tailwind,
+ *     reinterpretados para el estilo «libro de cocina» (radio 0, tinta y pergamino). Ver docs/design/ATTRIBUTIONS.md
+ * --------------------------------------------------------------------------------------------------------- */
+/* TextMorph → «Hoy en la cocina: hamburguesas → pastas…» (lógica en src/ui/efectos.js) */
+.tm { display: inline-block; font-style: normal; font-weight: 600; color: var(--c-on-dark); white-space: nowrap; }
+.tm-l { display: inline-block; transition: transform .26s var(--m-ease), opacity .26s var(--m-ease); transition-delay: calc(var(--d, 0) * 18ms); }
+.tm-l--entra { animation: tm-entra .5s var(--m-ease) both; animation-delay: calc(var(--d, 0) * 22ms); }
+.tm-l--sale { transform: translateY(-45%); opacity: 0; }
+@keyframes tm-entra { from { transform: translateY(55%); opacity: 0; } }
+
+/* HeroPill → anuncio rectangular sobre el titular, con vidrio esmerilado y flecha que avanza */
+.c-hero__pill {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 10px; min-height: 40px; margin-bottom: var(--sp-2); padding: 0 14px 0 10px;
+  font: 500 .9375rem/1.2 var(--font-body); color: var(--c-on-dark); text-decoration: none;
+  background: rgb(246 240 225 / .12); border: 1px solid rgb(246 240 225 / .4); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  animation: m-asoma var(--m-3) var(--m-ease) both; transition: background-color var(--m-2) var(--m-ease);
+}
+.c-hero__pill:hover { background: rgb(246 240 225 / .22); color: var(--c-on-dark); }
+.c-hero__pill-i { display: inline-grid; place-items: center; padding-right: 10px; border-right: 1px solid rgb(246 240 225 / .35); color: var(--c-gold); }
+.c-hero__pill-i .ico { transition: transform var(--m-2) var(--m-ease); }
+.c-hero__pill:hover .c-hero__pill-i .ico { transform: rotate(72deg) scale(1.15); }
+.c-hero__pill-f { transition: transform var(--m-2) var(--m-ease); }
+.c-hero__pill:hover .c-hero__pill-f { transform: translateX(3px); }
+.c-hero__pill:focus-visible { outline: 2px solid var(--c-on-dark); outline-offset: 3px; }
+
+/* TextShimmer → un brillo recorre el texto de estado («Abierto · cierra 22:00», «Disponible ahora»).
+   El color base ya cumple AA por sí solo; el brillo solo lo aclara por momentos. */
+.t-brillo {
+  --tb-base: var(--c-ink); --tb-luz: var(--c-ink-muted);
+  background: linear-gradient(90deg, var(--tb-base) 0 40%, var(--tb-luz) 50%, var(--tb-base) 60% 100%) 100% 0 / 250% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: t-brillo 2.6s linear infinite;
+}
+.c-hero .t-brillo { --tb-base: var(--c-on-dark-muted); --tb-luz: #fff; }
+.badge--ok .t-brillo { --tb-base: var(--c-success); --tb-luz: #5fa35f; }
+@keyframes t-brillo { to { background-position: -150% 0; } }
+
+/* Skeleton → la caja de la foto respira con un barrido mientras la imagen carga (la imagen la tapa al llegar) */
+.foto { isolation: isolate; }
+.foto::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / .55) 50%, transparent 70%) var(--c-linen);
+  background-size: 220% 100%; animation: esqueleto 1.4s var(--m-ease-io) 4;
+}
+@keyframes esqueleto { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* ShimmerButton → un destello cruza el botón principal cada pocos segundos (sin cambiar su forma ni su color) */
+.btn--brillo { overflow: hidden; isolation: isolate; }
+.btn--brillo::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent, var(--brillo, rgb(255 255 255 / .22)), transparent);
+  transform: skewX(-18deg); animation: destello 4.8s var(--m-ease-io) 1.6s infinite;
+}
+.c-hero--video .btn--brillo { --brillo: rgb(41 10 8 / .14); }
+@keyframes destello { 0%, 62% { left: -60%; } 100% { left: 130%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-l, .tm-l--entra, .c-hero__pill, .t-brillo, .foto::before, .btn--brillo::before { animation: none !important; transition: none !important; }
+  .t-brillo { color: var(--tb-base); background: none; }
+  .btn--brillo::before { display: none; }
+}

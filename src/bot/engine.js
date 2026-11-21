@@ -1,0 +1,856 @@
+import { normalize } from '../core/text.js';
+import { alternativesFor, isAvailable } from '../core/menu.js';
+import { assignBranch, createOrder, payOrder, priceOrder, issueInvoice, PAGO_YAPPY, esperarComprobanteYappy, registrarComprobanteYappy, confirmarPagoYappy } from '../core/orders.js';
+import { createReservation } from '../core/reservations.js';
+import { detectLang, parseOrder } from './parser.js';
+import { horaPanama, parseFecha, parseHora, sinHora } from './datetime.js';
+import { t } from './texts.js';
+import { allergenReply, ALERGENO_CUE, palabras } from './allergens.js';
+import { estadoSucursal } from '../core/horario.js';
+import { esPedirVacio, esAlergenoVacio, pareceDireccion, RESERVA_KW, ocasionNinguna, ocasionReconocida, ocasionLibre, CUE_SUMAR, mismasLineas } from './steps.js';
+
+// Motor del bot en modo guion: una máquina de pasos por conversación.
+// El paso actual (conv.paso) y los datos recogidos (conv.slots) viven en la conversación.
+// No hay WhatsApp ni pagos reales: todo es simulado.
+
+const HUMANO = /\b(pasar a una persona|hablar con (una |un )?(persona|humano|agente)|persona real|human|agent|representative|real person|speak (to|with) (a )?(person|someone))\b/;
+const CANCELAR = /^(cancelar|cancela|cancelo|cancel)\b/;
+// Confirma SOLO un «sí» limpio; «sí, pero sin cebolla» es una corrección y se aplica antes de confirmar.
+const SI = /^(si|yes|yeah|yep|sure|ok|okay|dale|claro|correcto|listo|confirmo|confirmar|confirm|de acuerdo)(\W+(que si|por favor|please|confirm\w*|gracias|thanks))*\W*$/;
+const AFIRMA = new Set(['si', 'yes', 'yeah', 'yep', 'sure', 'ok', 'okay', 'dale', 'claro', 'correcto', 'listo']);
+const NO_SE = /^(no se|no estoy segur[oa]|no sabria|no se si|not sure|i don'?t know|i dont know|dunno|no idea)\W*$/;
+const INTERROG = /^(a que|que|cual|cuales|cuanto|cuantos|cuando|donde|como|quien|por que|puedo|puede|pueden|tienen|tiene|hay|aceptan|se puede|do you|does|is|are|can|what|when|where|how|which|why|who|will)\b/;
+const NO = /^(no|nop|nope)(\s+(gracias|thanks|thank you))?\W*$/;
+const ES = /\b(hola|gracias|quiero|buenas|buenos|reserva|reservar|horario|pedido|manana|hoy|personas|persona|ubicacion|donde|cuanto|favor|sin|para|una|un|dos|del|dia|tarjeta|efectivo|entrega|retiro|cancelar|tiene|tienen|las|los|que|cumpleanos|ninguna)\b/;
+const EN = /\b(add|coke|cokes|lemonade|burgers?|fries|water|juice|salad|another|extra|close|closes|does|do|the|contain|contains|have|has|what|which|yes|yeah|hi|hello|hey|please|hours|open|where|status|reservation|book|table|tomorrow|today|cancel|human|agent|thanks|thank|people|order|delivery|pickup|card|cash|allergens?|allergy|my|menu|would|like|want|none|birthday)\b/;
+const ORDEN = /\b(quiero|quisiera|me regala|me da|dame|ponme|pedir|ordenar|pedido|i want|i'd like|i would like|order|can i get)\b/;
+const ESTADO = /(como va|como esta|donde (esta|va|viene)|estado de|estatus|status|track|where is|how('?s| is)|cuanto (falta|demora|tarda)|how long).*(pedido|orden|order)|^(mi|my) (pedido|orden|order)\W*$|cuando (llega|llegara|va a llegar|me llega|llegan)|when (will|does|is) (it|my food|my order|the food) (arrive|come|get here|be here|ready)/;
+// Búsqueda segura en objetos con texto del usuario: «constructor» o «__proto__» no son claves.
+const own = (obj, k) => (Object.hasOwn(obj, k) ? obj[k] : undefined);
+const RESERVA = /reserv|\bbook\b|booking|table for|mesa para|una mesa|a table/;
+const HORARIO = /horario|hora de (atencion|apertura)|a que hora (abren|cierran|abre|cierra)|abierto|abren|cierran|\bopen\b|opening|\bhours\b|closing|\bclos(e|es|ed)\b|what time (do|does|are|is) (you|they|the)|when (do|does|are|is) (you|they|the) (open|close|closed|opening|closing)/;
+const UBICACION = /ubicacion|ubicad|direccion de|donde (estan|queda|quedan|se encuentran)|location|address|where (are|is)/;
+const MENU = /menu del dia|menu of the day|today'?s menu|combos?\b|especial(es)? del dia|daily special|\bmenu\b|\bcarta\b/;
+const SALUDO = /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hello|hi|hey|good (morning|afternoon|evening))\b/;
+const GRACIAS = /\b(gracias|thanks|thank you)\b/;
+const PREGUNTA = /^(tienen|tiene|hay|cuanto|cuantos|puedo|se puede|aceptan|do you|is there|are there|can i|how much|what|que|donde|cuando|como)\b/;
+const QUITAR = /\b(quita|quitar|quitale|elimina|eliminar|saca|sacar|remove|delete|drop)\b/;
+const AGREGAR = /^(y|and|tambien|also|mas)\b|\b(agrega|agregar|agregame|agregale|anade|anadir|suma|sumar|add|ponle|ponme|dame|quiero|i want|i'd like)\b/;
+const TOTAL = /^(?:(?:cual es )?(?:el )?total(?: a pagar)?|cuanto (?:es|cuesta|seria|son|me sale|va a ser)(?: en total)?|a como sale|how much(?: is it| does it cost| is the total| in total)?|(?:what'?s|what is|whats) the total)\W*$/;
+const RETIRO_VERBO = /retir|recog|recoj|pickup|pick up/;
+const MAS_N = /^(\d+|[a-z]+)\s+(?:mas|more)\W*$/;
+const OTRA = /^(?:otra|otro|another|another one|one more|otra mas|otro mas|una mas|uno mas)\W*$/;
+const CANT_PROD = /^(?:mejor|make it|cambia(?:lo|la|r)?(?: a)?|change it to|actually|ahora)\s+(\d+|[a-z]+)\s+([a-z ]+)$/;
+const CANT = /^(?:mejor|make it|cambia(?:lo)?(?: a)?|change it to|actually)\s+(\d+|[a-z]+)\s*$/;
+const MOD = /^(?:mejor |make it |actually |ahora )?(?:sin|without)\s+(?:la |el |los |las |the )?(.+)$/;
+const NUMS = { un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+const EN_PROD = { burger: 'hamburguesa', burgers: 'hamburguesa', lemonade: 'limonada', fries: 'papas', juice: 'jugo', water: 'agua', salad: 'ensalada', soda: 'refresco', chicken: 'pollo', tea: 'te helado', coffee: 'cafe', shake: 'batido' };
+const EN_ING = { onion: 'cebolla', onions: 'cebolla', tomato: 'tomate', tomatoes: 'tomate', sauce: 'salsa', ice: 'hielo' };
+const MAX_DIR = 200;
+const RETIRO = /\b(retiro|retirar|recoger|recojo|pickup|pick up|sucursal)\b/;
+const ENTREGA = /\b(entrega|delivery|deliver|domicilio)\b/;
+const MAX_PERSONAS = 8;
+const PASOS_PEDIDO = ['confirmar', 'tipo', 'direccion', 'pago'];
+
+export function createBot(store, opts = {}) {
+  // Verificación simulada del comprobante de Yappy: tras unos segundos el pago queda confirmado.
+  const programar = typeof opts.programar === 'function' ? opts.programar : (fn, ms) => setTimeout(fn, ms);
+  const verificacionMs = opts.verificacionMs ?? 3000;
+  const ahora = () => (typeof opts.ahora === 'function' ? opts.ahora() : opts.ahora instanceof Date ? opts.ahora : new Date());
+  const state = () => store.get();
+  const getConv = (id) => state().conversaciones.find((c) => c.id === id);
+  const upd = (id, fn) => store.update((s) => { const c = s.conversaciones.find((x) => x.id === id); if (c) fn(c); });
+  const m = (texto, botones, actions) => {
+    const msg = { de: 'bot', texto };
+    if (botones?.length) msg.botones = botones;
+    if (actions?.length) msg.actions = actions;
+    return msg;
+  };
+
+  function append(id, msg) {
+    const d = ahora();
+    const guardado = { ...msg, hora: horaPanama(d), en: d.toISOString() };
+    upd(id, (c) => { c.mensajes.push(guardado); });
+    return guardado;
+  }
+  const setStep = (id, paso, slots) => upd(id, (c) => { c.paso = paso; c.slots = slots ?? {}; });
+  const reset = (id) => setStep(id, null, {});
+  const handoff = (id) => upd(id, (c) => { c.requiereHumano = true; });
+  const sucNombre = (sid) => state().sucursales.find((s) => s.id === sid)?.nombre ?? sid;
+  const sucDefault = () => state().ui?.sucursalCliente ?? state().sucursales[0].id;
+  const nombreProd = (pid) => state().productos.find((p) => p.id === pid)?.nombre ?? pid;
+  const lang = (id) => t(getConv(id).idioma);
+
+  // Sucursal nombrada en el texto (por la última palabra de su nombre: Centro, Costa, Norte).
+  function sucursalNombrada(texto) {
+    const n = texto.replace(/\bnorth\b/g, 'norte').replace(/\b(center|centre|downtown)\b/g, 'centro').replace(/\bcoast\b/g, 'costa');
+    let r = null;
+    for (const x of state().sucursales) {
+      if (new RegExp(String.raw`\b${normalize(x.nombre).split(' ').pop()}\b`).test(n)) r = x.id;
+    }
+    return r;
+  }
+
+  // Repite lo no identificado con las tildes y mayúsculas que escribió el cliente.
+  function eco(texto, frags) {
+    const orig = texto.split(/\s+/).filter(Boolean).map((w) => w.replace(/^[¡!¿?.,;:"()]+|[¡!¿?.,;:"()]+$/g, ''));
+    const norm = orig.map((w) => normalize(w));
+    return frags.map((f) => {
+      const fw = f.split(' ').filter(Boolean);
+      for (let i = 0; i + fw.length <= norm.length; i++) {
+        if (fw.every((w, k) => norm[i + k] === w)) return orig.slice(i, i + fw.length).join(' ');
+      }
+      return f;
+    });
+  }
+
+  // Avisos del parser: ambigüedades, cantidades inválidas y lo no identificado.
+  function avisos(T, texto, res) {
+    const out = [];
+    for (const a of res.ambiguos ?? []) out.push(T.ambiguo(eco(texto, [a.termino ?? a.frag])[0], a.opciones));
+    const inv = res.invalidas ?? [];
+    const enteras = inv.filter((i) => i.motivo === 'entera');
+    if (enteras.length) out.push(T.cantidadEntera(eco(texto, enteras.map((i) => i.frag)).join(', ')));
+    if (inv.some((i) => i.motivo === 'rango')) out.push(T.cantidadMax);
+    const resto = res.desconocidos.filter((f) => !inv.some((i) => i.frag === f));
+    if (resto.length) out.push(T.noEntendidos(eco(texto, resto).join(', ')));
+    return out;
+  }
+
+  // Aviso de sucursal cerrada ahora (hora de Panamá, reloj inyectable). '' si está abierta.
+  function avisoCerrada(T, sucId, clave) {
+    const sc = state().sucursales.find((x) => x.id === sucId);
+    if (!sc) return '';
+    const st = estadoSucursal(sc.horario, ahora());
+    if (st.abierto || st.etiqueta !== 'Cerrado') return '';
+    return T[clave](sc.nombre, /hoy/.test(st.detalle), sc.horario.abre);
+  }
+
+  function pickLang(texto, actual) {
+    const n = normalize(texto);
+    if (!n) return actual;
+    if (ES.test(n)) return 'es';
+    if (EN.test(n) || (n.split(" ").length >= 4 && detectLang(texto) === "en")) return "en";
+    return actual;
+  }
+
+  // ---------- pedidos ----------
+  function zonaDe(texto) {
+    const z = assignBranch(state(), texto);
+    if (!z) return null;
+    const n = normalize(texto);
+    const suc = state().sucursales.find((s) => s.id === z.sucursalId);
+    const nombre = suc.zonasEntrega.find((zn) => n.includes(normalize(zn)));
+    return { ...z, zona: nombre };
+  }
+
+  // Resumen con todo lo que ya se sabe: platos y total; dirección exacta y forma de pago cuando ya se dieron.
+  function resumen(T, sl) {
+    const tot = priceOrder(state(), sl.lineas);
+    const lineas = sl.lineas.map((l) => `- ${T.linea(l.cantidad, nombreProd(l.productoId), l.modificadores)}`);
+    const partes = [T.resumenTitulo, ...lineas, T.totales(tot.subtotal, tot.itbms, tot.total)];
+    const suc = state().sucursales.find((x) => x.id === sl.sucursalId);
+    if (sl.tipo === 'retiro') partes.push(T.retiraEn(suc.nombre, suc.direccion));
+    if (sl.tipo === 'entrega' && sl.exacta && sl.direccion) partes.push(T.entregaEn(sl.direccion));
+    const conSucursal = (sl.tipo === 'entrega' && sl.direccion) || sl.tipo === 'retiro';
+    if (conSucursal) partes.push(T.sucursalEta(suc.nombre, sl.eta ?? suc.etaBaseMin));
+    if (sl.metodo) partes.push(T.pagoLinea(sl.metodo));
+    const cerrada = conSucursal ? avisoCerrada(T, sl.sucursalId, 'cerradaResumen') : '';
+    if (cerrada) partes.push(cerrada);
+    return partes.join('\n');
+  }
+
+  // Siguiente dato que falta del pedido, en este orden: entrega o retiro → dirección exacta → forma de pago.
+  // Con todo completo muestra el resumen final (platos, total, dirección, pago) y RECIÉN AHÍ pide confirmar.
+  // `conResumen`: antepone el resumen parcial (al iniciar o tras una corrección).
+  function avanzar(id, sl, previo = [], conResumen = false) {
+    const T = lang(id);
+    const out = [...previo];
+    const pedir = (paso, texto, botones) => {
+      setStep(id, paso, sl);
+      return [m([...out, ...(conResumen ? [resumen(T, sl)] : []), texto].join('\n'), botones)];
+    };
+    if (!sl.tipo) return pedir('tipo', T.pedirTipo, T.botonesTipo);
+    if (sl.tipo === 'entrega' && !(sl.exacta && sl.direccion)) {
+      return pedir('direccion', sl.zona ? T.pedirDetalle(sl.zona) : T.pedirDireccion);
+    }
+    if (!sl.metodo) return pedir('pago', T.pedirPago, T.botonesPago);
+    setStep(id, 'confirmar', sl);
+    return [m([...out, resumen(T, sl), T.confirmarPreg].join('\n'), [T.si, T.cancelar])];
+  }
+
+  const metodoDe = (n) => (/yappy/.test(n) ? 'yappy' : /tarjeta|\bcard\b|credit|debit|debito/.test(n) ? 'tarjeta' : /efectivo|\bcash\b/.test(n) ? 'efectivo' : null);
+  const CLAUSULA_PAGO = /^(?:(?:y|and)\s+)?(?:(?:el\s+)?pag\w*|pay\w*|con|en|with|by|in|via|por)?\b.*\b(?:yappy|tarjeta|efectivo|cash|card|credito|debito|credit|debit)\b/;
+  // «Calle 50, edificio Global Bank piso 3. Pago con Yappy»: separa la forma de pago de la dirección
+  // para que ninguna de las dos se pierda. Devuelve { metodo, resto } (resto = el texto sin la parte del pago).
+  function extraerPago(texto) {
+    const metodo = metodoDe(normalize(texto));
+    if (!metodo) return { metodo: null, resto: texto };
+    const partes = texto.split(/([.;,\n]+)/);
+    let resto = '';
+    for (let i = 0; i < partes.length; i += 2) {
+      let cl = partes[i];
+      const n = normalize(cl);
+      if (metodoDe(n)) {
+        // «piso 3 y pago con Yappy»: se corta desde la conjunción que introduce el pago
+        const corte = /\s+(?:y|and)\s+(?:pag|pay|con |with |en efectivo)/i.exec(cl);
+        if (!corte && CLAUSULA_PAGO.test(n)) continue;
+        if (corte) cl = cl.slice(0, corte.index);
+        else continue;
+      }
+      resto += cl + (partes[i + 1] ?? '');
+    }
+    return { metodo, resto: resto.replace(/[\s.;,]+$/, '').trim() };
+  }
+
+  // ¿El texto corrige el pedido (agregar, quitar, cantidad, «sin …»), aunque se esté pidiendo otro dato?
+  function esEdicion(texto, n, sl) {
+    if (!sl?.lineas?.length) return false;
+    if (QUITAR.test(n)) return true;
+    // nombra platos («otra hamburguesa clásica a domicilio», la frase del pedido repetida): es el pedido, no la dirección
+    const r = parseOrder(texto, state(), sl.sucursalId);
+    if (r.lineas.length || r.agotados.length) return true;
+    // «mejor retiro», «mejor con tarjeta», «Calle 50, Obarrio» responden al paso, no corrigen el pedido
+    if (metodoDe(n) || RETIRO.test(n) || ENTREGA.test(n) || zonaDe(texto)) return false;
+    // «agrega un sándwich» / «agrega un helado»: aunque el plato no se reconozca, es una corrección del pedido
+    if (AGREGAR.test(n)) return true;
+    if (CANT.test(n) || CANT_PROD.test(n) || MAS_N.test(n) || OTRA.test(n)) return true;
+    return MOD.test(n) && !AGREGAR.test(n);
+  }
+
+  function textoAgotados(T, ids, sucId) {
+    return ids.map((pid) => T.agotado(nombreProd(pid), alternativesFor(state(), pid, sucId).map((a) => a.nombre))).join('\n');
+  }
+
+  function iniciarPedido(id, texto) {
+    const T = lang(id);
+    const n = normalize(texto);
+    // «para retirar en Norte / en Costa del Este»: retiro en la sucursal nombrada (no es una zona de entrega)
+    const retiro = RETIRO.test(n);
+    const z = retiro ? null : zonaDe(texto);
+    const sucursalId = (retiro ? sucursalNombrada(n) : null) ?? z?.sucursalId ?? sucDefault();
+    const res = parseOrder(texto, state(), sucursalId);
+    if (!res.lineas.length && !res.agotados.length) {
+      reset(id);
+      const av = avisos(T, texto, res);
+      const soloDesconocidos = !res.ambiguos.length && !res.invalidas.length;
+      return [m([...av, ...(soloDesconocidos ? [T.aclarar] : [])].join('\n'))];
+    }
+    const sl = {
+      lineas: res.lineas, sucursalId,
+      tipo: retiro ? 'retiro' : z ? 'entrega' : ENTREGA.test(n) ? 'entrega' : null,
+      direccion: z ? z.zona : null, zona: z?.zona ?? null, exacta: false, eta: z?.etaMin ?? null,
+    };
+    const out = [];
+    if (res.agotados.length) out.push(textoAgotados(T, res.agotados, sucursalId));
+    if (!sl.lineas.length) { reset(id); return [m([...out, ...avisos(T, texto, res)].join('\n'))]; }
+    out.push(...avisos(T, texto, res));
+    out.push(resumen(T, sl));
+    if (res.agotados.length) out.push(T.agotadoSigue);
+    return avanzar(id, sl, out);
+  }
+
+  const clave = (l) => `${l.productoId}|${[...l.modificadores].sort().join('|')}`;
+  function fusionar(lineas) {
+    const mapa = new Map();
+    for (const l of lineas) {
+      const k = clave(l);
+      if (mapa.has(k)) mapa.get(k).cantidad += l.cantidad;
+      else mapa.set(k, { productoId: l.productoId, cantidad: l.cantidad, modificadores: [...l.modificadores] });
+    }
+    return [...mapa.values()];
+  }
+
+  // Líneas del pedido que el texto menciona (las de mayor coincidencia de palabras del nombre).
+  function lineasMencionadas(texto, lineas) {
+    const tw = new Set(palabras(normalize(texto).split(' ').map((w) => own(EN_PROD, w) ?? own(EN_PROD, w.replace(/s$/, '')) ?? w).join(' ')));
+    const puntaje = lineas.map((l) => palabras(nombreProd(l.productoId)).filter((w) => tw.has(w)).length);
+    const max = Math.max(0, ...puntaje);
+    return max ? lineas.filter((_, i) => puntaje[i] === max) : [];
+  }
+
+  function mostrarEdicion(id, T, sl, previo = []) {
+    if (!sl.lineas.length) { reset(id); return [m(T.pedidoVacio)]; }
+    return avanzar(id, sl, previo, true);
+  }
+
+  function editarPedido(id, texto, n) {
+    const T = lang(id);
+    const sl = JSON.parse(JSON.stringify(getConv(id).slots));
+    const hint = (extra) => {
+      const rep = repetirPaso(id);
+      return [m([extra, T.hintEdicion, getConv(id).paso === 'confirmar' ? '' : rep?.texto].filter(Boolean).join('\n'), rep?.botones ?? [T.si, T.cancelar])];
+    };
+    const objetivo = lineasMencionadas(texto, sl.lineas);
+    const mmas = MAS_N.exec(n);
+    const qmas = OTRA.test(n) ? 1 : mmas ? (/^\d+$/.test(mmas[1]) ? Number(mmas[1]) : own(NUMS, mmas[1])) : undefined;
+    if (qmas !== undefined && sl.lineas.length) {
+      const ult = sl.lineas[sl.lineas.length - 1];
+      if (qmas < 1 || ult.cantidad + qmas > 20) return hint(T.cantidadMax);
+      ult.cantidad += qmas;
+      return mostrarEdicion(id, T, { ...sl, lineas: fusionar(sl.lineas) });
+    }
+    const mp = CANT_PROD.exec(n);
+    const qp = mp ? (/^\d+$/.test(mp[1]) ? Number(mp[1]) : own(NUMS, mp[1])) : undefined;
+    if (mp && qp !== undefined) {
+      if (qp < 1 || qp > 20) return hint(T.cantidadMax);
+      const obj = lineasMencionadas(mp[2], sl.lineas);
+      if (!obj.length) return hint(T.noEncuentroLinea);
+      obj[obj.length - 1].cantidad = qp;
+      return mostrarEdicion(id, T, { ...sl, lineas: fusionar(sl.lineas) });
+    }
+    const mc = CANT.exec(n);
+    if (mc) {
+      const q = /^\d+$/.test(mc[1]) ? Number(mc[1]) : own(NUMS, mc[1]);
+      if (q === undefined) return hint();
+      if (q < 1 || q > 20) return hint(T.cantidadMax);
+      sl.lineas[sl.lineas.length - 1].cantidad = q;
+      return mostrarEdicion(id, T, { ...sl, lineas: fusionar(sl.lineas) });
+    }
+    if (QUITAR.test(n) || (/^sin (el|la|los|las|the) /.test(n) && objetivo.length)) {
+      if (!objetivo.length) return hint(T.noEncuentroLinea);
+      sl.lineas = sl.lineas.filter((l) => !objetivo.includes(l));
+      return mostrarEdicion(id, T, sl);
+    }
+    const mm = MOD.exec(n);
+    if (mm && !AGREGAR.test(n)) {
+      const ing = mm[1].split(' ').map((w) => own(EN_ING, w) ?? w).join(' ').replace(/[^a-z ]/g, '').trim();
+      for (const cand of [ing, ing.replace(/s$/, '')]) {
+        for (let i = sl.lineas.length - 1; i >= 0; i--) {
+          const prod = state().productos.find((p) => p.id === sl.lineas[i].productoId);
+          const soportado = prod?.modificadores.find((x) => normalize(x) === `sin ${cand}`);
+          if (!soportado) continue;
+          if (!sl.lineas[i].modificadores.includes(soportado)) sl.lineas[i].modificadores.push(soportado);
+          return mostrarEdicion(id, T, { ...sl, lineas: fusionar(sl.lineas) });
+        }
+      }
+      return hint(T.noEncuentroLinea);
+    }
+    const res = parseOrder(texto, state(), sl.sucursalId);
+    // la misma frase otra vez, sin señal de sumar, no duplica lo que ya está en el pedido
+    if (res.lineas.length && !res.agotados.length && !res.ambiguos.length && !res.invalidas.length && !CUE_SUMAR.test(n) && mismasLineas(res.lineas, sl.lineas)) {
+      const lista = res.lineas.map((l) => T.linea(l.cantidad, nombreProd(l.productoId), l.modificadores)).join(', ');
+      return avanzar(id, sl, [T.yaLoTengo(lista)], true);
+    }
+    const previo = [];
+    if (res.agotados.length) previo.push(textoAgotados(T, res.agotados, sl.sucursalId));
+    if (res.lineas.length) {
+      const nuevas = fusionar([...sl.lineas, ...res.lineas]);
+      if (nuevas.some((l) => l.cantidad > 20)) return hint(T.cantidadMax);
+      sl.lineas = nuevas;
+    }
+    if (!res.lineas.length && !res.agotados.length) return hint(avisos(T, texto, res).join('\n'));
+    previo.push(...avisos(T, texto, res));
+    return mostrarEdicion(id, T, sl, previo);
+  }
+
+  // Quita un «sí / ok / dale» inicial (y un «pero») para aplicar lo que viene después.
+  function sinAfirmacion(texto) {
+    const m1 = /^\s*[¡¿]?([^\s,.;:!]+)[\s,.;:!-]*/.exec(texto);
+    if (!m1 || !AFIRMA.has(normalize(m1[1]))) return texto;
+    const resto = texto.slice(m1[0].length);
+    const m2 = /^(pero|but)(?![a-z])[\s,.;:!-]*/i.exec(resto);
+    return m2 ? resto.slice(m2[0].length) : resto;
+  }
+
+  const faltaDato = (sl) => !sl.tipo || (sl.tipo === 'entrega' && !(sl.exacta && sl.direccion)) || !sl.metodo;
+
+  function pasoConfirmar(id, texto, n) {
+    const T = lang(id);
+    const sl = getConv(id).slots;
+    if (NO.test(n)) { reset(id); return [m(T.cancelado, T.botonesInicio)]; }
+    // Un «sí» con datos pendientes (p. ej. una propuesta del modo IA) sigue pidiendo lo que falta.
+    if (SI.test(n)) return faltaDato(sl) ? avanzar(id, sl) : crearPedido(id, sl);
+    if (NO_SE.test(n)) return [m(T.dudaConfirmar, [T.si, T.cancelar])];
+    // «Mejor con tarjeta» / «pago en efectivo»: cambia la forma de pago y vuelve a mostrar el resumen
+    const metodo = metodoDe(n);
+    if (metodo && !esEdicion(texto, n, sl)) return avanzar(id, { ...sl, metodo });
+    if (RETIRO.test(n) && RETIRO_VERBO.test(n)) return aplicarRetiro(id, sl, n);
+    // «Sí, pero sin cebolla» / «ok, y agrégale una limonada»: se aplica la corrección y se vuelve a confirmar
+    const resto = sinAfirmacion(texto);
+    if (resto !== texto && normalize(resto)) return editarPedido(id, resto, normalize(resto));
+    return editarPedido(id, texto, n);
+  }
+
+  function pasoTipo(id, texto, n) {
+    const T = lang(id);
+    const sl = getConv(id).slots;
+    const { metodo, resto } = extraerPago(texto);
+    const conPago = metodo ? { ...sl, metodo } : sl;
+    const nr = normalize(resto);
+    if (RETIRO.test(nr)) return aplicarRetiro(id, conPago, nr);
+    if (zonaDe(resto)) return pasoDireccion(id, texto);
+    if (ENTREGA.test(nr)) return avanzar(id, { ...conPago, tipo: 'entrega' });
+    return [m(T.pedirTipo, T.botonesTipo)];
+  }
+
+  // Retiro, en la sucursal nombrada si la hay: se re-verifica lo agotado en ESA sucursal.
+  function aplicarRetiro(id, sl, n) {
+    const T = lang(id);
+    const nuevo = sucursalNombrada(n);
+    const base = { ...sl, tipo: 'retiro', eta: null, direccion: null, zona: null, exacta: false };
+    delete base.fallosDir;
+    const s = () => state().sucursales.find((x) => x.id === base.sucursalId);
+    if (nuevo && nuevo !== sl.sucursalId) {
+      base.sucursalId = nuevo;
+      const faltan = sl.lineas.filter((l) => !isAvailable(state(), l.productoId, nuevo));
+      if (faltan.length) {
+        base.lineas = sl.lineas.filter((l) => isAvailable(state(), l.productoId, nuevo));
+        const out = textoAgotados(T, faltan.map((l) => l.productoId), nuevo);
+        if (!base.lineas.length) { reset(id); return [m(out)]; }
+        return avanzar(id, base, [out], true);
+      }
+    }
+    return avanzar(id, base, base.metodo ? [] : [T.retiraEn(s().nombre, s().direccion), T.sucursalEta(s().nombre, s().etaBaseMin)]);
+  }
+
+  // ¿Lo que queda al quitar la zona es solo la zona? («Obarrio» a secas no es una dirección de entrega).
+  const soloZona = (texto, zona) => !normalize(texto).replace(normalize(zona), '').replace(/\b(en|para|a|in|to|zona|area)\b/g, '').replace(/[^a-z0-9]/g, '');
+
+  function pasoDireccion(id, texto) {
+    const T = lang(id);
+    const { metodo, resto } = extraerPago(texto);
+    const sl = { ...getConv(id).slots, ...(metodo ? { metodo } : {}) };
+    const n = normalize(resto);
+    const z = zonaDe(resto);
+    // salida a retiro: «retiro», «Retiro en sucursal», «pickup», «lo recojo yo», «retirar en Norte»…
+    if (RETIRO.test(n) && (RETIRO_VERBO.test(n) || !z)) return aplicarRetiro(id, sl, n);
+    // solo la forma de pago («pago con Yappy»): se anota y se sigue pidiendo la dirección
+    if (metodo && !n) return avanzar(id, sl);
+    // «Entrega a domicilio» / «Delivery»: se mantiene la entrega y se pide de nuevo la dirección
+    if (!z && ENTREGA.test(n) && !/\d/.test(n) && n.split(' ').length <= 4) {
+      setStep(id, 'direccion', { ...sl, fallosDir: 0 });
+      return [m(T.pedirDireccion)];
+    }
+    // La zona ya se sabe («…para Obarrio»): la calle y el edificio completan la dirección exacta.
+    if (!z && sl.zona && sl.tipo === 'entrega' && parecedir(resto, n)) {
+      delete sl.fallosDir;
+      const cola = `, ${sl.zona}`;
+      const nuevo = { ...sl, direccion: `${resto.trim().slice(0, MAX_DIR - cola.length)}${cola}`, exacta: true };
+      return avanzar(id, nuevo, nuevo.metodo ? [] : [T.atiende(sucNombre(sl.sucursalId), sl.eta ?? 30)]);
+    }
+    if (!z) {
+      const fallos = (sl.fallosDir ?? 0) + 1;
+      setStep(id, 'direccion', { ...sl, fallosDir: fallos });
+      const zonas = state().sucursales.flatMap((s) => s.zonasEntrega).join(', ');
+      if (fallos >= 2) return [m(T.ofrecerOpciones(zonas), T.botonesTipo)];
+      if (!parecedir(resto, n)) return [m(T.direccionNoValida, T.botonesTipo)];
+      return [m(T.fueraZona(zonas), T.botonesTipo)];
+    }
+    delete sl.fallosDir;
+    const exacta = !soloZona(resto, z.zona);
+    Object.assign(sl, { tipo: 'entrega', direccion: exacta ? resto.trim().slice(0, MAX_DIR) : z.zona, zona: z.zona, exacta, eta: z.etaMin });
+    if (z.sucursalId !== sl.sucursalId) {
+      sl.sucursalId = z.sucursalId;
+      const faltan = sl.lineas.filter((l) => !isAvailable(state(), l.productoId, z.sucursalId));
+      if (faltan.length) {
+        sl.lineas = sl.lineas.filter((l) => isAvailable(state(), l.productoId, z.sucursalId));
+        const out = `${T.atiende(sucNombre(z.sucursalId), z.etaMin)}\n${textoAgotados(T, faltan.map((l) => l.productoId), z.sucursalId)}`;
+        if (!sl.lineas.length) { reset(id); return [m(out)]; }
+        return avanzar(id, sl, [out], true);
+      }
+    }
+    // con la forma de pago ya dada, el resumen final ya dice qué sucursal lo prepara
+    return avanzar(id, sl, sl.metodo && sl.exacta ? [] : [T.atiende(sucNombre(sl.sucursalId), z.etaMin)]);
+  }
+
+  function pasoPago(id, texto, n) {
+    const T = lang(id);
+    const sl = getConv(id).slots;
+    const metodo = metodoDe(n);
+    if (!metodo) {
+      if (RETIRO.test(n)) return aplicarRetiro(id, sl, n);
+      if (ENTREGA.test(n) && sl.tipo !== 'entrega') return avanzar(id, { ...sl, tipo: 'entrega', exacta: false });
+      // una dirección escrita a esta altura corrige la de entrega
+      if (sl.tipo === 'entrega' && n.length > 2 && parecedir(texto, n)) {
+        if (zonaDe(texto)) return pasoDireccion(id, texto);
+        const cola = sl.zona ? `, ${sl.zona}` : '';
+        const dir = `${texto.trim().slice(0, MAX_DIR - cola.length)}${cola}`;
+        return avanzar(id, { ...sl, direccion: dir, exacta: true }, [T.direccionAnotada]);
+      }
+      return [m(T.pagoInvalido, T.botonesPago)];
+    }
+    // «Yappy, y la dirección es Calle 50, Obarrio»: si además trae una dirección, también se anota
+    const { resto } = extraerPago(texto);
+    if (sl.tipo === 'entrega' && normalize(resto) && zonaDe(resto)) return pasoDireccion(id, texto);
+    return avanzar(id, { ...sl, metodo });
+  }
+
+  // El cliente ya confirmó el resumen completo: se crea el pedido y se cobra (simulado).
+  function crearPedido(id, sl) {
+    const T = lang(id);
+    const metodo = sl.metodo;
+    let r;
+    try {
+      r = createOrder(store, { lineas: sl.lineas, tipo: sl.tipo, sucursalId: sl.sucursalId, direccion: sl.direccion, canal: 'whatsapp', conversacionId: id });
+    } catch { return falla(id); }
+    if (!r.ok) {
+      if (r.razon === 'agotado') {
+        const ids = r.detalle.agotados.map((a) => a.id);
+        const rest = sl.lineas.filter((l) => !ids.includes(l.productoId));
+        const out = textoAgotados(T, ids, sl.sucursalId);
+        if (!rest.length) { reset(id); return [m(out)]; }
+        return avanzar(id, { ...sl, lineas: rest }, [out]);
+      }
+      if (r.razon === 'sin_zona') { setStep(id, 'direccion', { ...sl, exacta: false }); return [m(T.pedirDireccion)]; }
+      if (r.razon === 'vacio') { reset(id); return [m(T.pedidoVacio)]; }
+      return falla(id);
+    }
+    const p = r.pedido;
+    const total = priceOrder(state(), p.lineas).total;
+    const cerrada = avisoCerrada(T, p.sucursalId, 'cerradaListo');
+    const eta = p.etaMin ?? (p.tipo === 'retiro' ? state().sucursales.find((x) => x.id === p.sucursalId)?.etaBaseMin : undefined);
+    const accion = [{ type: 'pedido:creado', payload: { pedidoId: p.id } }];
+    const listo = (pago) => `${T.pedidoListo(p.id, total, pago, eta)}${cerrada ? `\n${cerrada}` : ''}`;
+    try {
+      if (metodo === 'yappy') {
+        esperarComprobanteYappy(store, p.id);
+        setStep(id, 'comprobante', { pedidoId: p.id });
+        return [m(listo(T.pagoYappyEspera), [T.botonComprobante], accion)];
+      }
+      payOrder(store, p.id, metodo);
+    } catch { return falla(id); }
+    reset(id);
+    if (metodo === 'tarjeta') {
+      const f = textoFactura(id, p.id);
+      return [m(`${listo(T.pagoTarjeta)}${f ? `\n\n${f}` : ''}`, undefined, accion)];
+    }
+    return [m(listo(T.pagoEfectivo), undefined, accion)];
+  }
+
+  // ---------- factura simulada ----------
+  // Emite (si hace falta) la factura del pedido y devuelve su texto para el chat, una sola vez por pedido.
+  function textoFactura(convId, pedidoId) {
+    issueInvoice(store, pedidoId);
+    const p = state().pedidos.find((x) => x.id === pedidoId);
+    if (!p?.factura || p.factura.enChat) return '';
+    store.update((s) => { s.pedidos.find((x) => x.id === pedidoId).factura.enChat = true; });
+    const tot = p.total !== undefined ? p : { ...p, ...priceOrder(state(), p.lineas) };
+    return lang(convId).factura(p.factura, tot);
+  }
+
+  // ---------- comprobante de Yappy (simulado) ----------
+  const COMPROBANTE = /comprobante|captura|adjunt|screenshot|receipt|proof|ya (le )?(pague|pagamos|hice|envie|mande|transferi)|listo,? (ya )?pague|i (have )?(paid|sent)|done|sent it|ya esta|^(listo|enviado|pagado|paid|sent)\W*$/;
+
+  function recibirComprobante(id) {
+    const T = lang(id);
+    const { pedidoId } = getConv(id).slots;
+    const p = state().pedidos.find((x) => x.id === pedidoId);
+    reset(id);
+    if (!p) return falla(id);
+    if (p.pago?.estado !== PAGO_YAPPY.espera) return [m(T.estadoPedido(p.id, p.estado))];
+    try { registrarComprobanteYappy(store, pedidoId); } catch { return falla(id); }
+    // Verificación simulada: unos segundos después el pago queda confirmado y sale la factura por el chat.
+    programar(() => {
+      try {
+        const q = state().pedidos.find((x) => x.id === pedidoId);
+        if (!q || q.pago?.estado !== PAGO_YAPPY.recibido || !getConv(id)) return;
+        confirmarPagoYappy(store, pedidoId);
+        const f = textoFactura(id, pedidoId);
+        const mensaje = append(id, m(`${lang(id).pagoConfirmado(pedidoId)}${f ? `\n\n${f}` : ''}`));
+        store.emit('chat:mensaje', { convId: id, mensaje });
+      } catch { /* una verificación fallida no debe romper el chat */ }
+    }, verificacionMs);
+    return [m(T.comprobanteRecibido)];
+  }
+
+  function pasoComprobante(id, texto, n) {
+    const T = lang(id);
+    if (COMPROBANTE.test(n)) return recibirComprobante(id);
+    const s = state();
+    const otra = consulta(id, n) ?? horarioUbicacion(T, s, n);
+    if (otra) return [m([...otra.map((x) => x.texto), T.esperandoComprobante].join('\n'), [T.botonComprobante])];
+    // otra intención clara (un pedido nuevo, una reserva): se atiende; el pedido sigue esperando su comprobante
+    const res = parseOrder(texto, s, sucDefault());
+    if (RESERVA.test(n) || ORDEN.test(n) || res.lineas.length || MENU.test(n)) { reset(id); return info(id, n, texto); }
+    return [m(T.esperandoComprobante, [T.botonComprobante])];
+  }
+
+  function falla(id) {
+    handoff(id);
+    reset(id);
+    return [m(lang(id).error)];
+  }
+
+  // ---------- reservas ----------
+  function pasoReserva(id, texto, n, esperado) {
+    const T = lang(id);
+    const sl = { ...(getConv(id).slots ?? {}) };
+    const sinH = sinHora(texto);
+    if (!sl.fecha) sl.fecha = parseFecha(texto, ahora()) ?? undefined;
+    if (!sl.hora) sl.hora = parseHora(texto, { suelto: esperado === 'hora' }) ?? undefined;
+    if (sl.personas === undefined) {
+      const mp = /(\d+)\s*(personas?|people|persons?|pax|guests?|comensales)/.exec(sinH)
+        ?? /\b(?:para|for|somos|we are)\s+(\d+)\b/.exec(sinH)
+        ?? (esperado === 'personas' ? /^\D*(\d+)\D*$/.exec(sinH) : null);
+      if (mp) sl.personas = Number(mp[1]);
+    }
+    if (!sl.ocasion) {
+      if (/cumple|birthday/.test(n)) sl.ocasion = 'cumpleaños';
+      else if (/aniversario|anniversary/.test(n)) sl.ocasion = 'aniversario';
+      else if (/evento|event/.test(n)) sl.ocasion = 'evento';
+      else if (esperado === 'ocasion') {
+        if (ocasionNinguna(n)) sl.ocasion = 'ninguna';
+        else if (ocasionReconocida(n) || ocasionLibre(texto, n) || (sl.rechazos ?? 0) >= 2) sl.ocasion = texto.trim().slice(0, 60);
+        else { setStep(id, 'ocasion', { ...sl, rechazos: (sl.rechazos ?? 0) + 1 }); return [m(T.ocasionRepite, T.botonesOcasion)]; }
+      }
+    }
+    sl.sucursalId = sucursalNombrada(n) ?? sl.sucursalId ?? sucDefault();
+
+    if (sl.personas > MAX_PERSONAS || sl.ocasion === 'evento') {
+      handoff(id); reset(id);
+      return [m(T.handoffReserva)];
+    }
+    if (sl.personas !== undefined && sl.personas < 1) { delete sl.personas; setStep(id, 'personas', sl); return [m(T.personasInvalidas)]; }
+    const falta = [['fecha', sl.fecha], ['hora', sl.hora], ['personas', sl.personas], ['ocasion', sl.ocasion]].find(([, v]) => v === undefined)?.[0];
+    if (falta) {
+      setStep(id, falta, sl);
+      const fallo = esperado === falta && falta !== 'ocasion';
+      const ask = { fecha: fallo ? T.fechaNo : T.pedirFecha, hora: fallo ? T.horaNo : T.pedirHora, personas: fallo ? T.personasInvalidas : T.pedirPersonas, ocasion: T.pedirOcasion }[falta];
+      return [m(ask, falta === 'ocasion' ? T.botonesOcasion : undefined)];
+    }
+    let r;
+    try {
+      r = createReservation(store, { sucursalId: sl.sucursalId, fecha: sl.fecha, hora: sl.hora, personas: sl.personas, ocasion: sl.ocasion }, { ahora: ahora() });
+    } catch { return falla(id); }
+    if (r.ok) { reset(id); return [m(T.reservaOk(r.reserva, sucNombre(sl.sucursalId)), undefined, [{ type: 'reserva:creada', payload: { reservaId: r.reserva.id } }])]; }
+    const suc = state().sucursales.find((s) => s.id === sl.sucursalId);
+    switch (r.razon) {
+      case 'handoff': handoff(id); reset(id); return [m(T.handoffReserva)];
+      case 'sin_mesa': { const h = sl.hora; delete sl.hora; setStep(id, 'hora', sl); return [m(T.sinMesa(h))]; }
+      case 'fuera_de_horario': delete sl.hora; setStep(id, 'hora', sl); return [m(T.fueraHorario(suc.nombre, suc.horario))];
+      case 'fecha_pasada': delete sl.fecha; delete sl.hora; setStep(id, 'fecha', sl); return [m(T.fechaPasada)];
+      case 'personas_invalidas': delete sl.personas; setStep(id, 'personas', sl); return [m(T.personasInvalidas)];
+      default: return falla(id);
+    }
+  }
+
+  // ---------- información ----------
+  const esPregunta = (texto, n) => /[?¿]/.test(texto) || INTERROG.test(n.replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim());
+
+  function horarioUbicacion(T, s, n) {
+    const h = HORARIO.test(n);
+    const u = UBICACION.test(n);
+    if (!h && !u) return null;
+    const partes = [];
+    if (h) partes.push(T.horarios(s.sucursales.map((x) => T.horarioLinea(x.nombre, x.horario))));
+    if (u) partes.push(T.ubicaciones(s.sucursales.map((x) => T.ubicacionLinea(x.nombre, x.direccion))));
+    return [m(partes.join('\n'))];
+  }
+
+  // Consultas que se responden igual dentro o fuera de un flujo: pedido a secas, alérgenos a secas,
+  // estado del pedido y alérgenos de un plato.
+  function consulta(id, n) {
+    const T = lang(id);
+    const s = state();
+    if (esPedirVacio(n)) return [m(T.pedirQue)];
+    if (esAlergenoVacio(n)) return [m(T.pedirAlergeno)];
+    if (ESTADO.test(n)) {
+      const p = s.pedidos.find((x) => x.conversacionId === id);
+      if (!p) {
+        const c = getConv(id);
+        if (PASOS_PEDIDO.includes(c.paso)) {
+          const suc = s.sucursales.find((x) => x.id === c.slots.sucursalId);
+          return [m(T.pedidoPendiente(c.slots.eta ?? suc?.etaBaseMin ?? 30))];
+        }
+        handoff(id);
+        return [m(T.sinPedido)];
+      }
+      return [m(T.estadoPedido(p.id, p.estado))];
+    }
+    if (ALERGENO_CUE(n)) {
+      const r = allergenReply(T, s, n);
+      if (r.handoff) handoff(id);
+      return [m(r.texto)];
+    }
+    return null;
+  }
+
+  function menuDia(id) {
+    const T = lang(id);
+    const s = state();
+    const combos = (s.combos ?? []).filter((c2) => c2.items.every((i) => isAvailable(s, i.productoId, sucDefault())));
+    if (!combos.length) { handoff(id); return [m(T.sinDato)]; }
+    return [m(T.menuDia(combos.map((c2) => T.comboLinea(c2))), [T.botonesInicio[0]])];
+  }
+
+  function info(id, n, texto) {
+    const T = lang(id);
+    const s = state();
+    const c = consulta(id, n);
+    if (c) return c;
+    if (RESERVA.test(n)) return pasoReserva(id, texto, n, null);
+    const hu = horarioUbicacion(T, s, n);
+    if (hu) return hu;
+    if (MENU.test(n)) return menuDia(id);
+    const res = parseOrder(texto, s, sucDefault());
+    if (res.lineas.length || res.agotados.length || res.ambiguos.length || res.invalidas.length || ORDEN.test(n)) return iniciarPedido(id, texto);
+    if (SALUDO.test(n)) return [m(T.saludo, T.botonesInicio)];
+    if (GRACIAS.test(n)) return [m(T.gracias)];
+    const limpio = n.replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const nPal = limpio ? limpio.split(' ').length : 0;
+    if (nPal >= 2 && (PREGUNTA.test(limpio) || (/\?/.test(texto) && nPal >= 3))) { handoff(id); return [m(T.sinDato)]; }
+    return [m(T.aclarar, T.botonesInicio)];
+  }
+
+  // ---------- preguntas dentro de un paso ----------
+  // Repite lo que el paso está esperando.
+  function repetirPaso(id) {
+    const T = lang(id);
+    const c = getConv(id);
+    switch (c.paso) {
+      case 'confirmar': return m(`${resumen(T, c.slots)}\n${T.confirmarPreg}`, [T.si, T.cancelar]);
+      case 'tipo': return m(T.pedirTipo, T.botonesTipo);
+      case 'direccion':
+        // tras una dirección fallida se ofrecen las dos salidas (otra dirección o retiro), con botones
+        if (c.slots?.fallosDir) return m(T.ofrecerOpciones(state().sucursales.flatMap((s) => s.zonasEntrega).join(', ')), T.botonesTipo);
+        return m(c.slots?.zona ? T.pedirDetalle(c.slots.zona) : T.pedirDireccion);
+      case 'pago': return m(T.pedirPago, T.botonesPago);
+      case 'comprobante': return m(T.esperandoComprobante, [T.botonComprobante]);
+      case 'fecha': return m(T.pedirFecha);
+      case 'hora': return m(T.pedirHora);
+      case 'personas': return m(T.pedirPersonas);
+      case 'ocasion': return m(T.pedirOcasion, T.botonesOcasion);
+      default: return null;
+    }
+  }
+
+  // Respuestas + lo que el paso sigue esperando, en un solo mensaje.
+  function conRepeticion(id, msgs) {
+    const rep = repetirPaso(id);
+    if (!rep) return msgs;
+    return [m([...msgs.map((x) => x.texto), rep.texto].join('\n'), rep.botones)];
+  }
+
+  // ¿Lo escrito parece una dirección? (números, calle, una zona conocida, o 3 palabras sin ser otra intención)
+  function parecedir(texto, n) {
+    const s = state();
+    const res = parseOrder(texto, s, sucDefault());
+    const fuerte = !!(res.lineas.length || res.agotados.length || res.ambiguos.length || res.invalidas.length) || ORDEN.test(n) || esPregunta(texto, n);
+    const debil = HORARIO.test(n) || UBICACION.test(n) || MENU.test(n);
+    return pareceDireccion(n, s.sucursales.flatMap((x) => x.zonasEntrega), { fuerte, debil });
+  }
+
+  // Una pregunta (alérgenos, horarios, ubicación, estado…) se responde SIN salir del paso y se repite
+  // lo pendiente; un texto con forma de pregunta nunca se toma como dirección. null = no es una pregunta.
+  function interrumpe(id, texto, n, paso) {
+    const T = lang(id);
+    const s = state();
+    const preg = esPregunta(texto, n);
+    const lineasPedido = getConv(id).slots?.lineas;
+    if (TOTAL.test(n.replace(/^[^a-z0-9]+/, '')) && lineasPedido?.length) return conRepeticion(id, [m(T.totalEs(priceOrder(s, lineasPedido).total))]);
+    const c = consulta(id, n);
+    if (c) return conRepeticion(id, c);
+    const hu = horarioUbicacion(T, s, n);
+    // «Horarios» sin «?» también se responde, salvo que lo escrito parezca una dirección
+    if (hu && (preg || !((paso === 'pago' || paso === 'direccion') && parecedir(texto, n)))) return conRepeticion(id, hu);
+    if (!preg) return null;
+    const unir = (msgs) => conRepeticion(id, msgs);
+    const sl = getConv(id).slots;
+    if (paso === 'pago') {
+      if (RETIRO.test(n) || ENTREGA.test(n)) return null;
+      if (/yappy|tarjeta|card|credit|debit|debito|efectivo|cash|pagar|pago|pay/.test(n)) return unir([m(T.pagoInfo)]);
+    } else if (paso === 'tipo') {
+      if (RETIRO.test(n) || ENTREGA.test(n) || zonaDe(texto)) return null;
+    } else if (paso === 'direccion') {
+      if (zonaDe(texto) || RETIRO.test(n) || ENTREGA.test(n)) return null;
+    } else if (paso === 'confirmar') {
+      if (CANT.test(n) || QUITAR.test(n) || AGREGAR.test(n) || MOD.test(n)) return null;
+      const r = parseOrder(texto, s, sl.sucursalId);
+      if (r.lineas.length || r.agotados.length || r.ambiguos.length || r.invalidas.length) return null;
+    }
+    handoff(id);
+    return unir([m(T.sinDato)]);
+  }
+
+  // Dentro de la reserva, un texto que es OTRA intención (pedido, horarios, alérgenos, una pregunta…) no se toma
+  // como respuesta: un pedido empieza su flujo; lo demás se contesta y se repite lo que la reserva espera.
+  function desvioReserva(id, texto, n, paso) {
+    const T = lang(id);
+    const s = state();
+    if (RESERVA_KW.test(n)) return null;
+    const res = parseOrder(texto, s, sucDefault());
+    if (esPedirVacio(n) || res.lineas.length || res.agotados.length || res.ambiguos.length || res.invalidas.length) {
+      reset(id);
+      return info(id, n, texto);
+    }
+    const dato = {
+      fecha: () => parseFecha(texto, ahora()) !== null,
+      hora: () => parseHora(texto, { suelto: true }) !== null,
+      personas: () => /\d|\b(un|una|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|one|two|three|four|five|six|seven|eight|nine|ten)\b/.test(n),
+      ocasion: () => ocasionNinguna(n) || ocasionReconocida(n),
+    }[paso];
+    if (dato()) return null;
+    const otra = consulta(id, n) ?? horarioUbicacion(T, s, n) ?? (MENU.test(n) ? menuDia(id) : null)
+      ?? (SALUDO.test(n) ? [m(T.saludo)] : GRACIAS.test(n) ? [m(T.gracias)] : null);
+    if (otra) return conRepeticion(id, otra);
+    if (esPregunta(texto, n)) { handoff(id); return conRepeticion(id, [m(T.sinDato)]); }
+    return null;
+  }
+
+  function respond(id, texto) {
+    const T = lang(id);
+    const n = normalize(texto);
+    if (!n) return [m(T.aclarar, T.botonesInicio)];
+    if (HUMANO.test(n)) { handoff(id); return [m(T.humano)]; }
+    if (CANCELAR.test(n)) { reset(id); return [m(T.cancelado, T.botonesInicio)]; }
+    const paso = getConv(id).paso;
+    if (PASOS_PEDIDO.includes(paso)) {
+      const q = interrumpe(id, texto, n, paso);
+      if (q) return q;
+      // una corrección del pedido («agrega una coca», «quita la limonada») se aplica en cualquier paso
+      if (paso !== 'confirmar') {
+        const resto = sinAfirmacion(texto); // «sí, pero cámbialo a 3 hamburguesas»
+        const nr = normalize(resto);
+        if (nr && esEdicion(resto, nr, getConv(id).slots)) return editarPedido(id, resto, nr);
+      }
+      // un «sí» antes de tiempo: todavía faltan datos; se repite lo pendiente sin contarlo como error
+      if (paso !== 'confirmar' && SI.test(n)) { const rep = repetirPaso(id); return [m(`${T.faltanDatos}
+${rep.texto}`, rep.botones)]; }
+    }
+    if (paso === 'comprobante') return pasoComprobante(id, texto, n);
+    if (paso === 'confirmar') return pasoConfirmar(id, texto, n);
+    if (paso === 'tipo') return pasoTipo(id, texto, n);
+    if (paso === 'direccion') return pasoDireccion(id, texto, n);
+    if (paso === 'pago') return pasoPago(id, texto, n);
+    if (['fecha', 'hora', 'personas', 'ocasion'].includes(paso)) return desvioReserva(id, texto, n, paso) ?? pasoReserva(id, texto, n, paso);
+    return info(id, n, texto);
+  }
+
+  // Avisos de estado del pedido hacia la conversación que lo originó.
+  store.on('pedido:estado', ({ pedidoId, estado, conversacionId } = {}) => {
+    try {
+      if (!conversacionId || !getConv(conversacionId)) return;
+      const T = lang(conversacionId);
+      let texto = T.avisoEstado(pedidoId, estado);
+      // Al entregar sale la factura simulada, si no salió ya al confirmarse el pago.
+      if (estado === 'Entregado') {
+        const f = textoFactura(conversacionId, pedidoId);
+        if (f) texto += `\n\n${f}`;
+      }
+      const mensaje = append(conversacionId, m(texto));
+      store.emit('chat:mensaje', { convId: conversacionId, mensaje });
+    } catch { /* un aviso fallido no debe romper el cambio de estado */ }
+  });
+
+  return {
+    reply(convId, texto) {
+      const raw = typeof texto === 'string' ? texto : String(texto ?? '');
+      if (!getConv(convId)) {
+        store.update((s) => { s.conversaciones.push({ id: convId, idioma: 'es', mensajes: [], requiereHumano: false, paso: null, slots: {} }); });
+      }
+      append(convId, { de: 'cliente', texto: raw });
+      const idioma = pickLang(raw, getConv(convId).idioma);
+      upd(convId, (c) => { c.idioma = idioma; });
+      let msgs;
+      try {
+        msgs = respond(convId, raw);
+      } catch {
+        handoff(convId);
+        msgs = [m(t(idioma).error)];
+      }
+      for (const x of msgs) append(convId, x);
+      return msgs;
+    },
+  };
+}

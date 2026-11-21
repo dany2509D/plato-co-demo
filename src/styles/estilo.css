@@ -1,0 +1,48 @@
+/* Guía de estilo (#/estilo): solo maquetación de la propia guía. */
+.eg section { padding-block: var(--sp-5); border-top: var(--rule-w) dotted var(--c-ink); scroll-margin-top: calc(var(--stick-top, 0px) + 8px); }
+.eg-cab { padding-block: var(--sp-4) var(--sp-5); }
+.eg-cab .tabs-pill { margin-top: var(--sp-3); }
+.eg h2 { margin-bottom: var(--sp-3); }
+.eg h3 { margin: var(--sp-4) 0 var(--sp-2); }
+.eg code { font-size: .8125em; background: var(--c-linen); padding: 1px 6px; border-radius: 3px; }
+.band--dark code, .band--rust code { background: var(--c-card); color: var(--c-on-dark); }
+.eg-swatches { display: grid; gap: var(--sp-2); grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.eg-chip { height: 88px; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 12px; border: var(--rule-w) solid var(--c-rule); border-radius: var(--r-card); }
+.eg-chip span { font-family: var(--font-display); font-size: 1.5rem; line-height: 1; }
+.eg-chip small { font-size: .75rem; font-weight: 700; }
+.eg-swatch p { margin: 6px 0 0; font-size: .8125rem; line-height: 1.4; overflow-wrap: anywhere; }
+.eg-scroll { overflow-x: auto; }
+.eg-tabla { width: 100%; border-collapse: collapse; font-size: .875rem; }
+.eg-tabla th, .eg-tabla td { text-align: left; padding: 8px 10px; border-bottom: var(--rule-w) solid var(--c-rule); vertical-align: middle; }
+.eg-tabla th { font-size: .75rem; letter-spacing: var(--tr-label); text-transform: uppercase; }
+.eg-par { display: inline-grid; place-items: center; width: 48px; height: 32px; border: var(--rule-w) solid var(--c-rule); border-radius: 3px; font-family: var(--font-display); }
+.eg-fila { padding-block: var(--sp-2); border-bottom: var(--rule-w) solid var(--c-rule); }
+.eg-fila > p:last-child { margin: 0; overflow-wrap: anywhere; }
+.eg-banda { margin-block: var(--sp-3); padding: var(--sp-3); border-radius: var(--r-card); }
+.eg-banda h3:first-child { margin-top: 0; }
+.eg-cols { display: grid; gap: 0 var(--sp-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.eg-geo { display: grid; place-items: center; min-width: 96px; height: 96px; padding: 8px; background: var(--c-linen); border: var(--rule-w) solid var(--c-line-strong); font-size: .8125rem; text-align: center; }
+.eg-esp { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-3); font-size: .75rem; }
+.eg-esp div { display: flex; flex-direction: column; gap: 4px; }
+
+/* Fotos, iconos y carta */
+.eg-fila-demo { max-width: 420px; }
+.eg-fila-demo .dish { display: grid; grid-template-columns: 120px minmax(0, 1fr); column-gap: 14px; align-items: start; padding-block: 14px; border-bottom: 1px solid var(--c-rule); }
+.eg-fila-demo .dish__media { display: contents; }
+.eg-fila-demo .foto { grid-column: 1; grid-row: 1; }
+.eg-fila-demo .dish__body { grid-column: 2; grid-row: 1; min-height: 90px; padding: 0; }
+.eg-fila-demo .dish__meta { padding-right: 52px; }
+.eg-fila-demo .dish__head { flex-direction: column; gap: 2px; }
+.eg-fila-demo .dish__price { text-align: left; font-size: 1rem; }
+.eg-fila-demo .dish__add { right: 0; bottom: 14px; }
+.eg-fila-demo .dish__picante { left: 6px; top: 20px; }
+.eg-velo { position: relative; overflow: hidden; max-width: 720px; }
+.eg-velo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgb(40 16 6 / .88), rgb(40 16 6 / 0) 58%); pointer-events: none; }
+.eg-velo__t { position: absolute; left: 20px; top: 16px; z-index: 1; color: var(--c-on-dark); font: 500 1.625rem/1.2 var(--font-body); }
+.eg-velo__t .eyebrow { margin: 0 0 6px; color: var(--c-on-dark); }
+.eg-velo__t p:last-child { margin: 0; }
+.eg-iconos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+.eg-icono { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 4px; border-top: 1px solid var(--c-rule); }
+.eg .dish__name, .eg .combo__head h3 { margin: 0; }
+.eg .mdd__t { margin: var(--sp-3) 0 var(--sp-2); }
+.eg .eg-velo { max-width: 640px; }

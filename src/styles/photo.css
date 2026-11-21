@@ -1,0 +1,29 @@
+/* Fotografía (dueño: bloque A, hecho). Se importa desde src/ui/photo.js. Uso: ver el JSDoc de photo.js. */
+.foto { position: relative; display: block; overflow: hidden; aspect-ratio: var(--foto-ratio, 4 / 3); border-radius: var(--r-photo); background: var(--c-linen); }
+.foto img, .foto > svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.foto img { filter: var(--photo-filter); transition: transform calc(var(--dur) * 1.5) var(--ease-out), filter .3s var(--ease-out); }
+.foto--warm img { filter: var(--photo-filter-warm); }
+.foto--grid { width: 100%; }
+.foto--fila { width: 120px; }
+.foto--mini { width: 64px; flex: none; }
+.foto--modal { --foto-ratio: 16 / 9; width: 100%; }
+.foto--modal img { object-position: 50% 55%; }
+.foto--agotado img, .foto--agotado > svg { filter: grayscale(1); opacity: .6; }
+
+/* Zoom 1.04 y filtro neutro al pasar el cursor o enfocar (la tarjeta puede llevar .foto-host) */
+.foto:hover img, .foto:focus-within img, .foto-host:hover .foto img, .foto-host:focus-within .foto img { transform: scale(1.04); filter: none; }
+.foto--agotado:hover img, .foto-host:hover .foto--agotado img { filter: grayscale(1); }
+
+/* Estado base del revelado con máscara (§6.1). El observador (clase .is-in) lo añade reveal.js (bloque B).
+ * Solo se oculta cuando <html> tiene .rv-ready; sin JS o con movimiento reducido la foto es visible. Nunca en el LCP. */
+/* Rediseño editorial (19 nov 2026): la foto ya no se recorta a 0 esperando el scroll; siempre visible, solo asienta un zoom 1.04 → 1. */
+.rv-ready .reveal--foto img { transform: scale(1.04); transition: transform .9s var(--ease-out), filter .3s var(--ease-out); }
+.rv-ready .reveal--foto.is-in img { transform: none; }
+.rv-ready .reveal--foto.is-in:hover img { transform: scale(1.04); }
+
+@media (prefers-reduced-motion: reduce) {
+  .foto img { transition: filter .3s; }
+  .foto:hover img, .foto:focus-within img, .foto-host:hover .foto img, .foto-host:focus-within .foto img { transform: none; }
+  .rv-ready .reveal--foto { clip-path: none; transition: none; }
+  .rv-ready .reveal--foto img { transform: none; transition: none; }
+}

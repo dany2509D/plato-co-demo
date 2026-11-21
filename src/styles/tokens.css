@@ -1,0 +1,177 @@
+/* CAMBIOS: 20 nov 2026 · tipografía: titulares Fraunces (serif variable «blanda») y texto Geist (ver tipografia.css).
+   19 nov 2026 (2.ª pasada · referencia «cookbook» tipo Alison Roman): papel pergamino #f6f0e1, tarjeta lino #fffaec,
+   tinta berenjena #290a08 (texto, relleno del ÚNICO botón lleno y superficies oscuras), filete #e5e7eb, resaltado de enlace
+   mantequilla #fff3cc (fondo, texto en tinta 16,6), titulares Cormorant Garamond 300 (sustituto de Jannon Neo) y cuerpo Lora
+   (sustituto de Modale Antique); radio 0 y sin sombras en todo. Contrastes: tinta/pergamino 16,2 · ink-soft 9,3 · ink-muted 5,9 ·
+   blanco/tinta 18,4 · ember/pergamino 7,8 · on-dark-muted/ember 6,2. --c-ember/--c-gold siguen siendo los del logotipo.
+   Primera pasada del mismo día (alto contraste): hueso #faf9f6 / tinta #141414 / carbón #111111, tomate de botón #c42f1f (--c-cta),
+   mostaza #efc547 (logotipo), albahaca #2f6b2f; botones y campos rectangulares (8 px), fotos sin sepia. Contrastes (script): tinta/hueso 17,5 ·
+   ink-soft 10,75 · ink-muted 6,93 · tomate/hueso 5,29 · hueso/tomate 5,57 · mostaza/carbón 11,46 · on-dark-muted/carbón 10,9 · on-dark-muted/tomate 4,91 · blanco/wa 5,35.
+   Los valores de abajo de la cabecera son del bloque V y quedan como historia.
+   11 nov 2026 (bloque V, identidad) brasa #823513→#8e1f16 «tomate», oro #faae33→#efc547 «mostaza», ember-deep #6b2a0e→#731811, line-dark #6b2e12→#74241a, gold-hover #ffc25c→#f6d677 (contrastes re-verificados con script; docs/brand/identidad-visual.md). */
+/*
+ * PLATO & CO. · TOKENS DE DISEÑO (fuente única de verdad)
+ * Mira la guía viva en  #/estilo  y la documentación en docs/design/system.md
+ *
+ * Convención de nombres
+ *   --c-*        colores (roles, no tonos: usar el rol, nunca el hex)
+ *   --font-*     familias        --fs-*   escala de tipo fluida       --lh-* / --tr-*  interlínea / tracking
+ *   --sp-*       espaciado (rejilla de 8 px)   --r-*  radios   --rule-*  filetes
+ *   --ease / --dur   movimiento   --z-*  capas   --w-*  anchos de contenedor
+ *   --ctx-*      variables de CONTEXTO: cambian dentro de .on-dark / .band--* (los componentes las leen)
+ *
+ * Contraste (WCAG 2.1, calculado con un script; AA texto normal ≥ 4,5, texto grande/UI ≥ 3):
+ *   ink #2a1a12 / canvas #ece2d0 13,03 · / linen #e0d3bb 11,32 · / paper #f6f0e4 14,5
+ *   ink-soft #5a483c / canvas 6,74 · / linen 5,85       ink-muted #65554a / canvas 5,54 · / linen 4,81
+ *   ember #8e1f16 / canvas 6,94 · / linen 6,02 · / paper 7,85 (texto y enlaces sobre crema = ink o ember, NUNCA oro)
+ *   canvas / ink 13,03 · canvas / ember 6,94 · canvas / ember-deep 8,76 · on-dark #ece2d0 / char #281006 14,02 · / card #402011 11,42
+ *   on-dark-muted #d2c4ab / char 10,48 · / card 8,53 · / ember 5,18
+ *   gold #efc547 / char 10,92 · / card 8,90 · / ember 5,41 · / ink 10,16   (oro = relleno, borde, texto grande/oscuro; sobre crema 1,28: NUNCA texto)
+ *   char / gold (texto de botón oro) 10,92 · char / gold-hover 12,69
+ *   white / chili #d1255c 5,08 (solo insignias)
+ *   success #2a6218 / okBg #d5e6c3 · warn #7a4a00 / #f7e0a8 5,77 · danger #a3132f / #f6d3d8 5,66  (ver tabla completa en el informe)
+ *   admin: muted #736f7c / blanco 4,89 · / soft #f6f6f5 4,52 · ink / blanco 16,73
+ *   line-strong #7d6d58 (borde de inputs) / canvas ≥ 3,5 (componente de UI ≥ 3)
+ *   Velos de foto (rediseño 2; carbón rgb(40 16 6) con alfa; peor caso = foto blanca debajo; script, 11 nov 2026):
+ *     --scrim-t/-b (.85/.80 en su punto más opaco): on-dark #ece2d0 9,08 / 7,58 · blanco 11,66 / 9,73 · oro 7,08 / 5,91 (todo ≥ 4,5)
+ *     --veil (.82): on-dark 8,15 · blanco 10,47 · oro 6,36 sobre foto blanca; ≥ 11 sobre foto media
+ *     --veil-soft (.35) NO garantiza AA por sí solo (on-dark 4,94 sobre gris medio, 1,75 sobre blanco): úselo solo sobre fotos
+ *       oscuras (cta_ingredientes: el centro es pizarra negra, ≥ 15) y con texto grande (≥ 3).
+ *     El velo se desvanece a 0: el texto debe quedar en la zona opaca (primer 28 % del velo superior, primer 50 % del inferior).
+ */
+:root {
+  /* ---------- Lienzo y tinta (cliente, claro) ---------- */
+  --c-canvas: #f6f0e1;        /* blanco hueso cálido: fondo de página (rediseño editorial, 19 nov 2026) */
+  --c-linen: #fffaec;         /* un escalón más oscuro: tarjetas, filas alternas, hover */
+  --c-paper: #ffffff;         /* un escalón más claro: tarjetas sobre canvas, inputs */
+  --c-rule: #e5e7eb;          /* filete decorativo de 1 px (no lleva información) */
+  --c-line-strong: #8a7a70;   /* borde de controles (contraste de UI ≥ 3) */
+  --c-ink: #290a08;           /* texto y botón primario; nunca #000 */
+  --c-ink-soft: #4f3a33;      /* texto secundario */
+  --c-ink-muted: #6b5850;     /* texto terciario / ayudas (sigue siendo AA) */
+
+  /* ---------- Bandas oscuras ---------- */
+  --c-char: #290a08;          /* carbón: héroe, pie, bandas */
+  --c-card: #3b1a15;          /* marrón medio: tarjetas sobre carbón */
+  --c-ember: #8e1f16;         /* tomate (antes brasa/óxido): borde del plato, banda de acento, enlaces sobre crema */
+  --c-ember-deep: #731811;    /* hover/pressed de tomate */
+  --c-line-dark: #4d1e18;     /* filete 1 px sobre bandas oscuras */
+  --c-on-dark: #f6f0e1;       /* texto sobre bandas */
+  --c-on-dark-muted: #e2d6c4; /* texto secundario sobre bandas */
+
+  /* ---------- Acento único ---------- */
+  --c-gold: #efc547;          /* mostaza: el «sol» del plato. Relleno, borde, texto grande sobre oscuro. NUNCA texto sobre crema */
+  --c-gold-hover: #f6d677;
+  --c-chili: #d1255c;
+  --c-highlight: #fff3cc;     /* mantequilla: fondo de enlaces en texto corrido y etiqueta «Nuevo» */
+  --c-burgundy: #810c00;      /* vino: solo detalles mínimos (etiqueta «Picante»); nunca botones ni bandas */         /* solo insignias diminutas de alerta/picante (texto blanco) */
+  /* Tomate de CONVERSIÓN (rediseño editorial): relleno de botones primarios y etiqueta «Picante». Más vivo que --c-ember
+     (que es el tomate del logotipo y de los enlaces). Texto blanco 5,57 · sobre hueso 5,29. */
+  --c-cta: #290a08;
+  --c-cta-deep: #4d1e18;
+
+  /* ---------- Semánticos de cocina (siempre con texto/icono, nunca solo color) ---------- */
+  --c-success: #2f6b2f;  --c-success-bg: #e3eedc;   /* verde albahaca */
+  --c-wa: #1f7a43;       --c-wa-deep: #17613a;      /* WhatsApp (texto blanco 5,35) */
+  --c-warn: #7a4a00;     --c-warn-bg: #f7e0a8;
+  --c-danger: #a3132f;   --c-danger-bg: #f6d3d8;
+
+  /* ---------- Superficies del panel (estilo Sunday, claro y limpio) ---------- */
+  --c-adm-surface: #ffffff;
+  --c-adm-soft: #f6f6f5;
+  --c-adm-hair: #dedede;      /* hairline */
+  --c-adm-muted: #736f7c;     /* texto apagado */
+  --c-adm-placeholder: #8a8590; /* solo placeholder (no es texto de contenido) */
+
+  /* ---------- Contexto (los componentes leen estos; .on-dark y .band--* los cambian) ---------- */
+  --ctx-bg: var(--c-canvas);
+  --ctx-fg: var(--c-ink);
+  --ctx-muted: var(--c-ink-soft);
+  --ctx-link: var(--c-ink);
+  --ctx-rule: var(--c-rule);
+  --ctx-focus: var(--c-ink);
+  --ctx-accent: var(--c-ember);   /* en oscuro pasa a oro */
+  --ctx-surface: var(--c-paper);  /* tarjetas */
+  --ctx-surface-line: var(--c-rule);
+
+  /* ---------- Tipografía ---------- */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Escala fluida: 360 px → 1440 px. d-* = Anton en mayúsculas; t-* = DM Sans */
+  --fs-d1: clamp(4.5rem, 2rem + 14vw, 12.5rem);     /* cifras gigantes 72 → 200 px */
+  --fs-d2: clamp(3.25rem, 1.5rem + 8vw, 8rem);      /* título de héroe 52 → 128 px */
+  --fs-d3: clamp(2.5rem, 1.4rem + 4.8vw, 4.5rem);   /* título de sección 40 → 72 px */
+  --fs-d4: clamp(1.75rem, 1.2rem + 2.4vw, 3rem);    /* subtítulo 28 → 48 px */
+  --fs-d5: clamp(1.25rem, 1.1rem + .7vw, 1.625rem); /* título de tarjeta 20 → 26 px */
+  --fs-lead: clamp(1.0625rem, 1rem + .3vw, 1.3125rem);
+  --fs-base: 1.0625rem;
+  --fs-sm: .875rem;
+  --fs-xs: .75rem;
+  /* Rediseño 2 (docs/design/direccion-v2.md §4). Anton solo ≥ 48 px o en cifras; máx. 3 usos por viewport */
+  --fs-hero: clamp(3.5rem, 1.6rem + 6.4vw, 7.5rem);  /* titular de una línea: 181 px a 1440 */
+  --fs-h2: clamp(2.5rem, 1.6rem + 3.2vw, 5rem);                                   /* título de sección: 92 px a 1440, 48 a 390 */
+  --fs-statement: clamp(1.875rem, 1.2rem + 2.2vw, 3rem);                       /* frase grande: DM Sans 400, −.03em, lh 1.08 */
+  --fs-wordmark: calc((100vw - 2 * var(--gutter)) / 4.2);                      /* logotipo del pie, de borde a borde */
+  --lh-display: 1;  --lh-tight: 1.1;  --lh-body: 1.6;
+  --tr-display: -0.03em;   /* ≥ 64 px */
+  --tr-title: -0.02em;     /* 28–64 px */
+  --tr-label: .02em;       /* etiquetas en mayúsculas */
+
+  /* ---------- Espaciado (rejilla de 8 px) ---------- */
+  --sp-0: 4px;  --sp-1: 8px;  --sp-2: 16px;  --sp-3: 24px;  --sp-4: 32px;
+  --sp-5: 48px; --sp-6: 64px; --sp-7: 80px;  --sp-8: 120px;  --sp-9: 160px; /* huecos grandes dentro de bandas */
+  --gutter: clamp(16px, 4vw, 32px);
+  --section-y: clamp(56px, 1.6vw + 48px, 80px);   /* rediseño 2: 136 px a 1440, 88 px a 390 (antes 56→120) */
+
+  /* ---------- Geometría ---------- */
+  --r-sharp: 0;
+  --r-card: 18px;             /* tarjetas */
+  --r-btn: 10px;               /* botones, campos, chips (rectangulares, nunca píldora) */
+  --r-tag: 6px;               /* etiquetas */
+  --r-pill: var(--r-btn);      /* nombre heredado: ya NO es píldora; los 50 % reales (avatares, puntos) van aparte */
+  --r-round: 9999px;          /* solo interruptores y puntos de estado */
+  --r-photo: 12px;            /* fotos sueltas: esquina suave (forma.css, 19 nov 2026) */
+  --r-panel: 16px;            /* SOLO panel admin y ventana «En vivo» (software del restaurante) */
+  --rule-w: 1px;
+  --tap: 44px;               /* tamaño mínimo táctil */
+  --w-content: 1200px;
+  --w-wide: 1440px;
+
+  /* ---------- Movimiento ---------- */
+  --dur: .4s;
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --dur-fast: .2s;            /* controles: color, fondo, borde */
+  --dur-photo: .7s;           /* revelado de foto con máscara */
+  --shadow-sticky: none;
+  --shadow-card: none; /* hover de tarjeta */ /* ÚNICA sombra: cabecera con scroll */
+
+  /* ---------- Fotografía (rediseño 2) ---------- */
+  --photo-filter: saturate(1.02);                 /* comida viva: sin sepia ni velos que la apaguen */
+  --photo-filter-warm: saturate(1) sepia(.05);  /* para fotos frías (sucursal_1) */
+  /* Velos: ÚNICO degradado permitido, solo detrás de texto sobre foto (ver system.md, regla 5) */
+  --scrim-t: linear-gradient(to bottom, rgb(17 17 17 / .85), rgb(17 17 17 / 0) 28%);
+  --scrim-b: linear-gradient(to top, rgb(17 17 17 / .8), rgb(17 17 17 / 0) 50%);
+  --veil: rgb(17 17 17 / .82);        /* velo sólido: fondo del chat */
+  --veil-soft: rgb(17 17 17 / .45);   /* velo sólido suave: banda CTA (solo foto oscura) */
+  --header-h: 72px;                  /* cabecera de escritorio; 56 px < 900 px (ver abajo) */
+
+  /* ---------- Capas ---------- */
+  --z-base: 1; --z-sticky: 40; --z-banner: 100; --z-float: 120; --z-modal: 200; --z-toast: 300;
+
+  /* ============================================================
+   * ALIAS DE COMPATIBILIDAD (nombres antiguos). Borrar cuando B y C migren.
+   * ============================================================ */
+  --crema: var(--c-canvas);
+  --crema-2: var(--c-linen);
+  --terracota: var(--c-ember);
+  --terracota-osc: var(--c-ember-deep);
+  --amarillo: var(--c-gold);
+  --tinta: var(--c-ink);
+  --tinta-suave: var(--c-ink-soft);
+  --blanco: var(--c-paper);
+  --radio: var(--r-card);
+  --sombra: none;
+  --fuente: var(--font-body);
+}
+@media (max-width: 899px) { :root { --header-h: 56px; } }

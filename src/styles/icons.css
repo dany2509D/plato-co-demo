@@ -1,0 +1,8 @@
+/* Iconos SVG (src/ui/icons.js). El color lo da currentColor. */
+.ico { display: inline-block; flex: none; vertical-align: -0.2em; }
+.ico-aro {
+  display: inline-grid; place-items: center; flex: none;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--c-rule); color: var(--c-ink);
+}
+.ico-aro--oscuro { border-color: var(--c-gold); color: var(--c-gold); }

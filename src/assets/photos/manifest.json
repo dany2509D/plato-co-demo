@@ -1,0 +1,590 @@
+{
+  "menu": {
+    "prod-01-aros-de-cebolla": {
+      "file": "menu/prod-01-aros-de-cebolla.webp",
+      "alt": "Aros de cebolla dorados con salsa para mojar sobre una mesa de madera",
+      "credit": {
+        "author": "Raphael Dalagnol",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/8_G6oGx674k",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-02-alitas-con-salsa": {
+      "file": "menu/prod-02-alitas-con-salsa.webp",
+      "alt": "Alita de pollo bañada en salsa BBQ que se moja en un recipiente de metal",
+      "credit": {
+        "author": "Diego Arenas de Rodrigo",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/MtrylXnOK-U",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-03-nachos-con-queso": {
+      "file": "menu/prod-03-nachos-con-queso.webp",
+      "alt": "Nachos con queso fundido, tocino y cebollín en canasta",
+      "credit": {
+        "author": "lap lap",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/5PkRWJ3ndOw",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-04-bastones-de-queso": {
+      "file": "menu/prod-04-bastones-de-queso.webp",
+      "alt": "Bastones de queso empanizados con queso derretido",
+      "credit": {
+        "author": "Shoeib Abolhassani",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/pTwN-C1w1Vc",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-05-papas-fritas": {
+      "file": "menu/prod-05-papas-fritas.webp",
+      "alt": "Papas fritas doradas en canastilla de metal sobre fondo oscuro",
+      "credit": {
+        "author": "Mitchell Luo",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/ChXHveqrb28",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-06-sopa-de-tomate": {
+      "file": "menu/prod-06-sopa-de-tomate.webp",
+      "alt": "Sopa de tomate cremosa en plato hondo oscuro",
+      "credit": {
+        "author": "Max Griss",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/xVgE_mCA8fk",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-07-hamburguesa-clasica": {
+      "file": "menu/prod-07-hamburguesa-clasica.webp",
+      "alt": "Hamburguesa clásica con lechuga, tomate y cebolla sobre madera oscura",
+      "credit": {
+        "author": "Ilya Mashkov",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/_qxbJUr9RqI",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-08-hamburguesa-doble": {
+      "file": "menu/prod-08-hamburguesa-doble.webp",
+      "alt": "Hamburguesa doble con queso cheddar derretido y pan brillante",
+      "credit": {
+        "author": "amirali mirhashemian",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/jh5XyK4Rr3Y",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-09-hamburguesa-con-tocino": {
+      "file": "menu/prod-09-hamburguesa-con-tocino.webp",
+      "alt": "Hamburguesa con tocino, queso cheddar y pepinillos",
+      "credit": {
+        "author": "amirali mirhashemian",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/9Bqiusimq6M",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-10-hamburguesa-de-pollo": {
+      "file": "menu/prod-10-hamburguesa-de-pollo.webp",
+      "alt": "Sándwich de pollo crujiente con lechuga y mayonesa sobre fondo negro",
+      "credit": {
+        "author": "David Foodphototasty",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/VFVnZfogE7s",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-11-hamburguesa-vegetariana": {
+      "file": "menu/prod-11-hamburguesa-vegetariana.webp",
+      "alt": "Hamburguesa vegetariana con aguacate, rúcula y tomate",
+      "credit": {
+        "author": "Lefteris kallergis",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/_TLKIVSW6Do",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-12-hamburguesa-picante": {
+      "file": "menu/prod-12-hamburguesa-picante.webp",
+      "alt": "Hamburguesa con salsa picante sobre una mesa de madera",
+      "credit": {
+        "author": "Israel Albornoz",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/YFG2_ZYoMWQ",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-13-espagueti-a-la-bolonesa": {
+      "file": "menu/prod-13-espagueti-a-la-bolonesa.webp",
+      "alt": "Espagueti a la boloñesa servido en plato azul turquesa",
+      "credit": {
+        "author": "Zayed Ahmed Zadu",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/rQCBC9EgoDE",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-14-fettuccine-alfredo": {
+      "file": "menu/prod-14-fettuccine-alfredo.webp",
+      "alt": "Fettuccine en salsa cremosa tipo Alfredo con pollo sobre una mesa de madera",
+      "credit": {
+        "author": "engin akyurt",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/Jrvcg9My0B4",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-15-penne-al-pesto": {
+      "file": "menu/prod-15-penne-al-pesto.webp",
+      "alt": "Manos sosteniendo un plato de penne al pesto con tomate",
+      "credit": {
+        "author": "Raamin ka",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/j6C7XUec100",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-16-lasana-de-carne": {
+      "file": "menu/prod-16-lasana-de-carne.webp",
+      "alt": "Porción de lasaña de carne con queso gratinado",
+      "credit": {
+        "author": "joe boshra",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/JNCxXU3A0H0",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-17-macarrones-con-queso": {
+      "file": "menu/prod-17-macarrones-con-queso.webp",
+      "alt": "Macarrones con queso cremoso en una olla azul con cuchara de madera",
+      "credit": {
+        "author": "Leanna Myers",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/Vkx_ZpQwQgE",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-18-pollo-a-la-parrilla": {
+      "file": "menu/prod-18-pollo-a-la-parrilla.webp",
+      "alt": "Pechuga de pollo a la parrilla con arvejas sobre plato oscuro",
+      "credit": {
+        "author": "Elena Leya",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/DBVIb_rWUKw",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-19-churrasco": {
+      "file": "menu/prod-19-churrasco.webp",
+      "alt": "Churrasco a término medio con papas fritas y ensalada",
+      "credit": {
+        "author": "meat Adil",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/d5EjL94rhZ0",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-20-filete-de-pescado": {
+      "file": "menu/prod-20-filete-de-pescado.webp",
+      "alt": "Filete de pescado dorado a la plancha sobre plato gris",
+      "credit": {
+        "author": "Facundo Luca",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/MH8NoIRIQMU",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-21-costillas-bbq": {
+      "file": "menu/prod-21-costillas-bbq.webp",
+      "alt": "Costillas BBQ glaseadas con papas en gajos",
+      "credit": {
+        "author": "Diego Arenas de Rodrigo",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/G4ofZCBe4wI",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-22-chuleta-de-cerdo": {
+      "file": "menu/prod-22-chuleta-de-cerdo.webp",
+      "alt": "Chuletas de cerdo a la parrilla con romero y papas",
+      "credit": {
+        "author": "sunorwind",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/37b4qc33A3Y",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-23-camarones-al-ajillo": {
+      "file": "menu/prod-23-camarones-al-ajillo.webp",
+      "alt": "Camarones al ajillo con ajo y hierbas en fuente blanca",
+      "credit": {
+        "author": "Kris Tian",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/35W67XoBpUs",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-24-ensalada-cesar": {
+      "file": "menu/prod-24-ensalada-cesar.webp",
+      "alt": "Ensalada César con crutones y aderezo cremoso",
+      "credit": {
+        "author": "Cliffer Rebelo",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/UdLsLK_KFLw",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-25-ensalada-de-la-casa": {
+      "file": "menu/prod-25-ensalada-de-la-casa.webp",
+      "alt": "Ensalada de la casa con hojas verdes, queso y fruta",
+      "credit": {
+        "author": "joe boshra",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/EklMD_oEcys",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-26-bowl-de-pollo-y-arroz": {
+      "file": "menu/prod-26-bowl-de-pollo-y-arroz.webp",
+      "alt": "Bowl de arroz con pollo glaseado y ajonjolí",
+      "credit": {
+        "author": "Zayed Ahmed Zadu",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/ZK8kPP8I4rY",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-27-bowl-vegetariano": {
+      "file": "menu/prod-27-bowl-vegetariano.webp",
+      "alt": "Bowl vegetariano con quinoa, garbanzos, aguacate y vegetales",
+      "credit": {
+        "author": "Sonny Mauricio",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/yhc4pSbl01A",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-28-ensalada-griega": {
+      "file": "menu/prod-28-ensalada-griega.webp",
+      "alt": "Ensalada griega con queso feta, tomate, pepino y cebolla",
+      "credit": {
+        "author": "william wallace",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/Dk4RNTHXlAA",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-29-brownie-con-helado": {
+      "file": "menu/prod-29-brownie-con-helado.webp",
+      "alt": "Brownie de chocolate tibio con helado de vainilla y salsa de chocolate",
+      "credit": {
+        "author": "ABHISHEK HAJARE",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/iw3bza94-r0",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-30-cheesecake": {
+      "file": "menu/prod-30-cheesecake.webp",
+      "alt": "Porción de cheesecake con salsa de arándanos",
+      "credit": {
+        "author": "Vasanth Kumar",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/uf9jCJRxNuk",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-31-helado-de-vainilla": {
+      "file": "menu/prod-31-helado-de-vainilla.webp",
+      "alt": "Helado de vainilla con chispas de colores",
+      "credit": {
+        "author": "sheri silver",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/5A0O12BIsjY",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-32-tarta-de-manzana": {
+      "file": "menu/prod-32-tarta-de-manzana.webp",
+      "alt": "Porción de tarta de manzana con manzanas frescas",
+      "credit": {
+        "author": "Mila",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/uYUooqpjsHI",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-33-flan-de-caramelo": {
+      "file": "menu/prod-33-flan-de-caramelo.webp",
+      "alt": "Flan de caramelo sobre plato blanco",
+      "credit": {
+        "author": "Felippe Lopes",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/TqPdzQ00I0U",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-34-limonada": {
+      "file": "menu/prod-34-limonada.webp",
+      "alt": "Vasos de limonada con rodajas de limón, lima y hierbabuena",
+      "credit": {
+        "author": "Svitlana",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/hclUIrSWwFE",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-35-te-helado": {
+      "file": "menu/prod-35-te-helado.webp",
+      "alt": "Vaso de té helado con hielo y limón sobre tabla de madera",
+      "credit": {
+        "author": "Mae Mu",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/kbch-i63YTg",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-36-refresco": {
+      "file": "menu/prod-36-refresco.webp",
+      "alt": "Vaso de refresco oscuro con hielo sobre fondo negro",
+      "credit": {
+        "author": "Qasim Malick",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/i597Mg_WSPw",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-37-agua-mineral": {
+      "file": "menu/prod-37-agua-mineral.webp",
+      "alt": "Vaso de agua con hielo sobre superficie oscura",
+      "credit": {
+        "author": "Rochelle Lee",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/35YkonDwBiA",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-38-jugo-de-naranja": {
+      "file": "menu/prod-38-jugo-de-naranja.webp",
+      "alt": "Vaso de jugo de naranja natural junto a naranjas partidas",
+      "credit": {
+        "author": "Mateusz Feliksik",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/TmOGarNOGFs",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-39-batido-de-fresa": {
+      "file": "menu/prod-39-batido-de-fresa.webp",
+      "alt": "Batido de fresa en vaso alto con fresas frescas",
+      "credit": {
+        "author": "Sebastian Coman Photography",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/rwBJaJdesGg",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    },
+    "prod-40-cafe-americano": {
+      "file": "menu/prod-40-cafe-americano.webp",
+      "alt": "Taza de café americano humeante sobre superficie oscura",
+      "credit": {
+        "author": "Steve Harvey",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/dT83uJUpjyk",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "shared": false
+    }
+  },
+  "hero": {
+    "hero": {
+      "file": "hero/hero.webp",
+      "alt": "Hamburguesa con papas fritas sobre pizarra oscura, con espacio libre para texto",
+      "credit": {
+        "author": "Benoît Deschasaux",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/60WT-38Mrwo",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "width": 1600,
+      "height": 900
+    },
+    "ambiente_salon": {
+      "file": "hero/ambiente_salon.webp",
+      "alt": "Salón de restaurante con luz cálida y mesas de madera",
+      "credit": {
+        "author": "Oliver Guhr",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/EjHiN2KxTO4",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "width": 1600,
+      "height": 900
+    },
+    "ambiente_parrilla": {
+      "file": "hero/ambiente_parrilla.webp",
+      "alt": "Cocinero salteando en una sartén con una gran llamarada",
+      "credit": {
+        "author": "Salman Sidheek",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/gSECRTRCeuI",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "width": 1600,
+      "height": 900
+    },
+    "delivery": {
+      "file": "hero/delivery.webp",
+      "alt": "Caja de cartón kraft abierta con hamburguesa y papas fritas para llevar",
+      "credit": {
+        "author": "Quin Engle",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/PnCuMQITM3c",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "width": 800,
+      "height": 600
+    },
+    "sucursal_1": {
+      "file": "hero/sucursal_1.webp",
+      "alt": "Terraza de restaurante con mesas al aire libre",
+      "credit": {
+        "author": "David Todd McCarty",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/FxExosRmEWg",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "width": 800,
+      "height": 600
+    },
+    "sucursal_2": {
+      "file": "hero/sucursal_2.webp",
+      "alt": "Barra de restaurante con luz tenue y estantes de vasos",
+      "credit": {
+        "author": "Kenneth Running",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/udPv6ANWQhU",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "width": 800,
+      "height": 600
+    },
+    "sucursal_3": {
+      "file": "hero/sucursal_3.webp",
+      "alt": "Salón amplio con mesas y sillas bajo luz cálida",
+      "credit": {
+        "author": "Glenov Brankovic",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/e4B5AvA7Jqo",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "width": 800,
+      "height": 600
+    },
+    "cta_ingredientes": {
+      "file": "hero/cta_ingredientes.webp",
+      "alt": "Mesa de pizarra oscura con especias, hierbas y pimienta",
+      "credit": {
+        "author": "Sergey Kotenev",
+        "source": "Unsplash",
+        "pageUrl": "https://unsplash.com/photos/PiizAdrUf8Y",
+        "license": "Unsplash License",
+        "licenseUrl": "https://unsplash.com/license"
+      },
+      "width": 1600,
+      "height": 900
+    }
+  }
+}

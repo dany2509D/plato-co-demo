@@ -1,0 +1,74 @@
+/* Indicadores · cifras gigantes, filetes, barras SVG en tinta con oro para la mejor */
+.ind { display: grid; gap: var(--sp-6); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ind .pg-cab { margin-bottom: 0; }
+
+/* KPIs (Sunday): cifras Anton de 112 px (64 px a 390), etiqueta de 14 px gris y filetes verticales entre ellas */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); border-block: var(--rule-w) solid var(--c-adm-hair); }
+.kpi { container-type: inline-size; min-width: 0; padding: var(--sp-4) var(--sp-3); }
+.kpi:first-child { padding-left: 0; }
+@media (min-width: 640px) { .kpi + .kpi { border-left: var(--rule-w) solid var(--c-adm-hair); } }
+@media (max-width: 639px) { .kpi { padding-inline: 0; } .kpi + .kpi { border-top: var(--rule-w) solid var(--c-adm-hair); } }
+.kpi-valor { font-family: var(--font-display); font-size: clamp(2.5rem, min(40cqw, 240cqw / var(--n, 4)), 7rem); line-height: 1; letter-spacing: var(--tr-display); text-transform: none; color: var(--c-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 639px) { .kpi-valor { font-size: clamp(2.5rem, min(40cqw, 240cqw / var(--n, 4)), 4rem); } }
+.kpi--texto .kpi-valor { padding-block: .08em; }
+.kpi-etiqueta { margin-top: var(--sp-2); font-size: .875rem; font-weight: 500; color: var(--c-adm-muted); }
+.kpi-nota { margin-top: 2px; font-size: .875rem; color: var(--c-adm-muted); }
+
+.ind-sec { min-width: 0; border-top: var(--rule-w) solid var(--c-adm-hair); padding-top: var(--sp-3); }
+.ind-sec h2 { margin: 0 0 var(--sp-3); font-family: var(--font-body); font-weight: 600; font-size: 1.25rem; letter-spacing: 0; text-transform: none; }
+.ind-cols { display: grid; grid-template-columns: 1fr; gap: var(--sp-6) var(--sp-5); }
+@media (min-width: 900px) { .ind-cols { grid-template-columns: 3fr 2fr; } }
+.vacio { color: var(--c-adm-muted); margin: 0; }
+.ind-ambito { display: inline-flex; width: fit-content; max-width: 100%; margin-top: var(--sp-2); overflow-x: auto; }
+
+.ind-comp { display: grid; gap: var(--sp-4); }
+@media (min-width: 1000px) { .ind-comp { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); align-items: start; gap: var(--sp-6); } }
+
+/* Barras: [miniatura] etiqueta | valor / barra SVG */
+.bars { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.bar-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'etq val' 'bar bar'; gap: 6px var(--sp-2); align-items: baseline; }
+.bar-fila--foto { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'foto etq val' 'foto bar bar'; align-items: center; column-gap: var(--sp-2); }
+.bar-foto { grid-area: foto; display: block; flex: none; }
+.bar-foto .foto { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 8px; }
+.bar-foto--sucursal { width: 96px; height: 72px; }
+.bar-foto--plato { width: 48px; height: 36px; }
+.bar-foto--plato .foto { border-radius: 6px; }
+.bar-foto .foto img { transition: none; transform: none; }
+.bar-etq { grid-area: etq; font-size: 1rem; font-weight: 500; overflow-wrap: anywhere; align-self: end; }
+.bar-val { grid-area: val; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; align-self: end; }
+.bar-svg { grid-area: bar; width: 100%; height: 10px; display: block; align-self: start; }
+.bar-pista { fill: var(--c-adm-soft); }
+.bar-relleno { fill: var(--c-ink); }
+.bar-mejor { fill: var(--c-gold); }
+.es-mejor .bar-etq { font-weight: 700; }
+
+/* Reparto web / WhatsApp */
+.split-svg { width: 100%; height: 20px; display: block; }
+.split-a { fill: var(--c-ink); }
+.split-b { fill: var(--c-gold); }
+.leyenda { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: grid; gap: var(--sp-1); }
+.leyenda li { display: flex; align-items: center; gap: 12px; font-size: 1rem; }
+.leyenda-n { font-family: var(--font-display); font-size: 3rem; line-height: .9; min-width: 2ch; letter-spacing: var(--tr-title); font-variant-numeric: tabular-nums; }
+.sw { flex: none; width: 14px; height: 14px; border: 1.5px solid var(--c-ink); }
+.sw-a { background: var(--c-ink); }
+.sw-b { background: var(--c-gold); }
+
+/* Tabla con filetes */
+.tabla-scroll { overflow-x: auto; }
+.tabla { width: 100%; border-collapse: collapse; font-size: 1rem; font-variant-numeric: tabular-nums; }
+.tabla th, .tabla td { padding: 14px 12px 14px 0; text-align: left; border-bottom: var(--rule-w) solid var(--c-adm-hair); white-space: nowrap; }
+.tabla thead th { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label); color: var(--c-adm-muted); border-bottom-color: var(--c-ink); }
+.tabla tbody th { font-weight: 700; }
+.tabla tr.actual th, .tabla tr.actual td { background: var(--c-adm-soft); }
+.tabla tr.actual th { padding-left: 12px; }
+.mejor { display: inline-block; margin-left: 8px; padding: 0 8px; font-weight: 700; font-size: .75rem; letter-spacing: .02em; border-radius: var(--r-pill); background: var(--c-gold); color: var(--c-char); }
+
+/* Correo simulado: tarjeta blanca, radio 16, filete de 1 px, sin sombra */
+.mail { max-width: 760px; border: var(--rule-w) solid var(--c-adm-hair); border-radius: var(--r-panel); background: var(--c-adm-surface); overflow: hidden; }
+.mail-cab { position: relative; display: grid; gap: 4px; padding: var(--sp-2) var(--sp-3); font-size: .9375rem; background: var(--c-adm-soft); border-bottom: var(--rule-w) solid var(--c-adm-hair); overflow-wrap: anywhere; }
+.mail-sello { position: absolute; top: var(--sp-2); right: var(--sp-3); padding: 0 10px; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: var(--tr-label); border: var(--rule-w) solid var(--c-ink); border-radius: var(--r-pill); }
+.mail-cab > div:nth-of-type(1) { padding-right: 90px; }
+.mail-et { display: inline-block; min-width: 4.5em; color: var(--c-adm-muted); font-weight: 700; }
+.mail-cuerpo { margin: 0; padding: var(--sp-3); font: inherit; font-size: .9375rem; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mail-pie { margin: 0; padding: var(--sp-2) var(--sp-3); font-size: .8125rem; color: var(--c-adm-muted); border-top: var(--rule-w) solid var(--c-adm-hair); }
